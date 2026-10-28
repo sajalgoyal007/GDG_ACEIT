@@ -1,0 +1,40 @@
+{
+  "name": "gdg-aceit-leaderboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/lib/participants/csv.test.ts src/lib/leaderboard.test.ts src/lib/google-sheets/sync-plan.test.ts src/lib/supabase/auth-link-error.test.ts src/lib/supabase/auth-destination.test.ts",
+    "preflight": "node scripts/preflight.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "googleapis": "^188.0.0",
+    "lucide-react": "^0.468.0",
+    "motion": "14.7.1",
+    "next": "^15.1.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.3",
+    "@types/react-dom": "^19.0.2",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.3",
+    "supabase": "^2.122.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2"
+  }
+}

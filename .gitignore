@@ -1,0 +1,23 @@
+# Dependencies & build outputs
+node_modules/
+.next/
+.next-cache-backup*/
+out/
+*.tsbuildinfo
+.vercel/
+
+# Environment files & secrets
+.env*
+!.env.example
+*.pem
+*.key
+*service-account*.json
+*credentials*.json
+
+# Supabase CLI local temporary cache
+supabase/.temp/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+

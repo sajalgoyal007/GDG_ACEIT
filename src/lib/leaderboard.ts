@@ -1,0 +1,41 @@
+import type { PublicParticipant } from "./types";
+
+export type Milestone = "in_progress" | "five_badge" | "ten_badge";
+
+export function hasMilestone(count: number, threshold: 5 | 10) {
+  return count >= threshold;
+}
+
+export function getMilestone(count: number): Milestone {
+  if (hasMilestone(count, 10)) return "ten_badge";
+  if (hasMilestone(count, 5)) return "five_badge";
+  return "in_progress";
+}
+
+/** Sort by count descending, then stable participant UUID ascending. */
+export function compareLeaderboardParticipants(a: PublicParticipant, b: PublicParticipant) {
+  return b.verifiedBadgeCount - a.verifiedBadgeCount || compareStableId(a.id, b.id);
+}
+
+function compareStableId(a: string, b: string) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+export function rankParticipants(participants: readonly PublicParticipant[]) {
+  const sorted = [...participants].sort(compareLeaderboardParticipants);
+  let previousCount: number | undefined;
+  let previousRank = 0;
+  return sorted.map((participant, index) => {
+    const rank = participant.verifiedBadgeCount === previousCount ? previousRank : index + 1;
+    previousCount = participant.verifiedBadgeCount;
+    previousRank = rank;
+    return { participant, rank };
+  });
+}
+
+export function getMilestoneLabel(count: number) {
+  const milestone = getMilestone(count);
+  if (milestone === "ten_badge") return "10-Badge Milestone";
+  if (milestone === "five_badge") return "5-Badge Milestone";
+  return "In Progress";
+}
