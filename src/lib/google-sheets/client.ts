@@ -12,6 +12,26 @@ export interface GoogleSheetsConfig {
   matchSecret: string;
 }
 
+export class GoogleSheetsConfigError extends Error {
+  readonly missingOrInvalid: string;
+  constructor(field: string, message: string) {
+    super(message);
+    this.name = "GoogleSheetsConfigError";
+    this.missingOrInvalid = field;
+  }
+}
+
+export class GoogleSheetsReadError extends Error {
+  readonly code: string;
+  readonly status?: number;
+  constructor(message: string, code: string, status?: number) {
+    super(message);
+    this.name = "GoogleSheetsReadError";
+    this.code = code;
+    this.status = status;
+  }
+}
+
 export function getGoogleSheetsConfig(): GoogleSheetsConfig {
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID?.trim() ?? "";
   const tabName = process.env.GOOGLE_SHEETS_TAB_NAME?.trim() ?? "";
@@ -25,12 +45,35 @@ export function getGoogleSheetsConfig(): GoogleSheetsConfig {
     email: process.env.GOOGLE_SHEETS_EMAIL_HEADER?.trim() ?? "",
     profileUrl: process.env.GOOGLE_SHEETS_PROFILE_URL_HEADER?.trim() ?? "",
   };
-  if (!/^[A-Za-z0-9_-]{20,}$/.test(spreadsheetId) || !tabName || !serviceAccountEmail || !privateKey.includes("PRIVATE KEY") || Buffer.byteLength(matchSecret, "utf8") < 32) {
-    throw new Error("Google Sheets sync is not configured. Check the server environment variables in the setup guide.");
+
+  if (!spreadsheetId || !/^[A-Za-z0-9_-]{20,}$/.test(spreadsheetId)) {
+    throw new GoogleSheetsConfigError("GOOGLE_SHEETS_SPREADSHEET_ID", "GOOGLE_SHEETS_SPREADSHEET_ID is missing or not a valid Google Spreadsheet ID.");
   }
-  if (!Number.isInteger(headerRow) || headerRow < 1 || headerRow > 20 || !headerMap.name || !headerMap.email || !headerMap.profileUrl) {
-    throw new Error("Google Sheets header mapping is incomplete. Set the exact response-sheet header names and header row.");
+  if (!tabName) {
+    throw new GoogleSheetsConfigError("GOOGLE_SHEETS_TAB_NAME", "GOOGLE_SHEETS_TAB_NAME is missing.");
   }
+  if (!serviceAccountEmail) {
+    throw new GoogleSheetsConfigError("GOOGLE_SERVICE_ACCOUNT_EMAIL", "GOOGLE_SERVICE_ACCOUNT_EMAIL is missing.");
+  }
+  if (!privateKey || !privateKey.includes("PRIVATE KEY")) {
+    throw new GoogleSheetsConfigError("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY", "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY is missing or does not contain a PRIVATE KEY header.");
+  }
+  if (Buffer.byteLength(matchSecret, "utf8") < 32) {
+    throw new GoogleSheetsConfigError("PARTICIPANT_MATCH_HMAC_SECRET", "PARTICIPANT_MATCH_HMAC_SECRET is missing or must be at least 32 bytes.");
+  }
+  if (!Number.isInteger(headerRow) || headerRow < 1 || headerRow > 20) {
+    throw new GoogleSheetsConfigError("GOOGLE_SHEETS_HEADER_ROW", "GOOGLE_SHEETS_HEADER_ROW must be an integer between 1 and 20.");
+  }
+  if (!headerMap.name) {
+    throw new GoogleSheetsConfigError("GOOGLE_SHEETS_NAME_HEADER", "GOOGLE_SHEETS_NAME_HEADER is missing.");
+  }
+  if (!headerMap.email) {
+    throw new GoogleSheetsConfigError("GOOGLE_SHEETS_EMAIL_HEADER", "GOOGLE_SHEETS_EMAIL_HEADER is missing.");
+  }
+  if (!headerMap.profileUrl) {
+    throw new GoogleSheetsConfigError("GOOGLE_SHEETS_PROFILE_URL_HEADER", "GOOGLE_SHEETS_PROFILE_URL_HEADER is missing.");
+  }
+
   return { spreadsheetId, tabName, serviceAccountEmail, privateKey, headerMap, matchSecret };
 }
 
@@ -88,7 +131,48 @@ export async function readGoogleFormResponseRows(config: GoogleSheetsConfig) {
       columns.map((column) => header[column]),
       ...Array.from({ length: rowCount }, (_, index) => columns.map((_column, columnIndex) => selectedValues[columnIndex][index] ?? "")),
     ];
-  } catch {
-    throw new Error("Could not read the private Google Sheet. Check that the Sheets API is enabled and the service account has Viewer access to this spreadsheet.");
+  } catch (err: unknown) {
+    const error = err as {
+      code?: string | number;
+      status?: number;
+      message?: string;
+      response?: {
+        status?: number;
+        data?: {
+          error?: string | { code?: number; message?: string; status?: string };
+          error_description?: string;
+        };
+      };
+    };
+    const status = error.response?.status ?? (typeof error.status === "number" ? error.status : (typeof error.code === "number" ? error.code : undefined));
+    const rawCode = typeof error.code === "string" ? error.code : undefined;
+    const responseError = typeof error.response?.data?.error === "string" ? error.response.data.error : error.response?.data?.error?.message;
+    const errorDesc = error.response?.data?.error_description;
+    const rawMessage = error.message ?? "";
+
+    let code = typeof rawCode === "string" ? rawCode : (status ? String(status) : "READ_FAILED");
+    let safeMessage = "Could not read the private Google Sheet. Check that the Sheets API is enabled and the service account has Viewer access to this spreadsheet.";
+
+    if (errorDesc?.includes("invalid_grant") || responseError?.includes("invalid_grant") || rawMessage.includes("invalid_grant")) {
+      code = "invalid_grant";
+      safeMessage = "Google service account authentication failed (invalid_grant). Check service account email and private key formatting/newlines.";
+    } else if (rawMessage.includes("PEM") || rawCode?.includes("PEM") || rawMessage.includes("DEK-Info") || rawMessage.includes("key format")) {
+      code = "INVALID_KEY_FORMAT";
+      safeMessage = "Google service account private key format is invalid. Check private key PEM formatting and newlines.";
+    } else if (status === 403) {
+      code = "PERMISSION_DENIED";
+      safeMessage = "Google Sheets API returned 403 Forbidden. Confirm Sheets API is enabled in Google Cloud Console and the spreadsheet is shared with the service account as Viewer.";
+    } else if (status === 404) {
+      code = "SPREADSHEET_NOT_FOUND";
+      safeMessage = "Google Sheets API returned 404 Not Found. Check GOOGLE_SHEETS_SPREADSHEET_ID.";
+    } else if (status === 400) {
+      code = "BAD_REQUEST";
+      safeMessage = "Google Sheets API returned 400 Bad Request. Check GOOGLE_SHEETS_TAB_NAME matches the tab name in the spreadsheet exactly.";
+    } else if (rawCode === "ENOTFOUND" || rawCode === "ETIMEDOUT" || rawCode === "ECONNREFUSED") {
+      code = rawCode;
+      safeMessage = `Network error connecting to Google Sheets API (${rawCode}).`;
+    }
+
+    throw new GoogleSheetsReadError(safeMessage, code, status);
   }
 }

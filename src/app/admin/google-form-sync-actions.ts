@@ -3,12 +3,22 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { getAdminAuthorization } from "@/lib/supabase/admin-auth";
+import { GoogleSheetsConfigError, GoogleSheetsReadError } from "@/lib/google-sheets/client";
 import { applyGoogleFormSync, GoogleFormSyncApplyError, previewGoogleFormSync } from "@/lib/google-sheets/sync-service";
 import type { GoogleFormSyncActionState } from "./google-form-sync-state";
 
+class AdminAuthError extends Error {
+  readonly authStatus: "unconfigured" | "signed_out" | "not_admin" | "check_failed";
+  constructor(status: "unconfigured" | "signed_out" | "not_admin" | "check_failed") {
+    super(`Administrator authentication required (status: ${status}).`);
+    this.name = "AdminAuthError";
+    this.authStatus = status;
+  }
+}
+
 async function getAuthorizedClient() {
   const authorization = await getAdminAuthorization();
-  if (authorization.status !== "admin") throw new Error("Administrator authentication is required for Google Form sync.");
+  if (authorization.status !== "admin") throw new AdminAuthError(authorization.status);
   return authorization.client;
 }
 
@@ -21,7 +31,40 @@ export async function googleFormSyncAction(_previous: GoogleFormSyncActionState,
       return { status: "preview", message: "Review this preview. No database records have been changed.", preview: await previewGoogleFormSync(client) };
     } catch (error) {
       const diagnosticId = randomUUID();
-      console.error("[google-form-sync] preview failed", { diagnosticId, errorType: error instanceof Error ? "Error" : "UnknownError" });
+      let category = "unknown";
+      let code: string | number = "UNKNOWN";
+      let status: number | undefined = undefined;
+      let safeMessage = "An unexpected error occurred during preview.";
+
+      if (error instanceof AdminAuthError) {
+        category = "admin_auth";
+        code = error.authStatus;
+        safeMessage = error.message;
+      } else if (error instanceof GoogleSheetsConfigError) {
+        category = "configuration";
+        code = error.missingOrInvalid;
+        safeMessage = error.message;
+      } else if (error instanceof GoogleSheetsReadError) {
+        category = "sheets_api";
+        code = error.code;
+        status = error.status;
+        safeMessage = error.message;
+      } else if (error instanceof Error && error.message.includes("participant records")) {
+        category = "database";
+        code = "DB_QUERY_FAILED";
+        safeMessage = error.message;
+      } else if (error instanceof Error) {
+        code = error.name || "Error";
+        safeMessage = error.message.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[REDACTED_EMAIL]");
+      }
+
+      console.error("[google-form-sync] preview failed", {
+        diagnosticId,
+        category,
+        code,
+        status,
+        safeMessage,
+      });
       return { status: "error", message: `Preview failed. Check server configuration and administrator access, then share diagnostic ID ${diagnosticId} with the project maintainer.` };
     }
   }
@@ -51,7 +94,23 @@ export async function googleFormSyncAction(_previous: GoogleFormSyncActionState,
       return { status: "error", message: `${messages[error.kind]} Diagnostic ID: ${error.diagnosticId}` };
     }
     const diagnosticId = randomUUID();
-    console.error("[google-form-sync] apply workflow failed", { diagnosticId, errorType: error instanceof Error ? "Error" : "UnknownError" });
+    let category = "unknown";
+    let code: string | number = "UNKNOWN";
+    let safeMessage = "Sync apply workflow failed.";
+    if (error instanceof AdminAuthError) {
+      category = "admin_auth";
+      code = error.authStatus;
+      safeMessage = error.message;
+    } else if (error instanceof GoogleSheetsConfigError) {
+      category = "configuration";
+      code = error.missingOrInvalid;
+      safeMessage = error.message;
+    } else if (error instanceof GoogleSheetsReadError) {
+      category = "sheets_api";
+      code = error.code;
+      safeMessage = error.message;
+    }
+    console.error("[google-form-sync] apply workflow failed", { diagnosticId, category, code, safeMessage });
     return { status: "error", message: `Sync could not be applied. No automatic retry was attempted. Share diagnostic ID ${diagnosticId} with the project maintainer.` };
   }
 
