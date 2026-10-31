@@ -200,10 +200,14 @@ export function classifyGoogleFormSync(
         records.push({ rowNumber: row.rowNumber, displayName: row.displayName, result: "duplicate", detail: "Profile needs manual review" });
         continue;
       }
-      const changed = matched.displayName !== row.displayName || matched.profileUrl !== profileUrl;
-      if (changed) {
+      if (matched.displayName !== row.displayName || matched.profileUrl !== profileUrl) {
         rowsToApply.push({ ...row, profileUrl });
-        records.push({ rowNumber: row.rowNumber, displayName: row.displayName, result: "updated", detail: `Registration details will update; current badge count ${matched.verifiedBadgeCount} is preserved` });
+        records.push({
+          rowNumber: row.rowNumber,
+          displayName: row.displayName,
+          result: "updated",
+          detail: `Registration details will update; verified badge count ${matched.verifiedBadgeCount} and last verification timestamp are preserved`,
+        });
       } else {
         records.push({ rowNumber: row.rowNumber, displayName: row.displayName, result: "duplicate", detail: "Already synchronized; no change" });
       }
@@ -216,8 +220,9 @@ export function classifyGoogleFormSync(
       records.push({ rowNumber: row.rowNumber, displayName: row.displayName, result: "duplicate", detail: "Possible existing participant; manual review required" });
       continue;
     }
+
     rowsToApply.push(row);
-    records.push({ rowNumber: row.rowNumber, displayName: row.displayName, result: "new", detail: "Will be added with zero badges if no record exists" });
+    records.push({ rowNumber: row.rowNumber, displayName: row.displayName, result: "new", detail: "Will be registered with 0 verified badges; any later badge count requires manual verification" });
   }
 
   const duplicateRows = new Set(records.filter((record) => record.result === "duplicate").map((record) => record.rowNumber));

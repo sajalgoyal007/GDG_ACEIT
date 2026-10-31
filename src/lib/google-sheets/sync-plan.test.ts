@@ -169,3 +169,47 @@ test("new rows are classified without badge data and invalid rows remain visible
   assert.equal(plan.counts.invalid, 1);
   assert.equal("verifiedBadgeCount" in plan.rowsToApply[0], false);
 });
+
+test("prepares and classifies rows with skills.google profile URLs ready for apply RPC", () => {
+  const prepared = prepareGoogleFormRows([
+    ["Name", "Email", "Google Skills profile URL"],
+    ["Skills Learner", "learner.skills@example.test", "https://www.skills.google/public_profiles/profile_456-XYZ"],
+  ], mapping, identity);
+  assert.equal(prepared.issues.length, 0);
+  assert.equal(prepared.rows.length, 1);
+  assert.equal(prepared.rows[0].profileUrl, "https://www.skills.google/public_profiles/profile_456-XYZ");
+
+  const plan = classifyGoogleFormSync(prepared.rows, prepared.issues, []);
+  assert.equal(plan.counts.new, 1);
+  assert.equal(plan.rowsToApply.length, 1);
+  assert.equal(plan.rowsToApply[0].displayName, "Skills Learner");
+  assert.equal(plan.rowsToApply[0].profileUrl, "https://www.skills.google/public_profiles/profile_456-XYZ");
+  assert.doesNotMatch(plan.records[0].detail, /badges from public profile/i);
+  assert.match(plan.records[0].detail, /registered with 0 verified badges/i);
+});
+
+test("existing participant registration preview preserves verified counts and timestamps", () => {
+  const prepared = prepareGoogleFormRows([
+    ["Name", "Email", "Google Skills profile URL"],
+    ["Learner", "learner@example.test", "https://www.cloudskillsboost.google/public_profiles/abc"],
+  ], mapping, identity);
+  const existing = [{
+    id: "participant-1",
+    participantKey: prepared.rows[0].participantKey,
+    displayName: "Learner",
+    profileUrl: "https://www.cloudskillsboost.google/public_profiles/abc",
+    verifiedBadgeCount: 5,
+  }];
+  const changed = prepareGoogleFormRows([
+    ["Name", "Email", "Google Skills profile URL"],
+    ["Updated Learner", "learner@example.test", "https://www.cloudskillsboost.google/public_profiles/abc"],
+  ], mapping, identity);
+  const plan = classifyGoogleFormSync(changed.rows, changed.issues, existing);
+  assert.equal(plan.counts.updated, 1);
+  assert.equal("badgeCount" in plan.rowsToApply[0], false);
+  assert.match(plan.records[0].detail, /verified badge count 5 and last verification timestamp are preserved/i);
+
+  const zeroCountParticipant = [{ ...existing[0], verifiedBadgeCount: 0 }];
+  const zeroPlan = classifyGoogleFormSync(changed.rows, changed.issues, zeroCountParticipant);
+  assert.match(zeroPlan.records[0].detail, /verified badge count 0 and last verification timestamp are preserved/i);
+});

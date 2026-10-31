@@ -96,6 +96,7 @@ function classifyApplyFailureCode(code: unknown): GoogleFormSyncApplyFailureKind
     case "42501":
       return "authorization";
     case "22023":
+    case "23514":
       return "validation";
     case "40001":
       return "concurrent_change";

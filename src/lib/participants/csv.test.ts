@@ -37,3 +37,14 @@ test("rejects unclosed quoted fields and oversized CSV input", () => {
   assert.match(parseParticipantCsv('participant_key,display_name,profile_url\nkey-1,"Unclosed,').issues[0].message, /Unclosed quoted field/);
   assert.equal(parseParticipantCsv(`participant_key,display_name,profile_url\n${"x".repeat(1_000_001)}`).issues[0].message, "CSV must be 1 MB or smaller.");
 });
+
+test("parses and normalizes skills.google profile URLs", () => {
+  const result = parseParticipantCsv("\uFEFFparticipant_key,display_name,profile_url\r\n ACEIT-002 ,\"Learner, Two\",https://www.skills.google/public_profiles/xyz-999");
+  assert.equal(result.issues.length, 0);
+  assert.deepEqual(result.rows, [{
+    rowNumber: 2,
+    participantKey: "aceit-002",
+    displayName: "Learner, Two",
+    profileUrl: "https://www.skills.google/public_profiles/xyz-999",
+  }]);
+});
