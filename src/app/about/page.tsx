@@ -6,16 +6,18 @@ import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 
 export const metadata: Metadata = {
-  title: "About GDG ACEIT | Learn with Communities 2026",
-  description: "Learn about GDG On Campus ACEIT, its student developer community, and publicly reported community highlights.",
+  title: "About",
+  description: "Meet the GDG On Campus ACEIT student developer community, its 2026 organizers, and the learning experience behind Learn with Communities.",
 };
 
 const waysToBuild = [
-  { title: "Learn", detail: "Workshops, technical sessions and study jams make room to explore new technologies together.", icon: Lightbulb, color: "blue" },
-  { title: "Build", detail: "Hackathons, collaborative projects and hands-on experimentation turn ideas into working things.", icon: Code2, color: "red" },
-  { title: "Connect", detail: "Peer learning, speaker sessions and developer collaboration bring the community closer.", icon: Radio, color: "yellow" },
-  { title: "Showcase", detail: "Share projects and learning milestones, and celebrate the work behind them.", icon: Sparkles, color: "green" },
+  { title: "Explore technology", detail: "Web development, cloud, AI and machine learning, open source, and the tools around them are all part of the learning conversation.", icon: Lightbulb, color: "blue" },
+  { title: "Learn together", detail: "Workshops, technical sessions, and study jams create space to ask questions and practice with peers.", icon: Radio, color: "red" },
+  { title: "Build practical skills", detail: "Collaborative projects and hands-on experiments help turn concepts into working prototypes and stronger habits.", icon: Code2, color: "yellow" },
+  { title: "Share what works", detail: "Comparing approaches, explaining decisions, and reflecting on a build are part of learning to develop well.", icon: Sparkles, color: "green" },
 ];
+
+const organizers = ["Sajal Goyal", "Shreya Soni", "Shreyansh Gupta"];
 
 export default function AboutPage() {
   return (
@@ -25,16 +27,21 @@ export default function AboutPage() {
         <section className="about-hero" aria-labelledby="about-title">
           <div className="about-hero-copy">
             <p className="eyebrow"><span className="eyebrow-dot" />OUR COMMUNITY <span className="eyebrow-divider">/</span> KUKAS, JAIPUR</p>
-            <h1 id="about-title">From curious minds<br />to <span>real-world builders.</span></h1>
-            <p>GDG On Campus ACEIT is a student developer community at Arya College of Engineering &amp; IT in Kukas, Jaipur. It brings students together to learn new technologies, build practical projects, collaborate with fellow developers and explore solutions to real-world problems.</p>
-            <Link className="button-primary" href="/progress">Explore community progress <span aria-hidden="true">↗</span></Link>
+            <h1 id="about-title">Learn together.<br /><span>Build with purpose.</span></h1>
+            <p>GDG On Campus ACEIT is a student developer community at Arya College of Engineering &amp; IT in Kukas, Jaipur. Learn with Communities 2026 gives students a place to explore developer technologies, learn from peers, and turn ideas into practical projects—through curiosity, experimentation, and collaboration.</p>
+            <Link className="button-primary" href="/progress">Explore recorded progress <span aria-hidden="true">↗</span></Link>
           </div>
           <div className="about-hero-mark" aria-hidden="true"><div className="about-mark-orbit"/><Image src="/gdg-mark.png" alt="" width={116} height={116} priority/><span>LEARN · BUILD · CONNECT</span><Braces className="about-braces" size={34}/></div>
         </section>
 
         <section className="value-section" aria-labelledby="values-title">
-          <div className="section-heading"><div><p className="section-kicker">HOW WE MOVE</p><h2 id="values-title">A community built by doing.</h2></div><p>Technology is best learned together—then put to work.</p></div>
+          <div className="section-heading"><div><p className="section-kicker">LEARN · EXPERIMENT · BUILD</p><h2 id="values-title">A community built by doing.</h2></div><p>Technology is best learned together—and understood more deeply when you put it to work.</p></div>
           <div className="value-grid">{waysToBuild.map(({ title, detail, icon: Icon, color }, index) => <article className={`value-card value-${color}`} key={title}><span className="value-number">0{index + 1}</span><span className="value-icon"><Icon size={19} aria-hidden="true"/></span><h3>{title}</h3><p>{detail}</p></article>)}</div>
+        </section>
+
+        <section className="organizers-section" aria-labelledby="organizers-title">
+          <div className="section-heading"><div><p className="section-kicker">LEARN WITH COMMUNITIES · 2026</p><h2 id="organizers-title">The people organizing this year.</h2></div><p>Meet the current-year organizers for the 2026 experience.</p></div>
+          <div className="organizer-grid">{organizers.map((name, index) => <article className={`organizer-card organizer-${index + 1}`} key={name}><span className="organizer-initials" aria-hidden="true">{name.split(" ").map((part) => part[0]).join("")}</span><span className="organizer-role">Organizer · 2026</span><h3>{name}</h3></article>)}</div>
         </section>
 
         <section className="highlights-section" aria-labelledby="highlights-title">
@@ -47,7 +54,7 @@ export default function AboutPage() {
         </section>
 
         <section className="references-section" aria-labelledby="references-title">
-          <div className="references-intro"><p className="section-kicker">READ MORE</p><h2 id="references-title">Sources &amp; community references</h2><p>Public profiles and event pages that inform this overview. Historical claims above are attributed to GDG ACEIT’s public updates.</p></div>
+          <div className="references-intro"><p className="section-kicker">READ MORE</p><h2 id="references-title">Sources &amp; community references</h2><p>Public profiles and event pages that inform this overview. Historical highlights are attributed to GDG ACEIT’s public updates; they are separate from current participant progress.</p></div>
           <div className="reference-links">
             <a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer"><span><small>COMMUNITY PROFILE</small><strong>GDG ACEIT on LinkedIn</strong></span><ArrowUpRight size={16} aria-hidden="true"/></a>
             <a href="https://www.aryacollege.in/arya-event/arya-gdg-club" target="_blank" rel="noreferrer"><span><small>CAMPUS CLUB</small><strong>Arya GDG Club · Arya College</strong></span><ArrowUpRight size={16} aria-hidden="true"/></a>

@@ -9,7 +9,7 @@ import { Award, BadgeCheck, Check, Clock3, ExternalLink, Medal, RefreshCw, Searc
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import type { LeaderboardSnapshot, PublicParticipant } from "@/lib/types";
-import { getMilestoneLabel, hasMilestone, rankParticipants } from "@/lib/leaderboard";
+import { getMilestoneLabel, hasMilestone, matchesMilestoneFilter, rankParticipants } from "@/lib/leaderboard";
 
 type FilterKey = "all" | "five" | "ten";
 
@@ -22,7 +22,7 @@ function formatTimestamp(value: string) {
 }
 
 export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: LeaderboardSnapshot; view?: "dashboard" | "progress" }) {
-  const { participants, registeredCount, totalVerifiedBadges, fiveBadgeCount, tenBadgeCount, lastSyncedAt } = snapshot;
+  const { participants, registeredCount, lastSyncedAt } = snapshot;
   const isProgressPage = view === "progress";
   const router = useRouter();
   const [isRefreshing, startRefresh] = useTransition();
@@ -32,12 +32,18 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
   const reduceMotion = useReducedMotion();
 
   const ranked = useMemo(() => rankParticipants(participants), [participants]);
+  const awaitingVerification = participants.filter((participant) => !participant.lastCheckedAt).length;
+  const reviewedParticipants = participants.filter((participant) => participant.lastCheckedAt);
+  const hasReviewedParticipants = reviewedParticipants.length > 0;
+  const reviewedBadgeTotal = reviewedParticipants.reduce((sum, participant) => sum + participant.verifiedBadgeCount, 0);
+  const reviewedFiveBadgeCount = reviewedParticipants.filter((participant) => hasMilestone(participant.verifiedBadgeCount, 5)).length;
+  const reviewedTenBadgeCount = reviewedParticipants.filter((participant) => hasMilestone(participant.verifiedBadgeCount, 10)).length;
   const visible = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return ranked.filter(({ participant }) => {
       const matchesName = !query || participant.displayName.toLocaleLowerCase().includes(query);
-      const count = participant.verifiedBadgeCount;
-      const matchesMilestone = filter === "all" || (filter === "five" ? hasMilestone(count, 5) : hasMilestone(count, 10));
+      const threshold = filter === "all" ? null : filter === "five" ? 5 : 10;
+      const matchesMilestone = matchesMilestoneFilter(participant, threshold);
       return matchesName && matchesMilestone;
     });
   }, [ranked, search, filter]);
@@ -57,7 +63,7 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
             <p className="eyebrow"><span className="eyebrow-dot" />GDG ON CAMPUS ACEIT <span className="eyebrow-divider">/</span> JAIPUR, RAJASTHAN</p>
             <h1 id="page-title">{isProgressPage ? <>Progress,<br /><span>made visible.</span></> : <>Build beyond<br /><span>limits.</span></>}</h1>
             <p className="hero-subtitle">Learn with Communities 2026</p>
-            <p className="hero-description">{isProgressPage ? "Track recorded learning milestones and see how our community is progressing together." : "Learn new skills. Build practical projects. Connect with developers shaping what comes next."}</p>
+            <p className="hero-description">{isProgressPage ? "See participant progress recorded through the community’s manual evidence review." : "Learn new skills. Build practical projects. Connect with developers shaping what comes next."}</p>
             <div className="hero-actions">
               <Link className="button-primary" href={isProgressPage ? "/" : "/progress"}>{isProgressPage ? "View leaderboard" : "Explore progress"}<span aria-hidden="true">↗</span></Link>
               <Link className="button-quiet" href="/about">Meet the community</Link>
@@ -90,10 +96,15 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
 
         <section className="summary-grid" aria-label={isProgressPage ? "Live community progress" : "Live community overview"}>
           <SummaryCard index={0} reduceMotion={reduceMotion} icon={<Users size={18} />} label="Registered participants" value={registeredCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples" : "Current records"} tone="blue" />
-          <SummaryCard index={1} reduceMotion={reduceMotion} icon={<BadgeCheck size={18} />} label="Recorded Skill Badges" value={totalVerifiedBadges} detail="Community recorded · not Google verified" tone="green" />
-          <SummaryCard index={2} reduceMotion={reduceMotion} icon={<Medal size={18} />} label="Reached 5+ badges" value={fiveBadgeCount} detail="Current milestone count" tone="amber" />
-          <SummaryCard index={3} reduceMotion={reduceMotion} icon={<Award size={18} />} label="Reached 10+ badges" value={tenBadgeCount} detail="Current milestone count" tone="violet" />
+          <SummaryCard index={1} reduceMotion={reduceMotion} icon={<BadgeCheck size={18} />} label={snapshot.dataMode === "demo" ? "Example badge count" : "Verified badges recorded"} value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : reviewedBadgeTotal} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Manual evidence review only" : "Awaiting first review"} tone="green" />
+          <SummaryCard index={2} reduceMotion={reduceMotion} icon={<Medal size={18} />} label="Reached 5+ badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : reviewedFiveBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Reviewed records" : "Awaiting first review"} tone="amber" />
+          <SummaryCard index={3} reduceMotion={reduceMotion} icon={<Award size={18} />} label="Reached 10+ badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : reviewedTenBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Reviewed records" : "Awaiting first review"} tone="violet" />
         </section>
+
+        {snapshot.dataMode === "database" && awaitingVerification > 0 && <section className="verification-notice" role="status" aria-live="polite">
+          <span className="verification-notice-icon"><ShieldCheck size={19} aria-hidden="true" /></span>
+          <div><strong>Badge counts are awaiting manual verification</strong><p>{awaitingVerification.toLocaleString("en-IN")} participant {awaitingVerification === 1 ? "record has" : "records have"} no verification timestamp. A registration default of 0 is not confirmation that someone has earned no badges. Counts appear as verified only after an administrator reviews evidence.</p></div>
+        </section>}
 
         {isProgressPage && <section className="history-section" aria-labelledby="history-title">
           <div className="section-heading"><div><p className="section-kicker">COMMUNITY HISTORY</p><h2 id="history-title">Ideas into impact.</h2></div><p>Past highlights, shown separately from live participant progress.</p></div>
@@ -114,7 +125,7 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
           <div className="leaderboard-heading">
             <div>
               <div className="leaderboard-title-line"><span className="leaderboard-icon"><Medal size={18} aria-hidden="true" /></span><h2 id="leaderboard-title">{isProgressPage ? "Participant progress" : "Community leaderboard"}</h2><span className="results-count">{visible.length}</span></div>
-              <p>Ranked by recorded badge count. Equal counts share a rank; participant ID breaks display-order ties.</p>
+              <p>{snapshot.dataMode === "demo" ? "Synthetic examples preview the ranking layout; they are not participant data." : "Verified records are ranked by manually recorded count. Unreviewed registrations stay unranked until evidence is reviewed."}</p>
             </div>
             <div className="freshness-indicator"><span aria-hidden="true" />{snapshot.dataMode === "demo" ? "Demo provider" : "Supabase"}</div>
           </div>
@@ -145,9 +156,9 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
                     return <tr key={participant.id}>
                       <td><RankBadge rank={rank} /></td>
                       <td><button type="button" className="participant-cell" onClick={() => setSelected(participant)} aria-label={`Open participant details for ${participant.displayName}`}><Avatar participant={participant} /><span><strong>{participant.displayName}</strong><small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small></span></button></td>
-                      <td><span className="badge-total"><Award size={15} aria-hidden="true" />{count}<small>badges</small></span></td>
-                      <td><ProgressPair count={count} /></td>
-                      <td><MilestoneBadge count={count} /></td>
+                      <td>{participant.lastCheckedAt ? <span className="badge-total"><Award size={15} aria-hidden="true" />{count}<small>verified</small></span> : <span className="badge-unreviewed">Not reviewed</span>}</td>
+                      <td>{participant.lastCheckedAt ? <ProgressPair count={count} /> : <span className="progress-unavailable">After review</span>}</td>
+                      <td>{participant.lastCheckedAt ? <MilestoneBadge count={count} /> : <span className="milestone-unreviewed">Awaiting verification</span>}</td>
                     </tr>;
                   })}</tbody>
                 </table>
@@ -156,8 +167,8 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
                 {visible.map(({ participant, rank }) => {
                   const count = participant.verifiedBadgeCount;
                   return <li key={participant.id}><button type="button" className="mobile-participant" onClick={() => setSelected(participant)} aria-label={`Open participant details for ${participant.displayName}`}>
-                    <span className="mobile-participant-top"><RankBadge rank={rank} /><Avatar participant={participant} /><span className="mobile-person-copy"><strong>{participant.displayName}</strong><small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small></span><span className="mobile-badge-total"><Award size={15} aria-hidden="true" />{count}</span></span>
-                    <span className="mobile-participant-bottom"><ProgressPair count={count} /><MilestoneBadge count={count} /></span>
+                    <span className="mobile-participant-top"><RankBadge rank={rank} /><Avatar participant={participant} /><span className="mobile-person-copy"><strong>{participant.displayName}</strong><small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small></span>{participant.lastCheckedAt ? <span className="mobile-badge-total"><Award size={15} aria-hidden="true" />{count}</span> : <span className="badge-unreviewed">Not reviewed</span>}</span>
+                    <span className="mobile-participant-bottom">{participant.lastCheckedAt ? <ProgressPair count={count} /> : <span className="progress-unavailable">Progress appears after manual review</span>}{participant.lastCheckedAt && <MilestoneBadge count={count} />}</span>
                   </button></li>;
                 })}
               </ul>
@@ -173,8 +184,9 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
   );
 }
 
-function SummaryCard({ icon, label, value, detail, tone, index, reduceMotion }: { icon: ReactNode; label: string; value: number; detail: string; tone: string; index: number; reduceMotion: boolean | null }) {
-  return <motion.article className="summary-card" initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .34, delay: reduceMotion ? 0 : index * .06 }} whileHover={reduceMotion ? undefined : { y: -2 }}><span className={`summary-icon ${tone}`} aria-hidden="true">{icon}</span><p>{label}</p><strong className="summary-value">{value.toLocaleString("en-IN")}</strong><small>{detail}</small></motion.article>;
+function SummaryCard({ icon, label, value, detail, tone, index, reduceMotion }: { icon: ReactNode; label: string; value: number | string; detail: string; tone: string; index: number; reduceMotion: boolean | null }) {
+  const formattedValue = typeof value === "number" ? value.toLocaleString("en-IN") : value;
+  return <motion.article className="summary-card" initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .34, delay: reduceMotion ? 0 : index * .06 }} whileHover={reduceMotion ? undefined : { y: -2 }}><span className={`summary-icon ${tone}`} aria-hidden="true">{icon}</span><p>{label}</p><strong className="summary-value">{formattedValue}</strong><small>{detail}</small></motion.article>;
 }
 
 function FilterButton({ current, value, onSelect, children }: { current: FilterKey; value: FilterKey; onSelect: (value: FilterKey) => void; children: ReactNode }) {
@@ -185,7 +197,8 @@ function Avatar({ participant }: { participant: PublicParticipant }) {
   return <span className={`person-avatar avatar-${participant.color}`}>{participant.initials}</span>;
 }
 
-function RankBadge({ rank }: { rank: number }) {
+function RankBadge({ rank }: { rank: number | null }) {
+  if (rank === null) return <span className="rank-badge rank-unreviewed" aria-label="Unranked until badge verification">—</span>;
   return <span className={rank <= 3 ? `rank-badge rank-${rank}` : "rank-badge"}>{rank <= 3 ? <Medal size={15} aria-label={`Rank ${rank}`} /> : `#${rank}`}</span>;
 }
 
@@ -215,6 +228,7 @@ function EmptyState({ hasParticipants, isDemo, onReset }: { hasParticipants: boo
 function ParticipantDialog({ participant, onClose, reduceMotion }: { participant: PublicParticipant; onClose: () => void; reduceMotion: boolean | null }) {
   const closeButton = useRef<HTMLButtonElement>(null);
   const count = participant.verifiedBadgeCount;
+  const hasReviewedCount = Boolean(participant.lastCheckedAt);
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -236,10 +250,10 @@ function ParticipantDialog({ participant, onClose, reduceMotion }: { participant
     <motion.section className="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-title" aria-describedby="profile-disclaimer" onKeyDown={handleKeyDown} initial={{ x: reduceMotion ? 0 : 24, opacity: reduceMotion ? 1 : .8 }} animate={{ x: 0, opacity: 1 }} exit={{ x: reduceMotion ? 0 : 18, opacity: reduceMotion ? 1 : .7 }} transition={{ duration: reduceMotion ? 0 : .2 }}>
       <button ref={closeButton} type="button" className="profile-close" onClick={onClose} aria-label="Close participant details"><X size={18} /></button>
       <div className="profile-heading"><Avatar participant={participant} /><div><span className="profile-kicker">{participant.badges ? "SYNTHETIC DEMO PROFILE" : "PARTICIPANT PROFILE"}</span><h2 id="profile-title">{participant.displayName}</h2><span className="profile-sample"><span />{participant.badges ? "Example record" : "Registered participant"}</span></div></div>
-      <div className="profile-summary"><div><strong>{count}</strong><span>badge records</span></div><div><strong>{getMilestoneLabel(count)}</strong><span>milestone status</span></div></div>
-      <section className="profile-progress" aria-labelledby="progress-title"><div className="profile-section-heading"><h3 id="progress-title">Milestone progress</h3><span>{count} total</span></div><ProgressMeter count={count} target={5} /><ProgressMeter count={count} target={10} /></section>
-      <section className="profile-badges" aria-labelledby="badges-title"><div className="profile-section-heading"><h3 id="badges-title">Badge records</h3><span>{count}</span></div>
-        {participant.badges?.length ? <ul>{participant.badges.filter((badge) => badge.status === "verified").map((badge) => <li key={badge.id}><span className="profile-badge-icon"><BadgeCheck size={15} aria-hidden="true" /></span><span className="profile-badge-copy"><strong>{badge.name}</strong><small>Observed {formatTimestamp(badge.verifiedAt)} IST</small></span></li>)}</ul> : count > 0 ? <p className="profile-no-badges">This database record stores an aggregate count; individual badge names are not available.</p> : <p className="profile-no-badges" role="status">No badge records in this profile.</p>}
+      <div className="profile-summary"><div><strong>{participant.lastCheckedAt ? count : "Awaiting"}</strong><span>{participant.lastCheckedAt ? "verified badges" : "manual verification"}</span></div><div><strong>{participant.lastCheckedAt ? getMilestoneLabel(count) : "Not ranked"}</strong><span>milestone status</span></div></div>
+      <section className="profile-progress" aria-labelledby="progress-title"><div className="profile-section-heading"><h3 id="progress-title">Milestone progress</h3><span>{participant.lastCheckedAt ? `${count} verified` : "Not yet available"}</span></div>{participant.lastCheckedAt ? <><ProgressMeter count={count} target={5} /><ProgressMeter count={count} target={10} /></> : <p className="profile-no-badges">A registration default is not an evidence-reviewed badge count. Progress will appear after manual verification.</p>}</section>
+      <section className="profile-badges" aria-labelledby="badges-title"><div className="profile-section-heading"><h3 id="badges-title">Badge records</h3><span>{hasReviewedCount ? count : "—"}</span></div>
+        {!hasReviewedCount ? <p className="profile-no-badges" role="status">No badge records have been submitted for manual review yet.</p> : participant.badges?.length ? <ul>{participant.badges.filter((badge) => badge.status === "verified").map((badge) => <li key={badge.id}><span className="profile-badge-icon"><BadgeCheck size={15} aria-hidden="true" /></span><span className="profile-badge-copy"><strong>{badge.name}</strong><small>Observed {formatTimestamp(badge.verifiedAt)} IST</small></span></li>)}</ul> : count > 0 ? <p className="profile-no-badges">This database record stores an aggregate count; individual badge names are not available.</p> : <p className="profile-no-badges" role="status">No badge records were confirmed in the latest manual review.</p>}
       </section>
       {participant.profileUrl ? <a className="public-profile-link" href={participant.profileUrl} target="_blank" rel="noreferrer"><span><ExternalLink size={15} aria-hidden="true" />Open public profile</span><ExternalLink size={14} aria-hidden="true" /></a> : <p className="profile-no-link">No public profile link is provided for this record.</p>}
       <section className="verification-card" aria-labelledby="verification-title"><div className="verification-card-heading"><ShieldCheck size={16} aria-hidden="true" /><h3 id="verification-title">Verification information</h3></div><dl><div><dt>Provider</dt><dd>{participant.verificationSource ?? "Not recorded"}</dd></div><div><dt>Last checked</dt><dd>{participant.lastCheckedAt ? <time dateTime={participant.lastCheckedAt}>{formatTimestamp(participant.lastCheckedAt)} IST</time> : "No count verification recorded"}</dd></div></dl><p id="profile-disclaimer">{participant.badges ? "Synthetic data only. Demo status does not mean Google verified this profile or its badges." : "Provider-recorded data is not verified by Google unless explicitly supported by evidence."} Observed timestamps are separate from badge-earned timestamps; earned dates are not inferred from count updates.</p></section>

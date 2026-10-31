@@ -13,7 +13,7 @@ export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "databas
     <header className="community-topbar">
       <div className="topbar-inner">
         <Link className="community-brand" href="/" aria-label="GDG On Campus ACEIT home">
-          <Image className="community-brand-mark" src="/gdg-mark.png" alt="" width={36} height={36} priority />
+          <Image className="community-brand-mark" src="/gdg-mark.png" alt="" width={44} height={44} priority />
           <span className="community-brand-copy"><strong>GDG On Campus ACEIT</strong><small>JAIPUR · RAJASTHAN</small></span>
         </Link>
         <nav className="reference-nav" aria-label="Main navigation">

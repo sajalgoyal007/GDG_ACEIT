@@ -12,8 +12,17 @@ export function getMilestone(count: number): Milestone {
   return "in_progress";
 }
 
-/** Sort by count descending, then stable participant UUID ascending. */
+/** Milestone filters only include participants whose counts have been reviewed. */
+export function matchesMilestoneFilter(participant: PublicParticipant, threshold: 5 | 10 | null) {
+  return threshold === null || Boolean(participant.lastCheckedAt && hasMilestone(participant.verifiedBadgeCount, threshold));
+}
+
+/** Verified counts rank first; unreviewed registrations remain visible but unranked. */
 export function compareLeaderboardParticipants(a: PublicParticipant, b: PublicParticipant) {
+  const aIsUnreviewed = !a.lastCheckedAt;
+  const bIsUnreviewed = !b.lastCheckedAt;
+  if (aIsUnreviewed !== bIsUnreviewed) return Number(aIsUnreviewed) - Number(bIsUnreviewed);
+  if (aIsUnreviewed) return compareStableId(a.id, b.id);
   return b.verifiedBadgeCount - a.verifiedBadgeCount || compareStableId(a.id, b.id);
 }
 
@@ -26,6 +35,7 @@ export function rankParticipants(participants: readonly PublicParticipant[]) {
   let previousCount: number | undefined;
   let previousRank = 0;
   return sorted.map((participant, index) => {
+    if (!participant.lastCheckedAt) return { participant, rank: null };
     const rank = participant.verifiedBadgeCount === previousCount ? previousRank : index + 1;
     previousCount = participant.verifiedBadgeCount;
     previousRank = rank;

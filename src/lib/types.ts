@@ -29,6 +29,7 @@ export interface PublicParticipant {
   displayName: string;
   initials: string;
   color: string;
+  /** The DB initializes this to zero; lastCheckedAt distinguishes that default from a reviewed zero. */
   verifiedBadgeCount: number;
   profileUrl?: string;
   lastCheckedAt?: string;

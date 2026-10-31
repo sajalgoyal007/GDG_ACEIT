@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getMilestone, getMilestoneLabel, hasMilestone, rankParticipants } from "./leaderboard.ts";
+import { getMilestone, getMilestoneLabel, hasMilestone, matchesMilestoneFilter, rankParticipants } from "./leaderboard.ts";
 import { parseVerifiedBadgeCount } from "./admin-validation.ts";
 
 for (const [count, milestone, label] of [
@@ -19,14 +19,39 @@ for (const [count, milestone, label] of [
 
 test("ranking uses UUID order for ties and competition rank numbering", () => {
   const records = [
-    { id: "c", displayName: "Zulu", verifiedBadgeCount: 10 },
-    { id: "b", displayName: "Beta", verifiedBadgeCount: 10 },
-    { id: "a", displayName: "Alpha", verifiedBadgeCount: 5 },
-    { id: "d", displayName: "Delta", verifiedBadgeCount: 5 },
+    { id: "c", displayName: "Zulu", verifiedBadgeCount: 10, lastCheckedAt: "2026-10-30T10:00:00Z" },
+    { id: "b", displayName: "Beta", verifiedBadgeCount: 10, lastCheckedAt: "2026-10-30T10:00:00Z" },
+    { id: "a", displayName: "Alpha", verifiedBadgeCount: 5, lastCheckedAt: "2026-10-30T10:00:00Z" },
+    { id: "d", displayName: "Delta", verifiedBadgeCount: 5, lastCheckedAt: "2026-10-30T10:00:00Z" },
   ].map((record) => ({ ...record, initials: "X", color: "blue" }));
   assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
     ["b", 1], ["c", 1], ["a", 3], ["d", 3],
   ]);
+});
+
+test("unreviewed zero-count registrations remain visible but unranked after verified records", () => {
+  const records = [
+    { id: "unreviewed-b", displayName: "Awaiting review B", verifiedBadgeCount: 100 },
+    { id: "unreviewed-a", displayName: "Awaiting review A", verifiedBadgeCount: 0 },
+    { id: "verified", displayName: "Verified zero", verifiedBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
+  ].map((record) => ({ ...record, initials: "X", color: "blue" }));
+
+  assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
+    ["verified", 1],
+    ["unreviewed-a", null],
+    ["unreviewed-b", null],
+  ]);
+});
+
+test("unreviewed stored counts cannot match badge milestone filters", () => {
+  const unreviewed = { id: "unreviewed", displayName: "Awaiting review", verifiedBadgeCount: 100, initials: "AR", color: "blue" };
+  const reviewed = { ...unreviewed, id: "reviewed", lastCheckedAt: "2026-10-30T10:00:00Z" };
+
+  assert.equal(matchesMilestoneFilter(unreviewed, null), true);
+  assert.equal(matchesMilestoneFilter(unreviewed, 5), false);
+  assert.equal(matchesMilestoneFilter(unreviewed, 10), false);
+  assert.equal(matchesMilestoneFilter(reviewed, 5), true);
+  assert.equal(matchesMilestoneFilter(reviewed, 10), true);
 });
 
 test("the 10-badge milestone also qualifies for the 5-badge threshold", () => {

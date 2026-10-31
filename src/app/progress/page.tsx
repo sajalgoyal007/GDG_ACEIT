@@ -4,7 +4,7 @@ import { getLeaderboardProvider } from "@/lib/leaderboard-provider";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Community Progress | GDG On Campus ACEIT",
+  title: "Community Progress",
   description: "Provider-backed participant badge progress and historical GDG ACEIT community highlights.",
 };
 
