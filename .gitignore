@@ -6,6 +6,12 @@ out/
 *.tsbuildinfo
 .vercel/
 
+# Local database files and application logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
 # Environment files & secrets
 .env*
 !.env.example

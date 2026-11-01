@@ -5,12 +5,14 @@ import { useActionState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, ArrowDownToLine, ArrowLeft, BadgeCheck, ChevronRight, CircleHelp, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LogOut, Medal, Search, ShieldCheck, Users, Menu, X } from "lucide-react";
+import { Activity, ArrowDownToLine, ArrowLeft, BadgeCheck, ChevronRight, CircleHelp, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, Medal, RefreshCw, Search, ShieldCheck, Users, Menu, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { importParticipantsAction, setVerifiedBadgeCountAction, signOutAdmin } from "@/app/admin/actions";
 import { initialAdminActionState } from "@/app/admin/action-state";
 import { GoogleFormSync } from "@/components/google-form-sync";
 import { ThemeControl } from "@/components/theme-control";
+import { UnverifiedProgressImport } from "@/components/unverified-progress-import";
+import type { AdminAutoProgressJobStatus } from "@/lib/auto-progress/admin-job-status";
 
 type AuditEventType = "participant_imported" | "participant_synced" | "badge_count_updated";
 type AuditSource = "csv_import" | "admin_manual" | "google_sheets_sync";
@@ -35,11 +37,28 @@ export interface AdminParticipantOption {
 }
 
 type ParticipantFilter = "all" | "registered" | "pending";
+type RefreshAllReply = {
+  status?: string;
+  message?: string;
+  total?: number;
+  fetched?: number;
+  validated?: number;
+  updated?: number;
+  unchanged?: number;
+  refreshed?: number;
+  failed?: number;
+  skipped?: number;
+  processed?: number;
+  jobId?: string;
+  retryAfterSeconds?: number;
+  results?: { participantId: string; status: string; message: string; fetched?: boolean; updated?: boolean }[];
+};
 
 const sidebarItems = [
   { href: "#overview", label: "Overview", icon: LayoutDashboard },
   { href: "#participants", label: "Participants", icon: Users },
   { href: "#google-form-sync", label: "Google Form Sync", icon: Database },
+  { href: "#automatic-progress", label: "Automatic Progress", icon: RefreshCw },
   { href: "#badge-verification", label: "Badge Verification", icon: BadgeCheck },
   { href: "#audit-history", label: "Audit History", icon: ClipboardList },
 ];
@@ -70,15 +89,45 @@ function ActionFeedback({ state }: { state: typeof initialAdminActionState }) {
   </div>;
 }
 
-export function AdminWorkspace({ participants }: { participants: AdminParticipantOption[] }) {
+export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAllAvailable }: { participants: AdminParticipantOption[]; latestAutoProgressJob: AdminAutoProgressJobStatus | null; refreshAllAvailable: boolean }) {
   const [importState, importAction, importPending] = useActionState(importParticipantsAction, initialAdminActionState);
   const [countState, countAction, countPending] = useActionState(setVerifiedBadgeCountAction, initialAdminActionState);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ParticipantFilter>("all");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
+  const [refreshAllPending, setRefreshAllPending] = useState(false);
+  const [refreshAllReply, setRefreshAllReply] = useState<RefreshAllReply | null>(null);
+  const refreshAllInFlight = useRef(false);
   const mobileMenuButton = useRef<HTMLButtonElement>(null);
   const reduceMotion = useReducedMotion();
+
+  async function refreshAll() {
+    if (refreshAllInFlight.current || !refreshAllAvailable) return;
+    refreshAllInFlight.current = true;
+    setRefreshAllPending(true);
+    setRefreshAllReply(null);
+    try {
+      const idempotencyKey = crypto.randomUUID();
+      const accumulated = new Map<string, NonNullable<RefreshAllReply["results"]>[number]>();
+      for (let batch = 0; batch < 64; batch += 1) {
+        const response = await fetch("/api/admin/auto-progress/refresh-all", {
+          method: "POST",
+          headers: { Accept: "application/json", "Idempotency-Key": idempotencyKey },
+          cache: "no-store",
+        });
+        const reply = await response.json() as RefreshAllReply;
+        for (const item of reply.results ?? []) accumulated.set(item.participantId, item);
+        setRefreshAllReply({ ...reply, results: [...accumulated.values()] });
+        if (reply.status !== "running") break;
+      }
+    } catch {
+      setRefreshAllReply({ status: "temporarily_unavailable", message: "Refresh All could not reach the server. Previously saved progress remains unchanged." });
+    } finally {
+      refreshAllInFlight.current = false;
+      setRefreshAllPending(false);
+    }
+  }
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -226,6 +275,23 @@ export function AdminWorkspace({ participants }: { participants: AdminParticipan
         <section id="google-form-sync" className="admin-section" aria-labelledby="sync-section-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">READ ONLY SOURCE · MANUAL REVIEW</p><h2 id="sync-section-title">Google Form Sync</h2></div><span className="admin-section-count">Preview before applying</span></div>
           <GoogleFormSync />
+        </section>
+
+        <section id="automatic-progress" className="admin-section" aria-labelledby="automatic-progress-title">
+          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">UNVERIFIED AUTOMATIC SNAPSHOTS</p><h2 id="automatic-progress-title">Automatic progress</h2></div><span className="admin-section-count">Separate from verified counts</span></div>
+          <article className="admin-panel">
+            <div className="admin-panel-heading"><span className="admin-panel-icon green"><RefreshCw size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">ADMIN ACTION</p><h3>Refresh all registered profiles</h3></div></div>
+            <p className="admin-panel-copy">Refresh All uses registered profile URLs and preserves prior snapshots when a profile cannot be fetched or validated. It never changes manually verified badge counts or their audit trail.</p>
+            {latestAutoProgressJob && <div className={`admin-feedback ${latestAutoProgressJob.status === "partial" ? "error" : "success"}`} role="status"><p>Latest durable run · {latestAutoProgressJob.triggerSource} · {latestAutoProgressJob.status}</p><p>{latestAutoProgressJob.saved + latestAutoProgressJob.unchanged + latestAutoProgressJob.failed + latestAutoProgressJob.skipped}/{latestAutoProgressJob.total} processed · {latestAutoProgressJob.fetched} fetched · {latestAutoProgressJob.validated} validated · {latestAutoProgressJob.saved} saved · {latestAutoProgressJob.unchanged} unchanged · {latestAutoProgressJob.failed} failed · {latestAutoProgressJob.skipped} skipped.</p><small>Started {latestAutoProgressJob.startedAt ? formatDate(latestAutoProgressJob.startedAt) : "not started"}{latestAutoProgressJob.completedAt ? ` · completed ${formatDate(latestAutoProgressJob.completedAt)}` : " · still running or awaiting continuation"}{latestAutoProgressJob.errorCategory ? ` · latest failure category: ${latestAutoProgressJob.errorCategory}` : ""}</small></div>}
+            <button type="button" className="button-primary" onClick={refreshAll} disabled={!refreshAllAvailable || refreshAllPending} aria-busy={refreshAllPending}>
+              {refreshAllPending ? <><LoaderCircle size={16} className="auth-spinner" aria-hidden="true" />Refreshing profiles…</> : <><RefreshCw size={15} aria-hidden="true" />Refresh All</>}
+            </button>
+            {!refreshAllAvailable && <p className="admin-help">Live profile retrieval is unavailable and automatic progress is disabled. No profile requests will be made.</p>}
+            {refreshAllReply?.message && <p className="admin-help" role="status">{refreshAllReply.message}</p>}
+            {refreshAllReply && typeof refreshAllReply.total === "number" && <p className="admin-help" role="status">Job {refreshAllReply.jobId ? `${refreshAllReply.jobId.slice(0, 8)} · ` : ""}{refreshAllReply.processed ?? 0}/{refreshAllReply.total} processed · {refreshAllReply.fetched ?? 0} responses fetched · {refreshAllReply.validated ?? 0} complete results validated · {refreshAllReply.updated ?? 0} snapshots saved · {refreshAllReply.unchanged ?? 0} unchanged · {refreshAllReply.failed ?? 0} failed · {refreshAllReply.skipped ?? 0} skipped.</p>}
+            {refreshAllReply?.results?.some((item) => !["refreshed", "unchanged"].includes(item.status)) && <ul className="admin-help">{refreshAllReply.results.filter((item) => !["refreshed", "unchanged"].includes(item.status)).map((item) => <li key={item.participantId}>{item.participantId}: {item.message}</li>)}</ul>}
+          </article>
+          <UnverifiedProgressImport />
         </section>
 
         <section id="badge-verification" className="admin-section" aria-labelledby="verification-section-title">

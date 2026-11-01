@@ -13,7 +13,7 @@ Open <http://localhost:3000>. Without Supabase environment variables, the dashbo
 
 ## Supabase setup
 
-1. Create a Supabase project and copy its project URL and publishable key into a local `.env.local` using `.env.example` as a template. The publishable key is intended for browser use; PostgreSQL grants and RLS are the access boundary. Do not add a service-role or secret key to this app.
+1. Create a Supabase project and copy its project URL and publishable key into a local `.env.local` using `.env.example` as a template. The publishable key is intended for browser use; PostgreSQL grants and RLS are the access boundary. `SUPABASE_SERVICE_ROLE_KEY` is used only by server-only isolated worker and account-linking code; it bypasses RLS, so never expose it to the browser, commit it, or set a `NEXT_PUBLIC_` prefix. Automatic profile fetching remains disabled.
 2. Install the Supabase CLI and authenticate/link the project using Supabase's documented workflow. Apply the migrations in `supabase/migrations/` (for example `supabase db push`). Review the SQL before applying it to a production project.
 3. Enable Supabase Auth email OTP/magic links and add `http://localhost:3000/auth/callback` to the project's allowed redirect URLs (plus the production callback after deployment). `shouldCreateUser: false` prevents the admin login form from creating arbitrary accounts. Create/invite operator accounts through the Supabase dashboard.
 4. Add each approved Auth user's UUID to `public.admin_users` using the Supabase SQL editor as the project owner. The table intentionally contains no email addresses. Admin membership is read through the authenticated user's session; privileged actions are enforced again by security-definer RPCs and `private.is_admin()`.
@@ -45,6 +45,24 @@ participant_key,display_name,profile_url
 - Re-imports never update an existing participant's display name, profile URL, registration state, or badge progress. New rows start at zero only; an import audit event is recorded.
 
 The CSV parser has automated tests (`npm test`). The data import itself runs through the admin-only `admin_import_participants` database function.
+
+## Organizer progress CSV (unverified fallback)
+
+The `/admin` workspace also supports an organizer-only progress update while no permitted live Google Skills data provider is available. This is an explicitly unverified fallback; it never writes `participants.verified_badge_count`, `last_verified_at`, automatic badge snapshots, or automatic Top 10 ranks.
+
+Download [`public/unverified-progress-template.csv`](public/unverified-progress-template.csv). The exact header is:
+
+```csv
+participant_key,profile_url,badge_count
+```
+
+Add one row for each currently registered participant, using that participant's exact key and current HTTPS public profile URL. Counts must be whole numbers from 0 to 10,000. Duplicate keys/profile URLs, unknown participants, changed profile URLs, malformed counts, and ambiguous registered URLs are excluded from the preview. The administrator reviews the matched preview and confirms before the database writes any previewed row. The database rechecks each identity inside one transaction. The import operation, admin actor, and affected participant IDs/counts are retained in separate audit tables; public access is limited to the registered participant's reported count and import time. The progress page displays the latest eligible import as **Organizer CSV · unverified**, with its import time. Profile changes invalidate the association. These organizer-reported counts do not qualify participants for automatic finish ranks or verified badges.
+
+Automatic fetching remains disabled (`AUTO_PROGRESS_ENABLED=false`), and no Vercel Cron schedule is configured. The protected `GET /api/cron/auto-progress` trigger requires a server-only `CRON_SECRET`, checks the provider/feature gates before creating a job, uses the existing database lock and durable batches, and returns run counters without participant details. It attempts bounded batches for at most 25 seconds per invocation; unfinished work remains persisted for a later protected invocation. The admin page can display the latest durable run through the admin-only status RPC. The 60-second function limit and batch size mean a large roster may need more than one scheduled window; deployment-specific capacity must be verified before claiming each cycle completes within six hours. Do not configure the schedule until an authorized provider is available and the deployment plan can support six-hour Cron execution. Google Skills' official help confirms a public profile can show earned badges, but its Acceptable Use Policy prohibits data extraction through data mining, robots, or similar tools. Do not enable a profile-fetch provider unless Google provides an authorized integration or written permission. ArcadeCalc's current community endpoint is undocumented; a single bounded diagnostic with a reserved nonparticipant URL returned HTTP 403, so this project does not depend on it.
+
+An approved provider must return a complete typed snapshot with the normalized profile URL, retrieval time, source, stable badge IDs, eligibility, and explicit pagination/truncation state. Missing badge arrays, duplicate IDs, malformed results, or unfinished pagination are failures and must preserve the last successful snapshot. The current automatic-progress tables persist eligible badge IDs and observed times; they do not persist badge titles or categories. Add storage for those fields only if an approved provider and product requirement need them. Provider output must not be converted to synthetic HTML to reuse the local fixture parser.
+
+If six-hour scheduling is approved later, configure the protected route with the UTC schedule `0 */6 * * *` only after confirming the Vercel plan supports that frequency. Vercel Hobby supports daily Cron only; the Vercel account plan remains unverified. Each invocation drains bounded batches and the durable job resumes unfinished items on a later invocation; slow provider responses may extend completion beyond one six-hour window. The route is infrastructure only: no schedule is configured and live fetching remains unavailable.
 
 ## Google Form response synchronization
 
@@ -82,7 +100,7 @@ The private sheet link supplied for this task could not be inspected or read fro
 
 ### Scheduled sync
 
-Scheduled synchronization is not enabled. The current database RPC requires a real authenticated administrator and this app intentionally has no service-role key or alternate privileged database identity. Adding a Vercel Cron writer would require a separate privileged server-side database path and credentials, which would expand access beyond the user-scoped admin workflow. The manually triggered preview-and-confirm sync is the supported workflow until that security design is separately approved and tested.
+Scheduled Google Form synchronization is not enabled. Its current database RPC requires a real authenticated administrator, and the manually triggered preview-and-confirm sync remains the supported workflow. Although a server-only Supabase service-role key is configured for isolated participant account linking and automatic-progress worker RPCs, it is not used to bypass the Google Form administrator workflow. No Vercel Cron writer is configured.
 
 ## Verification and audit model
 
@@ -114,13 +132,13 @@ The app uses the standard Next.js build (`npm run build`) and does not need a cu
 | `NEXT_PUBLIC_SUPABASE_URL` | Using the database provider or admin sign-in | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Using the database provider or admin sign-in | Supabase publishable key (`sb_publishable_…`) |
 
-Both are safe public configuration values; PostgreSQL grants and RLS protect data. No service-role or secret key is needed or supported by this app. If these values are absent, the site uses synthetic demo data and disables admin tools. Add production values to Production and appropriate test-project values to Preview; Vercel applies environment changes to new deployments.
+Both are safe public configuration values; PostgreSQL grants and RLS protect data. The durable worker requires `SUPABASE_SERVICE_ROLE_KEY` as a server-only Vercel environment variable, but its RPC grants are isolated and live profile fetching remains disabled until an authorized provider is configured. If the public values are absent, the site uses synthetic demo data and disables admin tools. Add Production values to Production and appropriate test-project values to Preview; Vercel applies environment changes to new deployments.
 
 ### GitHub-to-Vercel checklist
 
-1. Push the finished project to the existing GitHub repository on its intended production branch. This workspace currently has no `.git` directory or remote configured, so local changes still need to be committed and pushed from the repository checkout.
+1. Review the current changes, then commit and push them to the existing GitHub repository on its intended production branch.
 2. In Vercel, choose **Add New → Project**, authorize GitHub access if prompted, and import that repository. Keep the repository root as the project root and the Next.js framework/build defaults (`npm run build`).
-3. Add the two Supabase variables above in the Vercel environment scopes you intend to use. Do not add `SUPABASE_SERVICE_ROLE_KEY` or other privileged credentials.
+3. Add the Supabase public variables above in the Vercel environment scopes you intend to use. Keep `SUPABASE_SERVICE_ROLE_KEY` in a server-only encrypted environment setting and never expose it in client code or logs.
 4. Deploy and use the default `*.vercel.app` URL. After the first deployment reveals that URL, set it as the Supabase Auth Site URL and add `https://<your-vercel-host>/auth/callback` to the Supabase Auth redirect allow-list. Keep localhost for local testing; add preview callbacks only if you will test admin sign-in on Preview deployments.
 5. Verify the deployed home page shows **DATABASE** (not **DEMO DATA**), `/admin` redirects signed-out users to sign-in, a non-admin account is denied, and an authorized admin can import/update and inspect audit history. Run the RLS tests in staging before production use.
 

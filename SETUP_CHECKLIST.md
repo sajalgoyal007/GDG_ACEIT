@@ -15,15 +15,15 @@ Use these steps in order. The spreadsheet stays private and is read through Goog
    npx supabase db push --dry-run
    ```
 
-   Replace `YOUR_PROJECT_REF` with the Reference ID shown in Supabase **Project Settings → General** (also in the project dashboard URL). The `project_id` in `supabase/config.toml` is only a local CLI label; do not use it as the remote Reference ID. Review the migration list and dry-run output before applying. The repository migrations, in order, are `20261026000100_leaderboard.sql`, `20261027000100_leaderboard_tie_order.sql`, and `20261028000100_google_form_sync.sql`. `db push` applies pending migrations; it does not replace the schema from scratch. If this remote project already has tables or hand-applied schema, stop and reconcile it before pushing.
+   Replace `YOUR_PROJECT_REF` with the Reference ID shown in Supabase **Project Settings → General** (also in the project dashboard URL). The `project_id` in `supabase/config.toml` is only a local CLI label; do not use it as the remote Reference ID. Review the migration list and dry-run output before applying. Current repository migrations, in order, are `20261026000100_leaderboard.sql`, `20261027000100_leaderboard_tie_order.sql`, `20261028000100_google_form_sync.sql`, `20261030000100_allow_skills_google_profile_url.sql`, `20261031000100_automatic_badge_progress.sql`, `20261031000200_auto_progress_refresh_job_lock.sql`, `20261031000300_durable_auto_progress_jobs.sql`, `20261031000400_unverified_progress_csv_import.sql`, and `20261031000500_admin_auto_progress_job_status.sql`. The fourth migration creates the organizer progress CSV tables, RPC, and public unverified projection; the fifth adds an admin-only read-only latest-job summary RPC. `db push` applies pending migrations; it does not replace the schema from scratch. If this remote project already has tables, hand-applied schema, or a migration ledger that differs from the expected history, stop and reconcile it before pushing.
 
-   Only after verifying the linked project is the intended **empty/new** project and the dry run lists only these expected migrations, apply them:
+   For a genuinely empty, new project, verify the linked project reference and that the dry run lists the complete expected migration sequence before applying. For any existing or production project, first reconcile its remote migration ledger with the repository and review every pending migration for that specific project; do not assume it is empty or push blindly. Apply only after the project owner approves the reviewed plan:
 
    ```powershell
    npx supabase db push
    npx supabase migration list
    ```
-3. Set up a local database test environment with Docker, then run `supabase start` and [`supabase test db`](https://supabase.com/docs/guides/local-development/cli/testing-and-linting). This runs `supabase/tests/leaderboard_rls.test.sql` and `supabase/tests/google_form_sync.test.sql` against the local Supabase database. Do not run SQL test fixtures against production. Ensure both tests pass before using admin sync.
+3. Set up a disposable local database test environment with Docker, then run `npx supabase start` and [`npx supabase test db`](https://supabase.com/docs/guides/local-development/cli/testing-and-linting). This runs the SQL tests in `supabase/tests/` against the local Supabase database. Do not reset a database with valuable data and never run SQL test fixtures against production. Ensure the relevant RLS, Google Form sync, automatic-progress, durable-job, and unverified-import tests pass before enabling their respective workflows.
 4. In **Authentication → Sign In / Providers → Email**, confirm email authentication is enabled. This app uses existing accounts only: it contains no sign-up flow. Keep **Allow new users to sign up** disabled if accounts are invite-only. Email magic links remain available alongside passwords. Password recovery uses the Supabase recovery email and requires an authenticated recovery session; it never grants admin membership. The app requires a minimum 12-character password when setting/resetting one. In **Authentication → Email Templates → Reset Password**, keep the reset template active and make sure it uses Supabase’s recovery link.
 5. In **Authentication → URL Configuration**, set the local Site URL to `http://localhost:3000`; add both of these under **Redirect URLs**:
 
@@ -61,6 +61,9 @@ Copy `.env.example` to ignored `.env.local` for local use. Use the same exact na
 | --- | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase **Project Settings → API → Project URL** | `.env.local` / Vercel |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase **Project Settings → API → Publishable key** | `.env.local` / Vercel |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase **Project Settings → API → Secret key**; required by server-only participant account linking and isolated worker code. Keep it encrypted/server-only; never prefix it with `NEXT_PUBLIC_`. | `.env.local` / Vercel secret |
+| `AUTO_PROGRESS_ENABLED` | Keep set to `false`; no authorized live profile provider is configured. | `.env.local` / Vercel |
+| `CRON_SECRET` | Generate a random server-only secret (at least 16 characters); only configure it if an approved provider and supported scheduler are ready. | `.env.local` / Vercel secret |
 | `GOOGLE_SHEETS_SPREADSHEET_ID` | Between `/d/` and `/edit` in the spreadsheet URL | `.env.local` / Vercel |
 | `GOOGLE_SHEETS_TAB_NAME` | Exact bottom tab label in the response spreadsheet | `.env.local` / Vercel |
 | `GOOGLE_SHEETS_HEADER_ROW` | 1-based row number containing the column headers (supported: 1–20) | `.env.local` / Vercel |
@@ -71,7 +74,7 @@ Copy `.env.example` to ignored `.env.local` for local use. Use the same exact na
 | `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` | `private_key` in the downloaded JSON; server-only secret. Literal `\n` line breaks are accepted. | `.env.local` / Vercel secret |
 | `PARTICIPANT_MATCH_HMAC_SECRET` | Generate a unique random value locally with `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"`; keep it stable and back it up securely | `.env.local` / Vercel secret |
 
-The Supabase publishable key is intended to be public; never add a Supabase service-role/secret key. Google key and HMAC secret must not have a `NEXT_PUBLIC_` prefix. The HMAC key must remain stable: changing it makes existing form identities unmatchable and may create duplicate participant records.
+The Supabase publishable key is intended to be public. The service-role key bypasses RLS and must remain server-only; do not expose it to browser code, logs, or source control. Google key and HMAC secret must also remain server-only and must not have a `NEXT_PUBLIC_` prefix. The HMAC key must remain stable: changing it makes existing form identities unmatchable and may create duplicate participant records. Google Sheets variables are only needed if using Google Form synchronization; they are not required for organizer progress CSV imports. Keep automatic profile fetching disabled.
 
 Run `npm run preflight` to see only which variable names are missing or whether configuration has basic format problems. It never prints values and does not contact either service, so a `READY` result is not proof that credentials, permissions, migrations, or spreadsheet headers work.
 

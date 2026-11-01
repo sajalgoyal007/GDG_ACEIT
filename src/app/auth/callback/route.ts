@@ -6,7 +6,10 @@ import { getSafeAuthDestination } from "@/lib/supabase/auth-destination";
 
 function loginErrorRedirect(request: NextRequest, kind: "expired" | "invalid") {
   const status = kind === "expired" ? "expired" : "failed";
-  return NextResponse.redirect(new URL(`/admin/login?auth=${status}`, request.url));
+  const next = getSafeAuthDestination(request.nextUrl.searchParams.get("next"));
+  const query = new URLSearchParams({ auth: status });
+  if (next === "/progress") query.set("next", next);
+  return NextResponse.redirect(new URL(`/admin/login?${query.toString()}`, request.url));
 }
 
 export async function GET(request: NextRequest) {

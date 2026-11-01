@@ -4,6 +4,7 @@ import { getSafeAuthDestination } from "./auth-destination.ts";
 
 test("Auth callback allows the fixed password recovery destination", () => {
   assert.equal(getSafeAuthDestination("/admin/update-password"), "/admin/update-password");
+  assert.equal(getSafeAuthDestination("/progress"), "/progress");
 });
 
 test("Auth callback sends every other destination to the admin route", () => {

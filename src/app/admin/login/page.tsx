@@ -6,8 +6,10 @@ import { getAuthLinkErrorMessage } from "@/lib/supabase/auth-link-error";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ auth?: string; setup?: string }> }) {
-  const { auth, setup } = await searchParams;
+export default async function AdminLoginPage({ searchParams }: { searchParams: Promise<{ auth?: string; setup?: string; next?: string }> }) {
+  const { auth, setup, next } = await searchParams;
+  const returnPath = next === "/progress" ? "/progress" : "/admin";
+  const participantMode = returnPath === "/progress";
   const notice = setup === "required"
     ? "Configure Supabase and environment settings before signing in."
     : auth === "sign-in-required"
@@ -24,5 +26,5 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: P
   if (!isSupabaseConfigured()) {
     return <main className="auth-page admin-auth-page dark-community"><section className="auth-card admin-auth-card"><span className="auth-icon"><LockKeyhole size={20} /></span><p className="auth-eyebrow">ADMIN SETUP REQUIRED</p><h1>Admin sign-in is unavailable.</h1><p className="auth-description">Configure Supabase Auth and the server environment variables before enabling management workflows. Demo mode has no admin actions.</p><Link href="/" className="auth-back"><ArrowLeft size={14} /> Back to leaderboard</Link></section></main>;
   }
-  return <main className="auth-page admin-auth-page dark-community"><AdminLoginForm notice={notice} /></main>;
+  return <main className="auth-page admin-auth-page dark-community"><AdminLoginForm notice={notice} returnPath={returnPath} participantMode={participantMode} /></main>;
 }

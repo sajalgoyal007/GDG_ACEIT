@@ -3968,6 +3968,40 @@ body { font-size: 15px; }
 .error-diagnostic { padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--bg-surface-elevated); font-size: 12px !important; }
 .error-diagnostic code { color: var(--primary-accent-hover); }
 
+.auto-progress-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px 32px;
+  align-items: center;
+  margin: 0 0 34px;
+  padding: 26px 30px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  background: linear-gradient(125deg, var(--bg-surface-elevated), var(--bg-surface));
+  box-shadow: var(--shadow-card);
+}
+.auto-progress-copy .eyebrow { margin: 0 0 8px; color: var(--text-tertiary); font-size: 10px; font-weight: 750; letter-spacing: .12em; }
+.auto-progress-copy h2 { margin: 0; color: var(--text-primary); font-size: 24px; letter-spacing: -.03em; }
+.auto-progress-copy > p:last-child { max-width: 650px; margin: 7px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.65; }
+.auto-progress-summary { display: grid; justify-items: end; gap: 3px; text-align: right; }
+.auto-progress-summary strong { color: var(--text-primary); font-size: 28px; letter-spacing: -.04em; }
+.auto-progress-summary span, .auto-progress-summary small, .auto-progress-note { color: var(--text-tertiary); font-size: 11px; line-height: 1.5; }
+.auto-progress-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; grid-column: 1 / -1; }
+.auto-progress-actions .button-primary { min-height: 42px; display: inline-flex; align-items: center; gap: 8px; }
+.auto-progress-note { display: inline-flex; align-items: center; gap: 6px; }
+.auto-progress-result { min-height: 20px; grid-column: 1 / -1; margin: -12px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+.auto-progress-result:empty { display: none; }
+.unverified-progress-list { margin: 0 auto 32px; padding: 24px; border: 1px solid var(--border-subtle); border-radius: 20px; background: var(--bg-surface); }
+.unverified-progress-list h2 { margin: 4px 0 6px; color: var(--text-primary); font-size: 21px; letter-spacing: -.03em; }
+.unverified-progress-list > div > p:last-child { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+.unverified-progress-list ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; }
+.unverified-progress-list li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-width: 0; padding: 14px 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--bg-surface-subtle); }
+.unverified-progress-list li > div { display: grid; gap: 3px; min-width: 0; }
+.unverified-progress-list li strong { overflow: hidden; color: var(--text-primary); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.unverified-progress-list li span, .unverified-progress-list li small, .unverified-progress-empty { color: var(--text-tertiary); font-size: 11px; line-height: 1.45; }
+.unverified-progress-list li small { text-align: right; }
+.unverified-progress-empty { margin: 18px 0 0; }
+
 @media (max-width: 1080px) {
   .topbar-inner, .site-main { width: calc(100% - 56px); }
   .build-hero { grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr); }
@@ -3990,6 +4024,12 @@ body { font-size: 15px; }
   .summary-grid { gap: 12px; }
   .summary-card { min-height: 124px; padding: 18px; }
   .verification-notice { margin: 0 0 28px; padding: 17px; }
+  .auto-progress-panel { grid-template-columns: 1fr; gap: 16px; margin-bottom: 26px; padding: 21px; }
+  .unverified-progress-list { padding: 20px; }
+  .unverified-progress-list ul { grid-template-columns: 1fr; }
+  .auto-progress-summary { justify-items: start; text-align: left; }
+  .auto-progress-actions { grid-column: auto; align-items: flex-start; }
+  .auto-progress-result { grid-column: auto; margin-top: -8px; }
   .leaderboard-heading, .leaderboard-controls { padding-inline: 20px; }
   .community-table th:first-child, .community-table td:first-child { padding-left: 20px; }
   .about-hero { gap: 28px; padding: 36px 28px; }

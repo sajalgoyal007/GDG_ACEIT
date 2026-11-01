@@ -5,6 +5,9 @@ import { AdminWorkspace } from "@/components/admin-workspace";
 import { getAdminParticipants } from "@/lib/supabase/admin-data";
 import { getAdminAuthorization } from "@/lib/supabase/admin-auth";
 import { signOutAdmin } from "./actions";
+import { isAutoProgressEnabled } from "@/lib/auto-progress/config";
+import { googleSkillsAutoProgressProvider } from "@/lib/auto-progress/provider";
+import { parseAdminAutoProgressJob } from "@/lib/auto-progress/admin-job-status";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +24,11 @@ export default async function AdminPage() {
     return <main className="admin-access-page dark-community"><section className="admin-access-card"><span className="admin-access-icon"><LockKeyhole size={20} /></span><p className="auth-eyebrow">ADMIN CHECK FAILED</p><h1>Management tools are unavailable.</h1><p>The session or role check failed, so participant controls remain hidden. Check the migration, Supabase configuration, and database policies.</p><Link href="/admin/login" className="auth-back"><ArrowLeft size={14} /> Return to sign-in</Link></section></main>;
   }
 
-  const rows = await getAdminParticipants();
+  const [rows, jobStatusResult] = await Promise.all([
+    getAdminParticipants(),
+    authorization.client.rpc("admin_get_latest_auto_progress_job"),
+  ]);
+  const latestAutoProgressJob = jobStatusResult.error ? null : parseAdminAutoProgressJob(jobStatusResult.data);
   const participants = rows.map((row) => ({
     id: row.id,
     displayName: row.display_name,
@@ -30,5 +37,9 @@ export default async function AdminPage() {
     lastVerifiedAt: row.last_verified_at,
     audit: row.audit,
   }));
-  return <AdminWorkspace participants={participants} />;
+  return <AdminWorkspace
+    participants={participants}
+    latestAutoProgressJob={latestAutoProgressJob}
+    refreshAllAvailable={isAutoProgressEnabled() && googleSkillsAutoProgressProvider.availability === "available"}
+  />;
 }

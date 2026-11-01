@@ -10,7 +10,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 type LoginMode = "password" | "magic-link" | "reset";
 type Feedback = { kind: "error" | "success"; message: string } | null;
 
-export function AdminLoginForm({ notice }: { notice?: string }) {
+export function AdminLoginForm({ notice, returnPath = "/admin", participantMode = false }: { notice?: string; returnPath?: "/admin" | "/progress"; participantMode?: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +39,7 @@ export function AdminLoginForm({ notice }: { notice?: string }) {
           setFeedback({ kind: "error", message: "We couldn’t sign you in. Check your email and password, then try again." });
           return;
         }
-        router.replace("/admin");
+        router.replace(returnPath);
         router.refresh();
         return;
       }
@@ -47,7 +47,7 @@ export function AdminLoginForm({ notice }: { notice?: string }) {
       if (mode === "magic-link") {
         const { error } = await supabase.auth.signInWithOtp({
           email: normalizedEmail,
-          options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback` },
+          options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(returnPath)}` },
         });
         setFeedback(error
           ? { kind: "error", message: "We couldn’t send a sign-in link. Check your account setup and try again." }
@@ -73,10 +73,10 @@ export function AdminLoginForm({ notice }: { notice?: string }) {
   const submitText = isReset ? "Send reset instructions" : isMagic ? "Email me a sign-in link" : "Sign in securely";
 
   return <section className="auth-card admin-auth-card" aria-labelledby="admin-login-title">
-    <div className="admin-auth-brand"><Image src="/gdg-mark.png" alt="" width={38} height={38} priority /><span><strong>GDG On Campus ACEIT</strong><small>ADMINISTRATOR ACCESS</small></span></div>
+    <div className="admin-auth-brand"><Image src="/gdg-mark.png" alt="" width={38} height={38} priority /><span><strong>GDG On Campus ACEIT</strong><small>{participantMode ? "PARTICIPANT SIGN IN" : "ADMINISTRATOR ACCESS"}</small></span></div>
     <p className="auth-eyebrow">LEARN WITH COMMUNITIES 2026</p>
     <h1 id="admin-login-title">{title}</h1>
-    <p className="auth-description">Sign in with an existing Supabase account. Administrator access is checked separately; signing in does not grant an admin role.</p>
+    <p className="auth-description">{participantMode ? "Sign in using an existing Supabase account with the same confirmed email used for your GDG ACEIT registration. This does not create a new account." : "Sign in with an existing Supabase account. Administrator access is checked separately; signing in does not grant an admin role."}</p>
 
     <form onSubmit={handleSubmit} className="auth-form admin-auth-form">
       <label htmlFor="admin-email">Email address</label>
