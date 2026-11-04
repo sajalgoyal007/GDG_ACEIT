@@ -6,8 +6,9 @@ import { getAdminParticipants } from "@/lib/supabase/admin-data";
 import { getAdminAuthorization } from "@/lib/supabase/admin-auth";
 import { signOutAdmin } from "./actions";
 import { isAutoProgressEnabled } from "@/lib/auto-progress/config";
-import { googleSkillsAutoProgressProvider } from "@/lib/auto-progress/provider";
 import { parseAdminAutoProgressJob } from "@/lib/auto-progress/admin-job-status";
+import { getProgressObservationSummaries } from "@/lib/supabase/auto-progress-provider";
+import { isRefreshAllAvailable, isWorkerKeyConfigured } from "@/lib/supabase/worker-config";
 
 export const dynamic = "force-dynamic";
 
@@ -24,22 +25,36 @@ export default async function AdminPage() {
     return <main className="admin-access-page dark-community"><section className="admin-access-card"><span className="admin-access-icon"><LockKeyhole size={20} /></span><p className="auth-eyebrow">ADMIN CHECK FAILED</p><h1>Management tools are unavailable.</h1><p>The session or role check failed, so participant controls remain hidden. Check the migration, Supabase configuration, and database policies.</p><Link href="/admin/login" className="auth-back"><ArrowLeft size={14} /> Return to sign-in</Link></section></main>;
   }
 
-  const [rows, jobStatusResult] = await Promise.all([
+  const [rows, jobStatusResult, progressObservations] = await Promise.all([
     getAdminParticipants(),
     authorization.client.rpc("admin_get_latest_auto_progress_job"),
+    getProgressObservationSummaries().catch(() => []),
   ]);
   const latestAutoProgressJob = jobStatusResult.error ? null : parseAdminAutoProgressJob(jobStatusResult.data);
   const participants = rows.map((row) => ({
     id: row.id,
+    participantKey: row.participant_key,
     displayName: row.display_name,
+    profileUrl: row.profile_url,
     registrationStatus: row.registration_status,
     verifiedBadgeCount: row.verified_badge_count,
     lastVerifiedAt: row.last_verified_at,
     audit: row.audit,
   }));
+  const observationEnabled = isAutoProgressEnabled();
+  const workerConfigured = isWorkerKeyConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const refreshAllUnavailableMessage = !observationEnabled
+    ? "Public-profile retrieval is disabled. It requires AUTO_PROGRESS_ENABLED=true and GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED=true after written source authorization; no requests are made while disabled."
+    : !workerConfigured
+      ? "Refresh All is unavailable until the local worker configuration is completed. One-profile diagnostics use the authenticated admin session."
+      : null;
+
   return <AdminWorkspace
     participants={participants}
     latestAutoProgressJob={latestAutoProgressJob}
-    refreshAllAvailable={isAutoProgressEnabled() && googleSkillsAutoProgressProvider.availability === "available"}
+    progressObservations={progressObservations}
+    profileObservationFetchingEnabled={observationEnabled}
+    refreshAllAvailable={isRefreshAllAvailable(observationEnabled, process.env.SUPABASE_SERVICE_ROLE_KEY)}
+    refreshAllUnavailableMessage={refreshAllUnavailableMessage}
   />;
 }

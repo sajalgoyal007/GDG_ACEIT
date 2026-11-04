@@ -40,11 +40,15 @@ function fixtureProvider() {
 
 function withFlag(value: string | undefined, operation: () => Promise<void>) {
   const previous = process.env.AUTO_PROGRESS_ENABLED;
+  const previousAuthorization = process.env.GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED;
   if (value === undefined) delete process.env.AUTO_PROGRESS_ENABLED;
   else process.env.AUTO_PROGRESS_ENABLED = value;
+  process.env.GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED = "true";
   return operation().finally(() => {
     if (previous === undefined) delete process.env.AUTO_PROGRESS_ENABLED;
     else process.env.AUTO_PROGRESS_ENABLED = previous;
+    if (previousAuthorization === undefined) delete process.env.GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED;
+    else process.env.GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED = previousAuthorization;
   });
 }
 

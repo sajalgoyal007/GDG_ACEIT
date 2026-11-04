@@ -1,4 +1,5 @@
-/** False unless an operator deliberately enables the isolated worker. */
+/** Fetching stays off unless explicitly enabled and source authorization is documented. */
 export function isAutoProgressEnabled() {
-  return process.env.AUTO_PROGRESS_ENABLED === "true";
+  return process.env.AUTO_PROGRESS_ENABLED === "true"
+    && process.env.GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED === "true";
 }

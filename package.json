@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/participants/csv.test.ts src/lib/participants/progress-csv.test.ts src/lib/leaderboard.test.ts src/lib/google-sheets/sync-plan.test.ts src/lib/supabase/auth-link-error.test.ts src/lib/supabase/auth-destination.test.ts src/lib/auto-progress/*.test.ts scripts/auto-progress-disposable-target.test.mjs",
+    "test": "node --experimental-strip-types --test src/lib/participants/csv.test.ts src/lib/participants/progress-csv.test.ts src/lib/participants/verified-badge-csv.test.ts src/lib/participants/classified-badge-csv.test.ts src/lib/participants/progress-observation.test.ts src/lib/leaderboard.test.ts src/lib/google-sheets/sync-plan.test.ts src/lib/supabase/auth-link-error.test.ts src/lib/supabase/auth-destination.test.ts src/lib/supabase/worker-config.test.ts src/lib/auto-progress/*.test.ts scripts/auto-progress-disposable-target.test.mjs",
     "test:auto-progress-concurrency": "node scripts/test-auto-progress-concurrency.mjs",
     "test:auto-progress-jobs-concurrency": "node scripts/test-auto-progress-durable-jobs.mjs",
     "preflight": "node scripts/preflight.mjs"

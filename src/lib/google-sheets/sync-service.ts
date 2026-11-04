@@ -20,6 +20,75 @@ function previewSignature(secret: string, plan: GoogleFormSyncPlan, issuedAt: nu
 }
 
 const PREVIEW_TOKEN_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_PARTICIPANT_LOOKUP_BATCH_SIZE = 20;
+const MAX_PARTICIPANT_LOOKUP_PATH_LENGTH = 4_000;
+const PARTICIPANT_SELECT_COLUMNS = "id,participant_key,display_name,profile_url,verified_badge_count";
+const PARTICIPANT_LOOKUP_ERROR = "Could not compare Google Form responses with participant records. Check admin database policies.";
+
+function safeDatabaseErrorCode(code: unknown): string {
+  return typeof code === "string" && /^[A-Z0-9]{3,10}$/.test(code) ? code : "UNKNOWN";
+}
+
+function safeDatabaseErrorStatus(status: unknown): number | "UNKNOWN" {
+  return typeof status === "number" && Number.isFinite(status) && Number.isInteger(status) ? status : "UNKNOWN";
+}
+
+type ParticipantLookupColumn = "participant_key" | "profile_url";
+type ParticipantLookupStage = "participants_by_key" | "participants_by_profile";
+type ParticipantLookupRow = {
+  id: string;
+  participant_key: string;
+  display_name: string;
+  profile_url: string | null;
+  verified_badge_count: number;
+};
+
+function participantLookupPathLength(column: ParticipantLookupColumn, values: readonly string[]) {
+  // Match PostgREST's .in() encoding and leave ample room below common request-line limits.
+  const expression = values.map((value) => /[,()]/.test(value) ? `"${value}"` : value).join(",");
+  const params = new URLSearchParams({ select: PARTICIPANT_SELECT_COLUMNS });
+  params.set(column, `in.(${expression})`);
+  return `/rest/v1/participants?${params.toString()}`.length;
+}
+
+function batchParticipantLookupValues(column: ParticipantLookupColumn, values: readonly string[]) {
+  const batches: string[][] = [];
+  let batch: string[] = [];
+  for (const value of new Set(values)) {
+    const candidate = [...batch, value];
+    if (candidate.length <= MAX_PARTICIPANT_LOOKUP_BATCH_SIZE && participantLookupPathLength(column, candidate) <= MAX_PARTICIPANT_LOOKUP_PATH_LENGTH) {
+      batch = candidate;
+      continue;
+    }
+    if (batch.length === 0 || participantLookupPathLength(column, [value]) > MAX_PARTICIPANT_LOOKUP_PATH_LENGTH) {
+      throw new Error(PARTICIPANT_LOOKUP_ERROR);
+    }
+    batches.push(batch);
+    batch = [value];
+  }
+  if (batch.length) batches.push(batch);
+  return batches;
+}
+
+async function lookupParticipants(
+  supabase: SupabaseClient,
+  column: ParticipantLookupColumn,
+  stage: ParticipantLookupStage,
+  values: readonly string[],
+): Promise<ParticipantLookupRow[]> {
+  const rows: ParticipantLookupRow[] = [];
+  for (const batch of batchParticipantLookupValues(column, values)) {
+    const result = await supabase.from("participants")
+      .select(PARTICIPANT_SELECT_COLUMNS)
+      .in(column, batch);
+    if (result.error) {
+      console.error({ stage, code: safeDatabaseErrorCode(result.error.code), status: safeDatabaseErrorStatus(result.status) });
+      throw new Error(PARTICIPANT_LOOKUP_ERROR);
+    }
+    rows.push(...(result.data ?? []));
+  }
+  return rows;
+}
 
 function makePreviewToken(secret: string, plan: GoogleFormSyncPlan, issuedAt = Date.now()) {
   return `${issuedAt}.${previewSignature(secret, plan, issuedAt)}`;
@@ -46,20 +115,15 @@ async function buildCurrentPlan(supabase: SupabaseClient) {
 
   const keys = [...new Set(prepared.rows.map((row) => row.participantKey))];
   const profileUrls = [...new Set(prepared.rows.flatMap((row) => row.profileUrl ? [row.profileUrl] : []))];
-  const [byKeyResult, byProfileResult] = await Promise.all([
-    supabase.from("participants")
-      .select("id,participant_key,display_name,profile_url,verified_badge_count")
-      .in("participant_key", keys),
+  const [byKeyRows, byProfileRows] = await Promise.all([
+    lookupParticipants(supabase, "participant_key", "participants_by_key", keys),
     profileUrls.length
-      ? supabase.from("participants")
-        .select("id,participant_key,display_name,profile_url,verified_badge_count")
-        .in("profile_url", profileUrls)
-      : Promise.resolve({ data: [], error: null }),
+      ? lookupParticipants(supabase, "profile_url", "participants_by_profile", profileUrls)
+      : Promise.resolve([] as ParticipantLookupRow[]),
   ]);
-  if (byKeyResult.error || byProfileResult.error) throw new Error("Could not compare Google Form responses with participant records. Check admin database policies.");
 
   const existingMap = new Map<string, ExistingSyncParticipant>();
-  for (const row of [...(byKeyResult.data ?? []), ...(byProfileResult.data ?? [])]) {
+  for (const row of [...byKeyRows, ...byProfileRows]) {
     existingMap.set(row.id, {
       id: row.id,
       participantKey: row.participant_key,

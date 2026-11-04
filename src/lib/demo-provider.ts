@@ -21,23 +21,30 @@ export const demoProvider: LeaderboardProvider = {
   async getLastSyncedAt() { return DEMO_LAST_SYNCED_AT; },
   async getPublicSnapshot() {
     const registered = demoParticipants.filter((participant) => participant.registrationStatus === "registered");
-    const participants = registered.map((participant) => ({
-      id: participant.id,
-      displayName: participant.displayName,
-      initials: participant.initials,
-      color: participant.color,
-      verifiedBadgeCount: participant.badges.filter((badge) => badge.status === "verified").length,
-      ...(participant.profileUrl ? { profileUrl: participant.profileUrl } : {}),
-      ...(participant.lastCheckedAt ? { lastCheckedAt: participant.lastCheckedAt } : {}),
-      verificationSource: participant.verificationSource,
-      badges: participant.badges,
-    }));
+    const participants = registered.map((participant) => {
+      const verifiedBadgeCount = participant.badges.filter((badge) => badge.status === "verified").length;
+      return {
+        id: participant.id,
+        displayName: participant.displayName,
+        initials: participant.initials,
+        color: participant.color,
+        verifiedBadgeCount,
+        skillBadgeCount: verifiedBadgeCount,
+        arcadeGameBadgeCount: 0,
+        ...(participant.profileUrl ? { profileUrl: participant.profileUrl } : {}),
+        ...(participant.lastCheckedAt ? { lastCheckedAt: participant.lastCheckedAt } : {}),
+        verificationSource: participant.verificationSource,
+        badges: participant.badges,
+      };
+    });
     const totalVerifiedBadges = participants.reduce((sum, participant) => sum + participant.verifiedBadgeCount, 0);
     return {
       dataMode: "demo" as const,
       participants,
       registeredCount: registered.length,
       totalVerifiedBadges,
+      totalSkillBadges: totalVerifiedBadges,
+      totalArcadeBadges: 0,
       fiveBadgeCount: participants.filter((participant) => hasMilestone(participant.verifiedBadgeCount, 5)).length,
       tenBadgeCount: participants.filter((participant) => hasMilestone(participant.verifiedBadgeCount, 10)).length,
       lastSyncedAt: DEMO_LAST_SYNCED_AT,

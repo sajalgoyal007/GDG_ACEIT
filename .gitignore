@@ -11,6 +11,33 @@ out/
 *.sqlite
 *.sqlite3
 *.log
+/schema.sql
+/data.sql
+*.dump
+*.backup
+
+# Local participant roster and verified-count preparation/report files
+/verified-badge-roster.csv
+/verified-badge-counts-import.csv
+/verified-badge-counts-report.json
+/verified-badge-counts-skipped.csv
+/verified-badge-success.csv
+/verified-badge-skipped.csv
+/verified-badge-failed.csv
+/verified-badge-import.csv
+/build_badge_import.py
+
+# Raw participant HTML profiles and intermediate verification workspace data
+/data/raw_profiles/
+/data/assignments/
+/data/participant-verification-workspace.csv
+/data/verified-badge-counts-source.csv
+/data/automated-badge-counts.csv
+/data/automated_review_validation_report.json
+/data/review_validation_report.json
+/data/reviewed-badge-counts-validated.csv
+/data/reviewed-badge-counts.csv
+/data/verified-badge-import-admin.csv
 
 # Environment files & secrets
 .env*
@@ -26,4 +53,18 @@ supabase/.temp/
 # OS metadata
 .DS_Store
 Thumbs.db
+__pycache__/
+*.py[cod]
+
+# Real public-profile HTML captures are local diagnostic evidence, not fixtures
+# for public distribution. Tests use the sanitized synthetic fixtures instead.
+/src/lib/auto-progress/fixtures/observed-profile-current.html
+/src/lib/auto-progress/fixtures/observed-profile-historical.html
+/src/lib/auto-progress/fixtures/observed-profile-10.html
+
+# Local-only credential helper, scratch query, and reports with real profile IDs.
+/update-google-service-account-env.ps1
+/supabase/snippets/Untitled query 906.sql
+/docs/diagnostics/arcadecalc-profile-diagnostic-2026-11-01.json
+/docs/diagnostics/google-skills-html-structure-comparison.json
 

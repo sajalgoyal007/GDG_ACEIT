@@ -7,8 +7,27 @@ import { getAdminAuthorization } from "@/lib/supabase/admin-auth";
 import { parseVerifiedBadgeCount } from "@/lib/admin-validation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseProgressCsv, resolveProgressCsvRows, type ResolvedProgressCsvRow } from "@/lib/participants/progress-csv";
+import { parseProgressObservationDraft } from "@/lib/participants/progress-observation";
+import { buildUnverifiedObservationRpcArgs, buildVerifiedZeroRpcArgs, fetchGoogleSkillsObservedBadgeCount } from "@/lib/auto-progress/google-skills-observed-count-provider";
+import { isAutoProgressEnabled } from "@/lib/auto-progress/config";
+import { getObservationFailureMessage } from "@/lib/auto-progress/observation-message";
+import type { ProgressObservationActionState } from "./observation-state";
 import type { UnverifiedProgressPreviewState } from "./progress-import-state";
 import type { AdminActionState } from "./action-state";
+import { parseVerifiedBadgeCsv, resolveVerifiedBadgeCsvRows, type ResolvedVerifiedBadgeCsvRow, type VerifiedBadgeCsvIssue, type VerifiedBadgeCsvIssueKind } from "@/lib/participants/verified-badge-csv";
+import type { VerifiedBadgeImportState, VerifiedBadgeImportResult } from "./verified-badge-import-state";
+import {
+  parseClassifiedBadgeCsv,
+  resolveClassifiedBadgeCsvRows,
+  type ResolvedClassifiedBadgeCsvRow,
+  type ClassifiedBadgeCsvIssue,
+  type ClassifiedBadgeCsvIssueKind,
+  CLASSIFIED_BADGE_ISSUE_MESSAGES,
+} from "@/lib/participants/classified-badge-csv";
+import type {
+  ClassifiedBadgeImportState,
+  ClassifiedBadgeImportResult,
+} from "./classified-badge-import-state";
 
 async function requireAdminClient() {
   const authorization = await getAdminAuthorization();
@@ -145,6 +164,126 @@ export async function applyUnverifiedProgressAction(
   }
 }
 
+export async function recordProgressObservationAction(
+  _previous: ProgressObservationActionState,
+  formData: FormData,
+): Promise<ProgressObservationActionState> {
+  if (formData.get("confirmObservation") !== "confirmed") {
+    return { status: "error", message: "Confirm that the source values are diagnostic and unverified." };
+  }
+  let identity: { participantKey: string; profileUrl: string };
+  try {
+    const value = JSON.parse(String(formData.get("participantIdentity") ?? "")) as unknown;
+    if (typeof value !== "object" || value === null || Array.isArray(value)) throw new Error("invalid");
+    const row = value as Record<string, unknown>;
+    if (Object.keys(row).length !== 2 || typeof row.participantKey !== "string" || typeof row.profileUrl !== "string") throw new Error("invalid");
+    identity = { participantKey: row.participantKey, profileUrl: row.profileUrl };
+  } catch {
+    return { status: "error", message: "Choose one registered participant and profile from the list." };
+  }
+  const draft = parseProgressObservationDraft({
+    participantKey: identity.participantKey,
+    profileUrl: identity.profileUrl,
+    sourceName: String(formData.get("sourceName") ?? ""),
+    retrievedAt: String(formData.get("retrievedAt") ?? ""),
+    httpStatus: String(formData.get("httpStatus") ?? ""),
+    reportedTotal: String(formData.get("reportedTotal") ?? ""),
+    detailCount: String(formData.get("detailCount") ?? ""),
+    uniqueBadgeCount: String(formData.get("uniqueBadgeCount") ?? ""),
+    completenessStatus: String(formData.get("completenessStatus") ?? ""),
+    summaryNote: String(formData.get("summaryNote") ?? ""),
+  });
+  if (!draft.ok) return { status: "error", message: draft.message };
+
+  try {
+    const supabase = await requireAdminClient();
+    const { data, error } = await supabase.rpc("admin_record_progress_observation", {
+      p_participant_key: draft.value.participantKey,
+      p_profile_url: draft.value.profileUrl,
+      p_source_name: draft.value.sourceName,
+      p_retrieved_at: draft.value.retrievedAt,
+      p_http_status: draft.value.httpStatus,
+      p_reported_total: draft.value.reportedTotal,
+      p_detail_count: draft.value.detailCount,
+      p_unique_badge_count: draft.value.uniqueBadgeCount,
+      p_completeness_status: draft.value.completenessStatus,
+      p_summary_note: draft.value.summaryNote,
+    });
+    if (error || !data?.length) return { status: "error", message: "The database rejected this observation because the registered identity changed or is ambiguous. No record was added." };
+    revalidatePath("/");
+    revalidatePath("/progress");
+    revalidatePath("/admin");
+    return { status: "success", message: "Diagnostic observation recorded with source provenance. It remains unverified and does not affect verified counts, automatic snapshots, or ranks." };
+  } catch {
+    return { status: "error", message: "Admin authorization or database access failed. No diagnostic observation was recorded." };
+  }
+}
+
+/** Fetches one registered public profile and records only an unverified card-candidate observation. */
+export async function fetchProgressObservationAction(
+  _previous: ProgressObservationActionState,
+  formData: FormData,
+): Promise<ProgressObservationActionState> {
+  const participantKey = String(formData.get("participantKey") ?? "").trim().toLowerCase();
+  if (!/^[a-z0-9][a-z0-9._:-]{0,119}$/.test(participantKey)) {
+    return { status: "error", message: "Choose a registered participant." };
+  }
+  if (formData.get("confirmOwnerZeroPolicy") !== "confirmed") {
+    return { status: "error", message: "Confirm the owner-approved zero policy before checking this profile." };
+  }
+  if (!isAutoProgressEnabled()) return { status: "error", message: "Public profile observation is disabled. No request was made." };
+
+  try {
+    const supabase = await requireAdminClient();
+    const { data: participant, error: participantError } = await supabase
+      .from("participants")
+      .select("id,profile_url")
+      .eq("participant_key", participantKey)
+      .eq("registration_status", "registered")
+      .maybeSingle();
+    if (participantError || !participant?.profile_url) {
+      return { status: "error", message: "The registered participant profile could not be resolved. No request was made." };
+    }
+
+    const { data: claimData, error: claimError } = await supabase.rpc("claim_google_skills_observation_cooldown", {
+      p_participant_key: participantKey,
+      p_profile_url: participant.profile_url,
+    });
+    const claim = Array.isArray(claimData) ? claimData[0] as { claim_status?: string; retry_after_seconds?: number } | undefined : undefined;
+    if (claimError || !claim || claim.claim_status !== "claimed") {
+      return { status: "error", message: claim?.claim_status === "cooldown"
+        ? `This profile was checked recently. Try again in about ${Math.max(1, Math.min(3600, Number(claim.retry_after_seconds) || 60))} seconds.`
+        : "The profile changed, is ambiguous, or could not be safely claimed. No request was made." };
+    }
+
+    const observed = await fetchGoogleSkillsObservedBadgeCount(participant.profile_url);
+    if (observed.status === "confirmed_zero") {
+      const verificationArgs = buildVerifiedZeroRpcArgs(observed, participant.id);
+      if (!verificationArgs) return { status: "error", message: "The zero result did not meet the audited verification requirements. No count was changed." };
+      const { data, error } = await supabase.rpc("admin_set_verified_badge_count", verificationArgs);
+      if (error || !data?.length) return { status: "error", message: "The audited zero verification failed. The previous verified count was preserved." };
+      revalidatePath("/");
+      revalidatePath("/progress");
+      revalidatePath("/admin");
+      return { status: "success", message: "Verified badge count recorded as 0 under the owner-approved missing-section policy. The authenticated admin, review note, previous value, and verification time were recorded by the existing audit workflow." };
+    }
+    if (observed.status !== "unverified") {
+      return { status: "error", message: getObservationFailureMessage(observed.status) };
+    }
+
+    const observationArgs = buildUnverifiedObservationRpcArgs(observed, participantKey, participant.profile_url);
+    if (!observationArgs) return { status: "error", message: "The profile result was not eligible for an unverified observation. Nothing was recorded." };
+    const { error } = await supabase.rpc("admin_record_progress_observation", observationArgs);
+    if (error) return { status: "error", message: "The profile changed or became ambiguous before the observation was saved. No record was added." };
+    revalidatePath("/");
+    revalidatePath("/progress");
+    revalidatePath("/admin");
+    return { status: "success", message: `Recorded ${observed.candidateCount} observed badge-card candidates as unverified. This is not a confirmed total and did not change verified counts, automatic snapshots, or ranks.` };
+  } catch {
+    return { status: "error", message: "Admin authorization, profile retrieval, or observation storage failed. No verified progress was changed." };
+  }
+}
+
 export async function setVerifiedBadgeCountAction(_previous: AdminActionState, formData: FormData): Promise<AdminActionState> {
   if (formData.get("confirmBadgeUpdate") !== "confirmed") {
     return { status: "error", message: "Confirm that you reviewed the evidence before recording this badge count." };
@@ -174,10 +313,482 @@ export async function setVerifiedBadgeCountAction(_previous: AdminActionState, f
     const result = (data as unknown as { previous_badge_count: number; new_badge_count: number }[])[0];
     revalidatePath("/");
     revalidatePath("/admin");
-    return { status: "success", message: `Badge count recorded: ${result.previous_badge_count} → ${result.new_badge_count}. The actor and verification timestamp were added to the audit log.` };
+    return { status: "success", message: result.previous_badge_count === result.new_badge_count
+      ? `Verified badge count remains ${result.new_badge_count}. An identical prior review was already recorded, so its audit history was preserved without adding a duplicate.`
+      : `Badge count recorded: ${result.previous_badge_count} → ${result.new_badge_count}. The actor and verification timestamp were added to the audit log.` };
   } catch {
     return { status: "error", message: "Admin authorization or database access failed. No count was changed." };
   }
+}
+
+const VERIFIED_BADGE_ISSUE_MESSAGES: Record<VerifiedBadgeCsvIssueKind, string> = {
+  invalid: "Invalid CSV row; it was excluded.",
+  duplicate: "Duplicate participant row; all matching rows were excluded.",
+  conflict: "Conflicting counts for this participant; all matching rows were excluded.",
+  unknown: "Participant UUID is not present in the current roster; this row was excluded.",
+};
+
+export async function previewVerifiedBadgeCsvAction(
+  _previous: VerifiedBadgeImportState,
+  formData: FormData,
+): Promise<VerifiedBadgeImportState> {
+  const file = formData.get("verifiedBadgeCsv");
+  if (!(file instanceof File) || file.size < 1 || file.size > 1_000_000) {
+    return { status: "error", message: "Choose a verified-count CSV between 1 byte and 1 MB." };
+  }
+  let supabase;
+  try { supabase = await requireAdminClient(); }
+  catch { return { status: "error", message: "Admin access could not be verified. No count was changed." }; }
+
+  const parsed = parseVerifiedBadgeCsv(await file.text());
+  const issues: VerifiedBadgeCsvIssue[] = [...parsed.issues];
+  const participants: { id: string; display_name: string; verified_badge_count: number; last_verified_at: string | null; verification_source: string | null }[] = [];
+  const ids = parsed.rows.map((row) => row.participantId);
+  for (let offset = 0; offset < ids.length; offset += 100) {
+    const { data, error } = await supabase.from("participants")
+      .select("id,display_name,verified_badge_count,last_verified_at,verification_source")
+      .in("id", ids.slice(offset, offset + 100));
+    if (error || !data) return { status: "error", message: "The participant roster could not be checked. Nothing was changed." };
+    participants.push(...data);
+  }
+  const resolved = resolveVerifiedBadgeCsvRows(parsed.rows, participants.map((participant) => ({
+    id: participant.id,
+    displayName: participant.display_name,
+    verifiedBadgeCount: participant.verified_badge_count,
+    lastVerifiedAt: participant.last_verified_at,
+    verificationSource: participant.verification_source,
+  })));
+  issues.push(...resolved.issues);
+  const orderedIssues = issues.sort((a, b) => a.rowNumber - b.rowNumber);
+  return {
+    status: "preview",
+    message: resolved.rows.length
+      ? `Preview ready: ${resolved.rows.length} eligible verification${resolved.rows.length === 1 ? "" : "s"}; ${orderedIssues.length} invalid, duplicate, conflicting, or unknown row${orderedIssues.length === 1 ? "" : "s"} excluded.`
+      : "No eligible rows were found. Review the skipped rows; no counts have been changed.",
+    issues: orderedIssues,
+    rows: resolved.rows,
+  };
+}
+
+function parseVerifiedPreviewRows(value: FormDataEntryValue | null): ResolvedVerifiedBadgeCsvRow[] | null {
+  try {
+    const raw = JSON.parse(String(value ?? "")) as unknown;
+    if (!Array.isArray(raw) || raw.length < 1 || raw.length > 500) return null;
+    const ids = new Set<string>();
+    return raw.map((item) => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) throw new Error("invalid");
+      const row = item as Record<string, unknown>;
+      if (typeof row.rowNumber !== "number" || !Number.isInteger(row.rowNumber) || row.rowNumber < 2 || row.rowNumber > 501
+        || typeof row.participantId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(row.participantId)
+        || typeof row.badgeCount !== "number" || !Number.isInteger(row.badgeCount) || row.badgeCount < 0 || row.badgeCount > 10000
+        || typeof row.reviewNote !== "string" || row.reviewNote.trim().length < 1 || row.reviewNote.trim().length > 1000
+        || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(row.reviewNote)
+        || typeof row.displayName !== "string" || typeof row.verifiedBadgeCount !== "number"
+        || !Number.isInteger(row.verifiedBadgeCount) || row.verifiedBadgeCount < 0 || row.verifiedBadgeCount > 10000
+        || !(row.lastVerifiedAt === null || (typeof row.lastVerifiedAt === "string" && !Number.isNaN(Date.parse(row.lastVerifiedAt))))
+        || !(row.verificationSource === null || typeof row.verificationSource === "string")) throw new Error("invalid");
+      const participantId = row.participantId.toLowerCase();
+      if (ids.has(participantId)) throw new Error("duplicate");
+      ids.add(participantId);
+      return {
+        rowNumber: row.rowNumber,
+        participantId,
+        badgeCount: row.badgeCount,
+        reviewNote: row.reviewNote.trim(),
+        id: participantId,
+        displayName: row.displayName,
+        verifiedBadgeCount: row.verifiedBadgeCount,
+        lastVerifiedAt: row.lastVerifiedAt,
+        verificationSource: row.verificationSource,
+      };
+    });
+  } catch { return null; }
+}
+
+function parseVerifiedPreviewIssues(value: FormDataEntryValue | null): VerifiedBadgeCsvIssue[] {
+  try {
+    const raw = JSON.parse(String(value ?? "[]")) as unknown;
+    if (!Array.isArray(raw) || raw.length > 1000) return [];
+    return raw.flatMap((item): VerifiedBadgeCsvIssue[] => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) return [];
+      const row = item as Record<string, unknown>;
+      if (typeof row.rowNumber !== "number" || !Number.isInteger(row.rowNumber) || row.rowNumber < 1 || row.rowNumber > 501
+        || typeof row.kind !== "string" || !Object.hasOwn(VERIFIED_BADGE_ISSUE_MESSAGES, row.kind)) return [];
+      const kind = row.kind as VerifiedBadgeCsvIssueKind;
+      return [{ rowNumber: row.rowNumber, kind, message: VERIFIED_BADGE_ISSUE_MESSAGES[kind] }];
+    });
+  } catch { return []; }
+}
+
+export async function applyVerifiedBadgeCsvAction(
+  _previous: VerifiedBadgeImportState,
+  formData: FormData,
+): Promise<VerifiedBadgeImportState> {
+  if (formData.get("confirmVerifiedBadgeImport") !== "confirmed") {
+    return { status: "error", message: "Confirm that you reviewed the complete preview before recording verified counts." };
+  }
+  const rows = parseVerifiedPreviewRows(formData.get("previewRows"));
+  if (!rows) return { status: "error", message: "The preview is invalid or expired. Preview the CSV again; no counts were changed." };
+  let supabase;
+  try { supabase = await requireAdminClient(); }
+  catch { return { status: "error", message: "Admin access could not be verified. No counts were changed." }; }
+
+  const currentRows: { id: string; verified_badge_count: number; last_verified_at: string | null; verification_source: string | null }[] = [];
+  for (let offset = 0; offset < rows.length; offset += 100) {
+    const { data, error } = await supabase.from("participants")
+      .select("id,verified_badge_count,last_verified_at,verification_source")
+      .in("id", rows.slice(offset, offset + 100).map((row) => row.participantId));
+    if (error || !data) return { status: "error", message: "The participant roster could not be rechecked. No counts were changed." };
+    currentRows.push(...data);
+  }
+  const currentById = new Map(currentRows.map((participant) => [participant.id.toLowerCase(), participant]));
+  const issues = parseVerifiedPreviewIssues(formData.get("previewIssues"));
+  const results: VerifiedBadgeImportResult[] = [];
+  const eligible: ResolvedVerifiedBadgeCsvRow[] = [];
+  for (const row of rows) {
+    const participant = currentById.get(row.participantId);
+    if (!participant) {
+      results.push({ rowNumber: row.rowNumber, participantId: row.participantId, badgeCount: row.badgeCount, status: "skipped", reason: "Participant is no longer present in the roster." });
+      continue;
+    }
+    const previewStateChanged = participant.verified_badge_count !== row.verifiedBadgeCount
+      || participant.last_verified_at !== row.lastVerifiedAt
+      || participant.verification_source !== row.verificationSource;
+    if (previewStateChanged && participant.verified_badge_count !== row.badgeCount) {
+      results.push({ rowNumber: row.rowNumber, participantId: row.participantId, badgeCount: row.badgeCount, status: "skipped", reason: "Verified count changed after preview; preview the CSV again." });
+      continue;
+    }
+    eligible.push(row);
+  }
+
+  if (eligible.length > 0) {
+    const { data, error } = await supabase.rpc("admin_bulk_set_verified_badge_counts", {
+      p_rows: eligible.map((row) => ({
+        row_number: row.rowNumber,
+        participant_id: row.participantId,
+        badge_count: row.badgeCount,
+        review_note: row.reviewNote,
+        expected_badge_count: row.verifiedBadgeCount,
+        expected_last_verified_at: row.lastVerifiedAt,
+        expected_verification_source: row.verificationSource,
+      })),
+    });
+    if (error || !data) {
+      for (const row of eligible) results.push({ rowNumber: row.rowNumber, participantId: row.participantId, badgeCount: row.badgeCount, status: "failed", reason: "The verification transaction failed. No eligible row in this batch was changed; preview again." });
+    } else {
+      const appliedRows = data as unknown as { row_number: number; participant_id: string; new_badge_count: number }[];
+      const appliedByRow = new Map(appliedRows.map((row) => [row.row_number, row]));
+      for (const row of eligible) {
+        const applied = appliedByRow.get(row.rowNumber);
+        results.push(applied
+          ? { rowNumber: row.rowNumber, participantId: row.participantId, badgeCount: applied.new_badge_count, status: "success", reason: "Recorded through the audited admin verification workflow." }
+          : { rowNumber: row.rowNumber, participantId: row.participantId, badgeCount: row.badgeCount, status: "failed", reason: "The database returned an incomplete result; verify the audit history before retrying." });
+      }
+    }
+  }
+  const skipped = results.filter((result) => result.status === "skipped").length + issues.length;
+  const failed = results.filter((result) => result.status === "failed").length;
+  const succeeded = results.filter((result) => result.status === "success").length;
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {
+    status: failed > 0 && succeeded === 0 ? "error" : "success",
+    message: `${succeeded} verified, ${skipped} skipped, ${failed} failed. All verified writes use the authenticated audited badge-verification workflow.`,
+    issues,
+    results,
+  };
+}
+
+export async function previewClassifiedBadgeCsvAction(
+  _previous: ClassifiedBadgeImportState,
+  formData: FormData,
+): Promise<ClassifiedBadgeImportState> {
+  const file = formData.get("classifiedBadgeCsv");
+  if (!(file instanceof File) || file.size < 1 || file.size > 1_000_000) {
+    return { status: "error", message: "Choose a classified badge CSV between 1 byte and 1 MB." };
+  }
+  let supabase;
+  try {
+    supabase = await requireAdminClient();
+  } catch {
+    return { status: "error", message: "Admin access could not be verified. No count was changed." };
+  }
+
+  const parsed = parseClassifiedBadgeCsv(await file.text());
+  const issues: ClassifiedBadgeCsvIssue[] = [...parsed.issues];
+  const participants: {
+    id: string;
+    display_name: string;
+    verified_badge_count: number;
+    skill_badge_count: number | null;
+    arcade_game_badge_count: number | null;
+    last_verified_at: string | null;
+    verification_source: string | null;
+  }[] = [];
+  const ids = parsed.rows.map((row) => row.participantId);
+  for (let offset = 0; offset < ids.length; offset += 100) {
+    const { data, error } = await supabase
+      .from("participants")
+      .select("id,display_name,verified_badge_count,skill_badge_count,arcade_game_badge_count,last_verified_at,verification_source")
+      .in("id", ids.slice(offset, offset + 100));
+    if (error || !data) {
+      return { status: "error", message: "The participant roster could not be checked. Nothing was changed." };
+    }
+    participants.push(...data);
+  }
+  const resolved = resolveClassifiedBadgeCsvRows(
+    parsed.rows,
+    participants.map((participant) => ({
+      id: participant.id,
+      displayName: participant.display_name,
+      verifiedBadgeCount: participant.verified_badge_count,
+      currentSkillBadgeCount: participant.skill_badge_count ?? null,
+      currentArcadeGameBadgeCount: participant.arcade_game_badge_count ?? null,
+      lastVerifiedAt: participant.last_verified_at,
+      verificationSource: participant.verification_source,
+    })),
+  );
+  issues.push(...resolved.issues);
+  const orderedIssues = issues.sort((a, b) => a.rowNumber - b.rowNumber);
+  return {
+    status: "preview",
+    message: resolved.rows.length
+      ? `Preview ready: ${resolved.rows.length} eligible classified verification${resolved.rows.length === 1 ? "" : "s"}; ${orderedIssues.length} invalid, duplicate, conflicting, sum mismatch, or unknown row${orderedIssues.length === 1 ? "" : "s"} excluded.`
+      : "No eligible rows were found. Review the skipped rows; no counts have been changed.",
+    issues: orderedIssues,
+    rows: resolved.rows,
+  };
+}
+
+function parseClassifiedPreviewRows(value: FormDataEntryValue | null): ResolvedClassifiedBadgeCsvRow[] | null {
+  try {
+    const raw = JSON.parse(String(value ?? "")) as unknown;
+    if (!Array.isArray(raw) || raw.length < 1 || raw.length > 500) return null;
+    const ids = new Set<string>();
+    return raw.map((item) => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) throw new Error("invalid");
+      const row = item as Record<string, unknown>;
+      if (
+        typeof row.rowNumber !== "number" ||
+        !Number.isInteger(row.rowNumber) ||
+        row.rowNumber < 2 ||
+        row.rowNumber > 501 ||
+        typeof row.participantId !== "string" ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(row.participantId) ||
+        typeof row.skillBadgeCount !== "number" ||
+        !Number.isInteger(row.skillBadgeCount) ||
+        row.skillBadgeCount < 0 ||
+        row.skillBadgeCount > 10000 ||
+        typeof row.arcadeGameBadgeCount !== "number" ||
+        !Number.isInteger(row.arcadeGameBadgeCount) ||
+        row.arcadeGameBadgeCount < 0 ||
+        row.arcadeGameBadgeCount > 10000 ||
+        typeof row.totalBadgeCount !== "number" ||
+        !Number.isInteger(row.totalBadgeCount) ||
+        row.totalBadgeCount < 0 ||
+        row.totalBadgeCount > 10000 ||
+        row.skillBadgeCount + row.arcadeGameBadgeCount !== row.totalBadgeCount ||
+        typeof row.reviewNote !== "string" ||
+        row.reviewNote.trim().length < 1 ||
+        row.reviewNote.trim().length > 1000 ||
+        /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(row.reviewNote) ||
+        typeof row.displayName !== "string" ||
+        typeof row.verifiedBadgeCount !== "number" ||
+        !Number.isInteger(row.verifiedBadgeCount) ||
+        row.verifiedBadgeCount < 0 ||
+        row.verifiedBadgeCount > 10000 ||
+        !(row.currentSkillBadgeCount === null || (typeof row.currentSkillBadgeCount === "number" && Number.isInteger(row.currentSkillBadgeCount) && row.currentSkillBadgeCount >= 0)) ||
+        !(row.currentArcadeGameBadgeCount === null || (typeof row.currentArcadeGameBadgeCount === "number" && Number.isInteger(row.currentArcadeGameBadgeCount) && row.currentArcadeGameBadgeCount >= 0)) ||
+        !(row.lastVerifiedAt === null || (typeof row.lastVerifiedAt === "string" && !Number.isNaN(Date.parse(row.lastVerifiedAt)))) ||
+        !(row.verificationSource === null || typeof row.verificationSource === "string")
+      ) {
+        throw new Error("invalid");
+      }
+      const participantId = row.participantId.toLowerCase();
+      if (ids.has(participantId)) throw new Error("duplicate");
+      ids.add(participantId);
+      return {
+        rowNumber: row.rowNumber,
+        participantId,
+        skillBadgeCount: row.skillBadgeCount,
+        arcadeGameBadgeCount: row.arcadeGameBadgeCount,
+        totalBadgeCount: row.totalBadgeCount,
+        reviewNote: row.reviewNote.trim(),
+        id: participantId,
+        displayName: row.displayName,
+        verifiedBadgeCount: row.verifiedBadgeCount,
+        currentSkillBadgeCount: row.currentSkillBadgeCount ?? null,
+        currentArcadeGameBadgeCount: row.currentArcadeGameBadgeCount ?? null,
+        lastVerifiedAt: row.lastVerifiedAt,
+        verificationSource: row.verificationSource,
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function parseClassifiedPreviewIssues(value: FormDataEntryValue | null): ClassifiedBadgeCsvIssue[] {
+  try {
+    const raw = JSON.parse(String(value ?? "[]")) as unknown;
+    if (!Array.isArray(raw) || raw.length > 1000) return [];
+    return raw.flatMap((item): ClassifiedBadgeCsvIssue[] => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) return [];
+      const row = item as Record<string, unknown>;
+      if (
+        typeof row.rowNumber !== "number" ||
+        !Number.isInteger(row.rowNumber) ||
+        row.rowNumber < 1 ||
+        row.rowNumber > 501 ||
+        typeof row.kind !== "string" ||
+        !Object.hasOwn(CLASSIFIED_BADGE_ISSUE_MESSAGES, row.kind)
+      ) {
+        return [];
+      }
+      const kind = row.kind as ClassifiedBadgeCsvIssueKind;
+      return [{ rowNumber: row.rowNumber, kind, message: CLASSIFIED_BADGE_ISSUE_MESSAGES[kind] }];
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function applyClassifiedBadgeCsvAction(
+  _previous: ClassifiedBadgeImportState,
+  formData: FormData,
+): Promise<ClassifiedBadgeImportState> {
+  if (formData.get("confirmClassifiedBadgeImport") !== "confirmed") {
+    return { status: "error", message: "Confirm that you reviewed the complete preview before recording classified counts." };
+  }
+  const rows = parseClassifiedPreviewRows(formData.get("previewRows"));
+  if (!rows) return { status: "error", message: "The preview is invalid or expired. Preview the CSV again; no counts were changed." };
+  let supabase;
+  try {
+    supabase = await requireAdminClient();
+  } catch {
+    return { status: "error", message: "Admin access could not be verified. No counts were changed." };
+  }
+
+  const currentRows: { id: string; verified_badge_count: number; last_verified_at: string | null; verification_source: string | null }[] = [];
+  for (let offset = 0; offset < rows.length; offset += 100) {
+    const { data, error } = await supabase
+      .from("participants")
+      .select("id,verified_badge_count,last_verified_at,verification_source")
+      .in("id", rows.slice(offset, offset + 100).map((row) => row.participantId));
+    if (error || !data) {
+      return { status: "error", message: "The participant roster could not be rechecked. No counts were changed." };
+    }
+    currentRows.push(...data);
+  }
+  const currentById = new Map(currentRows.map((participant) => [participant.id.toLowerCase(), participant]));
+  const issues = parseClassifiedPreviewIssues(formData.get("previewIssues"));
+  const results: ClassifiedBadgeImportResult[] = [];
+  const eligible: ResolvedClassifiedBadgeCsvRow[] = [];
+  for (const row of rows) {
+    const participant = currentById.get(row.participantId);
+    if (!participant) {
+      results.push({
+        rowNumber: row.rowNumber,
+        participantId: row.participantId,
+        skillBadgeCount: row.skillBadgeCount,
+        arcadeGameBadgeCount: row.arcadeGameBadgeCount,
+        totalBadgeCount: row.totalBadgeCount,
+        status: "skipped",
+        reason: "Participant is no longer present in the roster.",
+      });
+      continue;
+    }
+    const previewStateChanged =
+      participant.verified_badge_count !== row.verifiedBadgeCount ||
+      participant.last_verified_at !== row.lastVerifiedAt ||
+      participant.verification_source !== row.verificationSource;
+    if (previewStateChanged && participant.verified_badge_count !== row.totalBadgeCount) {
+      results.push({
+        rowNumber: row.rowNumber,
+        participantId: row.participantId,
+        skillBadgeCount: row.skillBadgeCount,
+        arcadeGameBadgeCount: row.arcadeGameBadgeCount,
+        totalBadgeCount: row.totalBadgeCount,
+        status: "skipped",
+        reason: "Verified count changed after preview; preview the CSV again.",
+      });
+      continue;
+    }
+    eligible.push(row);
+  }
+
+  if (eligible.length > 0) {
+    const { data, error } = await supabase.rpc("admin_bulk_set_classified_badge_counts", {
+      p_rows: eligible.map((row) => ({
+        row_number: row.rowNumber,
+        participant_id: row.participantId,
+        skill_count: row.skillBadgeCount,
+        arcade_count: row.arcadeGameBadgeCount,
+        total_count: row.totalBadgeCount,
+        review_note: row.reviewNote,
+        expected_total_count: row.verifiedBadgeCount,
+        expected_last_verified_at: row.lastVerifiedAt,
+        expected_verification_source: row.verificationSource,
+      })),
+    });
+    if (error || !data) {
+      for (const row of eligible) {
+        results.push({
+          rowNumber: row.rowNumber,
+          participantId: row.participantId,
+          skillBadgeCount: row.skillBadgeCount,
+          arcadeGameBadgeCount: row.arcadeGameBadgeCount,
+          totalBadgeCount: row.totalBadgeCount,
+          status: "failed",
+          reason: "The classified verification transaction failed. No eligible row in this batch was changed; preview again.",
+        });
+      }
+    } else {
+      const appliedRows = data as unknown as {
+        row_number: number;
+        participant_id: string;
+        new_total_count: number;
+        new_skill_count: number;
+        new_arcade_count: number;
+      }[];
+      const appliedByRow = new Map(appliedRows.map((row) => [row.row_number, row]));
+      for (const row of eligible) {
+        const applied = appliedByRow.get(row.rowNumber);
+        results.push(
+          applied
+            ? {
+                rowNumber: row.rowNumber,
+                participantId: row.participantId,
+                skillBadgeCount: applied.new_skill_count,
+                arcadeGameBadgeCount: applied.new_arcade_count,
+                totalBadgeCount: applied.new_total_count,
+                status: "success",
+                reason: "Recorded through the audited admin classified badge verification workflow.",
+              }
+            : {
+                rowNumber: row.rowNumber,
+                participantId: row.participantId,
+                skillBadgeCount: row.skillBadgeCount,
+                arcadeGameBadgeCount: row.arcadeGameBadgeCount,
+                totalBadgeCount: row.totalBadgeCount,
+                status: "failed",
+                reason: "The database returned an incomplete result; verify the audit history before retrying.",
+              },
+        );
+      }
+    }
+  }
+  const skipped = results.filter((result) => result.status === "skipped").length + issues.length;
+  const failed = results.filter((result) => result.status === "failed").length;
+  const succeeded = results.filter((result) => result.status === "success").length;
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return {
+    status: failed > 0 && succeeded === 0 ? "error" : "success",
+    message: `${succeeded} classified, ${skipped} skipped, ${failed} failed. All classified writes enforce skill + arcade = total and use the authenticated audited workflow.`,
+    issues,
+    results,
+  };
 }
 
 export async function signOutAdmin() {

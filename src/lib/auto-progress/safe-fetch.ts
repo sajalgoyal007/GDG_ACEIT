@@ -15,7 +15,7 @@ export type FetchFailure =
   | "blocked"
   | "upstream_error";
 export type ProfileFetchResult =
-  | { status: "ok"; html: string; normalizedProfileUrl: string }
+  | { status: "ok"; html: string; normalizedProfileUrl: string; httpStatus: number }
   | { status: FetchFailure; retryAfter?: string };
 
 export type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
@@ -125,6 +125,7 @@ export async function fetchPublicProfileHtml(
         status: "ok",
         html: new TextDecoder("utf-8", { fatal: false }).decode(combined),
         normalizedProfileUrl: initial.value.normalizedUrl,
+        httpStatus: response.status,
       };
     }
   } catch {

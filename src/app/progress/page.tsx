@@ -5,8 +5,9 @@ import { getLeaderboardProvider } from "@/lib/leaderboard-provider";
 import { isAutoProgressEnabled } from "@/lib/auto-progress/config";
 import { googleSkillsAutoProgressProvider } from "@/lib/auto-progress/provider";
 import { getAuthenticatedParticipant } from "@/lib/supabase/auto-progress-account";
-import { getAutoProgressForParticipant, getUnverifiedProgressLeaderboard } from "@/lib/supabase/auto-progress-provider";
+import { getAutoProgressForParticipant, getProgressObservationSummaries, getUnverifiedProgressLeaderboard } from "@/lib/supabase/auto-progress-provider";
 import { UnverifiedProgressLeaderboard } from "@/components/unverified-progress-leaderboard";
+import { ProgressObservationLeaderboard } from "@/components/progress-observation-leaderboard";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -15,10 +16,11 @@ export const metadata: Metadata = {
 };
 
 export default async function ProgressPage() {
-  const [snapshot, identity, importedProgress] = await Promise.all([
+  const [snapshot, identity, importedProgress, observations] = await Promise.all([
     getLeaderboardProvider().getPublicSnapshot(),
     getAuthenticatedParticipant().catch(() => ({ status: "check_failed" as const })),
     getUnverifiedProgressLeaderboard().catch(() => []),
+    getProgressObservationSummaries().catch(() => []),
   ]);
   let progress = null;
   let loadFailed = false;
@@ -35,7 +37,7 @@ export default async function ProgressPage() {
       progress={progress}
       loadFailed={loadFailed}
       refreshAvailable={isAutoProgressEnabled() && googleSkillsAutoProgressProvider.availability === "available"}
-    /><UnverifiedProgressLeaderboard entries={importedProgress} /></div>
+    /><UnverifiedProgressLeaderboard entries={importedProgress} /><ProgressObservationLeaderboard entries={observations} /></div>
     <Dashboard snapshot={snapshot} view="progress" />
   </>;
 }

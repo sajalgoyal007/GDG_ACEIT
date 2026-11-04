@@ -8,6 +8,8 @@ interface PublicParticipantRow {
   display_name: string;
   profile_url: string | null;
   verified_badge_count: number;
+  skill_badge_count: number | null;
+  arcade_game_badge_count: number | null;
   last_verified_at: string | null;
   verification_source: string | null;
 }
@@ -15,6 +17,8 @@ interface PublicParticipantRow {
 interface PublicSummary {
   registered_count: number;
   total_verified_badges: number;
+  total_skill_badges: number;
+  total_arcade_badges: number;
   five_badge_count: number;
   ten_badge_count: number;
   last_updated_at: string;
@@ -36,7 +40,8 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
     const supabase = createSupabasePublicClient();
     const [participantsResult, summaryResult] = await Promise.all([
       supabase.from("participants")
-        .select("id,display_name,profile_url,verified_badge_count,last_verified_at,verification_source")
+        .select("id,display_name,profile_url,verified_badge_count,skill_badge_count,arcade_game_badge_count,last_verified_at,verification_source")
+        .order("skill_badge_count", { ascending: false, nullsFirst: false })
         .order("verified_badge_count", { ascending: false })
         .order("id", { ascending: true }),
       supabase.rpc("get_public_summary"),
@@ -54,6 +59,8 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
       initials: initials(row.display_name),
       color: colorFor(row.id),
       verifiedBadgeCount: row.verified_badge_count,
+      skillBadgeCount: row.skill_badge_count ?? null,
+      arcadeGameBadgeCount: row.arcade_game_badge_count ?? null,
       ...(row.profile_url ? { profileUrl: row.profile_url } : {}),
       ...(row.last_verified_at ? { lastCheckedAt: row.last_verified_at } : {}),
       ...(row.verification_source ? { verificationSource: row.verification_source } : {}),
@@ -64,6 +71,8 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
       participants,
       registeredCount: Number(summary.registered_count),
       totalVerifiedBadges: Number(summary.total_verified_badges),
+      totalSkillBadges: Number(summary.total_skill_badges ?? 0),
+      totalArcadeBadges: Number(summary.total_arcade_badges ?? 0),
       fiveBadgeCount: Number(summary.five_badge_count),
       tenBadgeCount: Number(summary.ten_badge_count),
       lastSyncedAt: summary.last_updated_at,

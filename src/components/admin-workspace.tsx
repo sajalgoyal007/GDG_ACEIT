@@ -12,14 +12,22 @@ import { initialAdminActionState } from "@/app/admin/action-state";
 import { GoogleFormSync } from "@/components/google-form-sync";
 import { ThemeControl } from "@/components/theme-control";
 import { UnverifiedProgressImport } from "@/components/unverified-progress-import";
+import { VerifiedBadgeCsvImport } from "@/components/verified-badge-csv-import";
+import { ClassifiedBadgeCsvImport } from "@/components/classified-badge-csv-import";
+import { ProgressObservationForm } from "@/components/progress-observation-form";
 import type { AdminAutoProgressJobStatus } from "@/lib/auto-progress/admin-job-status";
+import { ProgressObservationLeaderboard } from "@/components/progress-observation-leaderboard";
+import type { ProgressObservationSummary } from "@/lib/supabase/auto-progress-provider";
+import { formatVerifiedBadgeCount, getReviewedBadgeCount } from "@/lib/leaderboard";
 
 type AuditEventType = "participant_imported" | "participant_synced" | "badge_count_updated";
 type AuditSource = "csv_import" | "admin_manual" | "google_sheets_sync";
 
 export interface AdminParticipantOption {
   id: string;
+  participantKey: string;
   displayName: string;
+  profileUrl: string | null;
   registrationStatus: "registered" | "pending";
   verifiedBadgeCount: number;
   lastVerifiedAt: string | null;
@@ -41,17 +49,13 @@ type RefreshAllReply = {
   status?: string;
   message?: string;
   total?: number;
-  fetched?: number;
-  validated?: number;
-  updated?: number;
-  unchanged?: number;
-  refreshed?: number;
+  observed?: number;
   failed?: number;
   skipped?: number;
   processed?: number;
   jobId?: string;
   retryAfterSeconds?: number;
-  results?: { participantId: string; status: string; message: string; fetched?: boolean; updated?: boolean }[];
+  results?: { participantId: string; status: string; message: string }[];
 };
 
 const sidebarItems = [
@@ -89,7 +93,7 @@ function ActionFeedback({ state }: { state: typeof initialAdminActionState }) {
   </div>;
 }
 
-export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAllAvailable }: { participants: AdminParticipantOption[]; latestAutoProgressJob: AdminAutoProgressJobStatus | null; refreshAllAvailable: boolean }) {
+export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAllAvailable, refreshAllUnavailableMessage, progressObservations, profileObservationFetchingEnabled }: { participants: AdminParticipantOption[]; latestAutoProgressJob: AdminAutoProgressJobStatus | null; refreshAllAvailable: boolean; refreshAllUnavailableMessage: string | null; progressObservations: ProgressObservationSummary[]; profileObservationFetchingEnabled: boolean }) {
   const [importState, importAction, importPending] = useActionState(importParticipantsAction, initialAdminActionState);
   const [countState, countAction, countPending] = useActionState(setVerifiedBadgeCountAction, initialAdminActionState);
   const [search, setSearch] = useState("");
@@ -111,7 +115,7 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
       const idempotencyKey = crypto.randomUUID();
       const accumulated = new Map<string, NonNullable<RefreshAllReply["results"]>[number]>();
       for (let batch = 0; batch < 64; batch += 1) {
-        const response = await fetch("/api/admin/auto-progress/refresh-all", {
+        const response = await fetch("/api/admin/progress-observations/refresh-all", {
           method: "POST",
           headers: { Accept: "application/json", "Idempotency-Key": idempotencyKey },
           cache: "no-store",
@@ -157,9 +161,12 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
     for (const p of participants) {
       if (p.registrationStatus === "registered") {
         regCount += 1;
-        badges += p.verifiedBadgeCount;
-        if (p.verifiedBadgeCount >= 5) fiveCount += 1;
-        if (p.verifiedBadgeCount >= 10) tenCount += 1;
+        const reviewedCount = getReviewedBadgeCount(p.verifiedBadgeCount, p.lastVerifiedAt);
+        if (reviewedCount !== null) {
+          badges += reviewedCount;
+          if (reviewedCount >= 5) fiveCount += 1;
+          if (reviewedCount >= 10) tenCount += 1;
+        }
       }
     }
     return {
@@ -263,8 +270,8 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
                 <label className="admin-directory-filter"><Filter size={14} aria-hidden="true" /><span className="sr-only">Filter by registration status</span><select value={filter} onChange={(event) => setFilter(event.target.value as ParticipantFilter)}><option value="all">All statuses</option><option value="registered">Registered</option><option value="pending">Pending</option></select></label>
               </div>
               {participants.length === 0 ? <div className="admin-panel-empty"><span><Users size={17} aria-hidden="true" /></span><p>No participant records</p><small>Import an approved registration CSV or review Google Form responses.</small></div> : filteredParticipants.length === 0 ? <div className="admin-panel-empty" role="status"><span><Search size={17} aria-hidden="true" /></span><p>No matching participants</p><small>Change the name or status filter to see more records.</small><button type="button" onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</button></div> : <>
-                <div className="admin-directory-table-wrap"><table className="admin-directory-table"><thead><tr><th scope="col">PARTICIPANT</th><th scope="col">REGISTRATION</th><th scope="col">BADGES</th><th scope="col">LAST VERIFIED</th></tr></thead><tbody>{filteredParticipants.map((participant) => <tr key={participant.id}><td><strong>{participant.displayName}</strong></td><td><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></td><td className="admin-badge-count">{participant.verifiedBadgeCount}</td><td>{participant.lastVerifiedAt ? formatDate(participant.lastVerifiedAt) : "Not recorded"}</td></tr>)}</tbody></table></div>
-                <ul className="admin-directory-mobile" aria-label="Participant records">{filteredParticipants.map((participant) => <li key={participant.id}><div><strong>{participant.displayName}</strong><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></div><p>{participant.verifiedBadgeCount} verified badges <span>·</span> {participant.lastVerifiedAt ? `Checked ${formatDate(participant.lastVerifiedAt)}` : "No verification recorded"}</p></li>)}</ul>
+                <div className="admin-directory-table-wrap"><table className="admin-directory-table"><thead><tr><th scope="col">PARTICIPANT</th><th scope="col">REGISTRATION</th><th scope="col">VERIFIED BADGES</th><th scope="col">VERIFICATION STATUS</th></tr></thead><tbody>{filteredParticipants.map((participant) => <tr key={participant.id}><td><strong>{participant.displayName}</strong></td><td><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></td><td className="admin-badge-count">{formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)}</td><td>{participant.lastVerifiedAt ? `Verified ${formatDate(participant.lastVerifiedAt)}` : "Not reviewed"}</td></tr>)}</tbody></table></div>
+                <ul className="admin-directory-mobile" aria-label="Participant records">{filteredParticipants.map((participant) => <li key={participant.id}><div><strong>{participant.displayName}</strong><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></div><p>{participant.lastVerifiedAt ? `${formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)} verified badges · Checked ${formatDate(participant.lastVerifiedAt)}` : "Badge count not reviewed"}</p></li>)}</ul>
                 <p className="admin-directory-result-count">Showing {filteredParticipants.length} of {participants.length} records</p>
               </>}
               <p className="admin-help">Private contact data and internal matching identifiers are not displayed.</p>
@@ -278,24 +285,28 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         </section>
 
         <section id="automatic-progress" className="admin-section" aria-labelledby="automatic-progress-title">
-          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">UNVERIFIED AUTOMATIC SNAPSHOTS</p><h2 id="automatic-progress-title">Automatic progress</h2></div><span className="admin-section-count">Separate from verified counts</span></div>
+          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">UNVERIFIED PROFILE OBSERVATIONS</p><h2 id="automatic-progress-title">Automatic progress</h2></div><span className="admin-section-count">Separate from verified counts</span></div>
           <article className="admin-panel">
-            <div className="admin-panel-heading"><span className="admin-panel-icon green"><RefreshCw size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">ADMIN ACTION</p><h3>Refresh all registered profiles</h3></div></div>
-            <p className="admin-panel-copy">Refresh All uses registered profile URLs and preserves prior snapshots when a profile cannot be fetched or validated. It never changes manually verified badge counts or their audit trail.</p>
-            {latestAutoProgressJob && <div className={`admin-feedback ${latestAutoProgressJob.status === "partial" ? "error" : "success"}`} role="status"><p>Latest durable run · {latestAutoProgressJob.triggerSource} · {latestAutoProgressJob.status}</p><p>{latestAutoProgressJob.saved + latestAutoProgressJob.unchanged + latestAutoProgressJob.failed + latestAutoProgressJob.skipped}/{latestAutoProgressJob.total} processed · {latestAutoProgressJob.fetched} fetched · {latestAutoProgressJob.validated} validated · {latestAutoProgressJob.saved} saved · {latestAutoProgressJob.unchanged} unchanged · {latestAutoProgressJob.failed} failed · {latestAutoProgressJob.skipped} skipped.</p><small>Started {latestAutoProgressJob.startedAt ? formatDate(latestAutoProgressJob.startedAt) : "not started"}{latestAutoProgressJob.completedAt ? ` · completed ${formatDate(latestAutoProgressJob.completedAt)}` : " · still running or awaiting continuation"}{latestAutoProgressJob.errorCategory ? ` · latest failure category: ${latestAutoProgressJob.errorCategory}` : ""}</small></div>}
+            <div className="admin-panel-heading"><span className="admin-panel-icon green"><RefreshCw size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">EXPLICIT ADMIN ACTION</p><h3>Observe all registered profile counts</h3></div></div>
+            <p className="admin-panel-copy">Refresh All reads registered public-profile pages in bounded batches and records only rendered badge-card candidates as unverified observations; it never changes verified counts, verification timestamps, audit history, or ranks. The separate one-profile admin check can record verified zero only after the explicit owner-policy confirmation and only when the response is HTTP 200, identity-matched, structurally complete, and has no badge container or recognized loading, challenge, or access-denied markers. Empty containers and all failures remain unknown.</p>
+            {latestAutoProgressJob && <div className="admin-feedback success" role="status"><p>Separate full-snapshot worker · {latestAutoProgressJob.status}</p><small>This count-only observation action does not update those snapshots.</small></div>}
             <button type="button" className="button-primary" onClick={refreshAll} disabled={!refreshAllAvailable || refreshAllPending} aria-busy={refreshAllPending}>
               {refreshAllPending ? <><LoaderCircle size={16} className="auth-spinner" aria-hidden="true" />Refreshing profiles…</> : <><RefreshCw size={15} aria-hidden="true" />Refresh All</>}
             </button>
-            {!refreshAllAvailable && <p className="admin-help">Live profile retrieval is unavailable and automatic progress is disabled. No profile requests will be made.</p>}
+            {!refreshAllAvailable && refreshAllUnavailableMessage && <p className="admin-help">{refreshAllUnavailableMessage}</p>}
             {refreshAllReply?.message && <p className="admin-help" role="status">{refreshAllReply.message}</p>}
-            {refreshAllReply && typeof refreshAllReply.total === "number" && <p className="admin-help" role="status">Job {refreshAllReply.jobId ? `${refreshAllReply.jobId.slice(0, 8)} · ` : ""}{refreshAllReply.processed ?? 0}/{refreshAllReply.total} processed · {refreshAllReply.fetched ?? 0} responses fetched · {refreshAllReply.validated ?? 0} complete results validated · {refreshAllReply.updated ?? 0} snapshots saved · {refreshAllReply.unchanged ?? 0} unchanged · {refreshAllReply.failed ?? 0} failed · {refreshAllReply.skipped ?? 0} skipped.</p>}
+            {refreshAllReply && typeof refreshAllReply.total === "number" && <p className="admin-help" role="status">Run {refreshAllReply.jobId ? `${refreshAllReply.jobId.slice(0, 8)} · ` : ""}{refreshAllReply.processed ?? 0}/{refreshAllReply.total} processed · {refreshAllReply.observed ?? 0} unverified observations recorded · {refreshAllReply.failed ?? 0} failed · {refreshAllReply.skipped ?? 0} skipped.</p>}
             {refreshAllReply?.results?.some((item) => !["refreshed", "unchanged"].includes(item.status)) && <ul className="admin-help">{refreshAllReply.results.filter((item) => !["refreshed", "unchanged"].includes(item.status)).map((item) => <li key={item.participantId}>{item.participantId}: {item.message}</li>)}</ul>}
           </article>
           <UnverifiedProgressImport />
+          <ProgressObservationForm participants={participants} fetchingEnabled={profileObservationFetchingEnabled} />
+          <ProgressObservationLeaderboard entries={progressObservations} admin />
         </section>
 
         <section id="badge-verification" className="admin-section" aria-labelledby="verification-section-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">AUDITED ADMIN ACTION</p><h2 id="verification-section-title">Badge Verification</h2></div><span className="admin-section-count">Manual review only</span></div>
+          <ClassifiedBadgeCsvImport />
+          <VerifiedBadgeCsvImport />
           <article className="admin-panel admin-verification-panel">
             <div className="admin-panel-heading"><span className="admin-panel-icon green"><BadgeCheck size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">VERIFIED PROGRESS</p><h3>Record badge count</h3></div></div>
             {participants.length === 0 ? <div className="admin-panel-empty"><span><BadgeCheck size={17} aria-hidden="true" /></span><p>No participants to verify yet.</p><small>Add a participant record before recording badge progress.</small></div> : <form action={countAction} className="admin-form admin-verification-form" onSubmit={(event) => {
@@ -306,9 +317,9 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
               if (!window.confirm(`Record ${count} verified badges for ${participantName}? This action is added to the audit history.`)) event.preventDefault();
             }}>
               <label htmlFor="count-participant">Participant</label>
-              <select id="count-participant" name="participantId" required defaultValue="" disabled={countPending}><option value="" disabled>Select a participant</option>{participants.map((participant) => <option key={participant.id} value={participant.id}>{participant.displayName} · current {participant.verifiedBadgeCount}</option>)}</select>
+              <select id="count-participant" name="participantId" required defaultValue="" disabled={countPending}><option value="" disabled>Select a participant</option>{participants.map((participant) => <option key={participant.id} value={participant.id}>{participant.displayName} · {participant.lastVerifiedAt ? `verified ${formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)}` : `not reviewed (stored default ${participant.verifiedBadgeCount})`}</option>)}</select>
               <label htmlFor="verified-count">Verified badge count</label>
-              <input id="verified-count" name="verifiedBadgeCount" type="number" min="0" max="10000" step="1" required disabled={countPending} />
+              <input id="verified-count" name="verifiedBadgeCount" type="number" min="0" max="10000" step="1" required defaultValue="" disabled={countPending} />
               <label htmlFor="verification-note">Verification note</label>
               <textarea id="verification-note" name="verificationNote" minLength={1} maxLength={1000} rows={3} required disabled={countPending} placeholder="Record the approved evidence or review context." />
               <label className="admin-confirm"><input type="checkbox" name="confirmBadgeUpdate" value="confirmed" required disabled={countPending} />I reviewed the evidence and confirm this verified count.</label>

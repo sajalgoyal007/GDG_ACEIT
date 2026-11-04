@@ -1,0 +1,14 @@
+# SYNTHETIC TEST FIXTURE — NOT REAL GOOGLE DATA
+# Format: Various edge cases for robust unit testing
+Learner Name,Public Profile URL,Skill Badges,Arcade Games
+Valid User,https://www.skills.google/public_profiles/11111111-1111-4111-8111-111111111111,10,2
+Empty Count User,https://www.skills.google/public_profiles/22222222-2222-4222-8222-222222222222,,
+Invalid URL User,https://malicious-site.com/public_profiles/33333333-3333-4333-8333-333333333333,5,1
+Non Numeric User,https://www.skills.google/public_profiles/44444444-4444-4444-8444-444444444444,five,two
+Duplicate A,https://www.skills.google/public_profiles/55555555-5555-4555-8555-555555555555,4,1
+Duplicate A Same Count,https://www.skills.google/public_profiles/55555555-5555-4555-8555-555555555555,4,1
+Conflict B,https://www.skills.google/public_profiles/66666666-6666-4666-8666-666666666666,2,0
+Conflict B Different Count,https://www.skills.google/public_profiles/66666666-6666-4666-8666-666666666666,10,5
+Trailing Slash User,https://skills.google/public_profiles/77777777-7777-4777-8777-777777777777/,3,3
+Negative Count User,https://skills.google/public_profiles/88888888-8888-4888-8888-888888888888,-2,1
+

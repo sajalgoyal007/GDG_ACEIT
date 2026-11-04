@@ -2716,13 +2716,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   line-height: 1.6;
 }
 
-.admin-import-guidance > a {
+.admin-import-guidance a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   color: var(--primary-accent-hover) !important;
   font-size: 12px;
   font-weight: 650;
+}
+
+.admin-import-report-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-import-report-links button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
 }
 
 .admin-directory-controls {
@@ -2772,6 +2791,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 .admin-directory-table-wrap {
   overflow-x: auto;
+}
+
+.admin-directory-mobile {
+  display: none;
 }
 
 .admin-directory-table {
@@ -2967,6 +2990,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   color: var(--text-tertiary);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.admin-help-link {
+  border: 0;
+  padding: 0;
+  color: var(--primary-accent);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .admin-feedback {
@@ -4001,6 +4036,15 @@ body { font-size: 15px; }
 .unverified-progress-list li span, .unverified-progress-list li small, .unverified-progress-empty { color: var(--text-tertiary); font-size: 11px; line-height: 1.45; }
 .unverified-progress-list li small { text-align: right; }
 .unverified-progress-empty { margin: 18px 0 0; }
+.progress-observation-list { margin: 0 auto 32px; padding: 24px; border: 1px solid var(--border-subtle); border-radius: 20px; background: var(--bg-surface); }
+.progress-observation-list h2 { margin: 4px 0 6px; color: var(--text-primary); font-size: 21px; letter-spacing: -.03em; }
+.progress-observation-list > div > p:last-child { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 1.55; }
+.progress-observation-list ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; }
+.progress-observation-list li { display: grid; gap: 8px; min-width: 0; padding: 14px 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--bg-surface-subtle); }
+.progress-observation-main, .progress-observation-times { display: grid; gap: 4px; min-width: 0; }
+.progress-observation-main strong { overflow: hidden; color: var(--text-primary); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.progress-observation-main span, .progress-observation-times small, .progress-observation-empty { color: var(--text-tertiary); font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.progress-observation-empty { margin: 18px 0 0; }
 
 @media (max-width: 1080px) {
   .topbar-inner, .site-main { width: calc(100% - 56px); }
@@ -4027,6 +4071,8 @@ body { font-size: 15px; }
   .auto-progress-panel { grid-template-columns: 1fr; gap: 16px; margin-bottom: 26px; padding: 21px; }
   .unverified-progress-list { padding: 20px; }
   .unverified-progress-list ul { grid-template-columns: 1fr; }
+  .progress-observation-list { padding: 20px; }
+  .progress-observation-list ul { grid-template-columns: 1fr; }
   .auto-progress-summary { justify-items: start; text-align: left; }
   .auto-progress-actions { grid-column: auto; align-items: flex-start; }
   .auto-progress-result { grid-column: auto; margin-top: -8px; }

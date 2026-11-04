@@ -31,6 +31,16 @@ export interface PublicParticipant {
   color: string;
   /** The DB initializes this to zero; lastCheckedAt distinguishes that default from a reviewed zero. */
   verifiedBadgeCount: number;
+  /**
+   * Skill Badge count drives the primary leaderboard rank.
+   * null means classification data has not yet been imported for this participant.
+   */
+  skillBadgeCount: number | null;
+  /**
+   * Arcade Game Badge count is displayed separately; it does not affect primary rank.
+   * null means classification data has not yet been imported for this participant.
+   */
+  arcadeGameBadgeCount: number | null;
   profileUrl?: string;
   lastCheckedAt?: string;
   verificationSource?: string;
@@ -42,6 +52,8 @@ export interface LeaderboardSnapshot {
   participants: PublicParticipant[];
   registeredCount: number;
   totalVerifiedBadges: number;
+  totalSkillBadges: number;
+  totalArcadeBadges: number;
   fiveBadgeCount: number;
   tenBadgeCount: number;
   lastSyncedAt: string;
