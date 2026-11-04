@@ -48,3 +48,23 @@ test("parses and normalizes skills.google profile URLs", () => {
     profileUrl: "https://www.skills.google/public_profiles/xyz-999",
   }]);
 });
+
+test("regression: roster importer rejects classified badge CSV and directs to classified importer", () => {
+  const classifiedCsv = "participant_id,skill_badge_count,arcade_game_badge_count,total_badge_count,review_note\n11111111-1111-4111-8111-111111111111,5,2,7,Reviewed evidence";
+  const result = parseParticipantCsv(classifiedCsv);
+  assert.equal(result.rows.length, 0);
+  assert.equal(result.issues.length, 1);
+  assert.equal(result.issues[0]?.kind, "invalid");
+  assert.match(result.issues[0]!.message, /classified badge-count CSV/);
+  assert.match(result.issues[0]!.message, /Bulk import Skill & Arcade badge counts/);
+});
+
+test("regression: roster importer rejects verified badge CSV and directs to badge verification importer", () => {
+  const verifiedCsv = "participant_id,verified_badge_count,review_note\n11111111-1111-4111-8111-111111111111,7,Reviewed evidence";
+  const result = parseParticipantCsv(verifiedCsv);
+  assert.equal(result.rows.length, 0);
+  assert.equal(result.issues.length, 1);
+  assert.equal(result.issues[0]?.kind, "invalid");
+  assert.match(result.issues[0]!.message, /verified badge-count CSV/);
+  assert.match(result.issues[0]!.message, /Bulk verify badge counts/);
+});

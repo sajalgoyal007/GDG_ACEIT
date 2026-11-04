@@ -108,6 +108,26 @@ export function parseParticipantCsv(source: string): ParticipantCsvResult {
   const header = records[0].values.map((value) => value.trim().toLowerCase());
   const headerIsValid = header.length === REQUIRED_HEADERS.length && REQUIRED_HEADERS.every((name) => header.includes(name)) && new Set(header).size === header.length;
   if (!headerIsValid) {
+    if (header.includes("skill_badge_count") || header.includes("arcade_game_badge_count") || header.includes("total_badge_count")) {
+      return {
+        rows: [],
+        issues: [{
+          rowNumber: records[0].rowNumber,
+          kind: "invalid",
+          message: "This file is a classified badge-count CSV. Please upload it in the 'Badge Verification' section under 'Bulk import Skill & Arcade badge counts', not in the participant roster importer.",
+        }],
+      };
+    }
+    if (header.includes("verified_badge_count")) {
+      return {
+        rows: [],
+        issues: [{
+          rowNumber: records[0].rowNumber,
+          kind: "invalid",
+          message: "This file is a verified badge-count CSV. Please upload it in the 'Badge Verification' section under 'Bulk verify badge counts', not in the participant roster importer.",
+        }],
+      };
+    }
     return { rows: [], issues: [{ rowNumber: records[0].rowNumber, kind: "invalid", message: `Header must contain exactly: ${REQUIRED_HEADERS.join(", ")}.` }] };
   }
 

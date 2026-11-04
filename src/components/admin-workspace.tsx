@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, ArrowDownToLine, ArrowLeft, BadgeCheck, ChevronRight, CircleHelp, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, Medal, RefreshCw, Search, ShieldCheck, Users, Menu, X } from "lucide-react";
+import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronRight, CircleHelp, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, Medal, RefreshCw, Search, ShieldCheck, Users, Menu, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { importParticipantsAction, setVerifiedBadgeCountAction, signOutAdmin } from "@/app/admin/actions";
 import { initialAdminActionState } from "@/app/admin/action-state";
@@ -63,6 +63,7 @@ const sidebarItems = [
   { href: "#participants", label: "Participants", icon: Users },
   { href: "#google-form-sync", label: "Google Form Sync", icon: Database },
   { href: "#automatic-progress", label: "Automatic Progress", icon: RefreshCw },
+  { href: "#classified-badge-import", label: "Classified Badges", icon: Award },
   { href: "#badge-verification", label: "Badge Verification", icon: BadgeCheck },
   { href: "#audit-history", label: "Audit History", icon: ClipboardList },
 ];
@@ -248,16 +249,16 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         <section id="participants" className="admin-section" aria-labelledby="participants-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">REGISTRATION</p><h2 id="participants-title">Participants</h2></div><span className="admin-section-count">{participants.length} records</span></div>
           <div className="admin-participant-tools">
-            <article className="admin-panel admin-import-panel">
-              <div className="admin-panel-heading"><span className="admin-panel-icon"><FileUp size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">CSV WORKFLOW</p><h3>Import participants</h3></div></div>
-              <div className="admin-import-guidance"><strong>Required columns</strong><code>participant_key, display_name, profile_url</code><p>Use an approved stable identifier. Email addresses are not accepted in this template.</p><a href="/participants-import-template.csv" download>Download CSV template <ArrowDownToLine size={13} aria-hidden="true" /></a></div>
+            <article className="admin-panel admin-import-panel" id="roster-import">
+              <div className="admin-panel-heading"><span className="admin-panel-icon"><FileUp size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">PARTICIPANT REGISTRATION ONLY</p><h3>Register participants</h3></div></div>
+              <div className="admin-import-guidance"><strong>Roster columns (NOT for badge counts)</strong><code>participant_key, display_name, profile_url</code><p>Registers new participant accounts only. To import badge counts (Skill &amp; Arcade), use the <a href="#classified-badge-import"><strong>Classified Badges</strong></a> section below.</p><a href="/participants-import-template.csv" download>Download roster template <ArrowDownToLine size={13} aria-hidden="true" /></a></div>
               <form action={importAction} className="admin-form" onSubmit={(event) => {
                 if (!window.confirm("Import valid participant rows from this CSV? Existing records and verified badge counts will remain unchanged.")) event.preventDefault();
               }}>
-                <label htmlFor="participants-csv">Select participant CSV</label>
+                <label htmlFor="participants-csv">Select participant roster CSV</label>
                 <input id="participants-csv" type="file" name="participantsCsv" accept=".csv,text/csv" required disabled={importPending} />
                 <label className="admin-confirm"><input type="checkbox" name="confirmImport" value="confirmed" required disabled={importPending} />I reviewed this CSV and confirm the import.</label>
-                <button type="submit" disabled={importPending}>{importPending ? "Validating and importing…" : "Validate and import CSV"}</button>
+                <button type="submit" disabled={importPending}>{importPending ? "Validating and importing…" : "Validate and import roster CSV"}</button>
               </form>
               <p className="admin-help">Duplicates and invalid rows are reported. Existing badge counts are preserved.</p>
               <ActionFeedback state={importState} />

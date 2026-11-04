@@ -53,27 +53,27 @@ export function ClassifiedBadgeCsvImport() {
   ];
 
   return (
-    <article className="admin-panel admin-import-panel">
+    <article className="admin-panel admin-import-panel" id="classified-badge-import">
       <div className="admin-panel-heading">
         <span className="admin-panel-icon blue">
           <Award size={16} aria-hidden="true" />
         </span>
         <div>
-          <p className="admin-panel-eyebrow">CLASSIFIED BADGE COUNTS</p>
+          <p className="admin-panel-eyebrow">OFFICIAL SKILL &amp; ARCADE BADGE IMPORT</p>
           <h3>Bulk import Skill &amp; Arcade badge counts</h3>
         </div>
       </div>
       <div className="admin-import-guidance">
-        <strong>Required columns</strong>
+        <strong>Required columns (data/classified-badge-import.csv)</strong>
         <code>participant_id,skill_badge_count,arcade_game_badge_count,total_badge_count,review_note</code>
         <p>
-          Enforces the sum invariant: <code>skill_badge_count + arcade_game_badge_count = total_badge_count</code>.
+          Upload <code>data/classified-badge-import.csv</code> here. Enforces the sum invariant: <code>skill_badge_count + arcade_game_badge_count = total_badge_count</code>.
           Zeroes are permitted when genuinely verified. Unknown badges must be resolved prior to import.
           Skill badge count determines official leaderboard ranking.
         </p>
       </div>
       <form action={previewAction} className="admin-form" onSubmit={() => setAppliedForPreview(false)}>
-        <label htmlFor="classified-badge-csv">Select classified badge CSV</label>
+        <label htmlFor="classified-badge-csv">Select classified badge CSV (data/classified-badge-import.csv)</label>
         <input
           id="classified-badge-csv"
           type="file"
