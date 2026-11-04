@@ -38,14 +38,24 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
   name: "Supabase public projection",
   async getPublicSnapshot(): Promise<LeaderboardSnapshot> {
     const supabase = createSupabasePublicClient();
-    const [participantsResult, summaryResult] = await Promise.all([
-      supabase.from("participants")
+    // Backward-compatibility: if the classified badge migration has not yet been applied to the database,
+    // gracefully fall back to selecting the base verified columns instead of failing the public homepage.
+    // Both queries cast through unknown so TypeScript does not enforce the full column shape on the fallback.
+    let participantsResult: { data: unknown; error: { code?: string; message?: string } | null } =
+      await supabase.from("participants")
         .select("id,display_name,profile_url,verified_badge_count,skill_badge_count,arcade_game_badge_count,last_verified_at,verification_source")
         .order("skill_badge_count", { ascending: false, nullsFirst: false })
         .order("verified_badge_count", { ascending: false })
-        .order("id", { ascending: true }),
-      supabase.rpc("get_public_summary"),
-    ]);
+        .order("id", { ascending: true });
+
+    if (participantsResult.error && (participantsResult.error.code === "42703" || participantsResult.error.message?.includes("skill_badge_count"))) {
+      participantsResult = await supabase.from("participants")
+        .select("id,display_name,profile_url,verified_badge_count,last_verified_at,verification_source")
+        .order("verified_badge_count", { ascending: false })
+        .order("id", { ascending: true });
+    }
+
+    const summaryResult = await supabase.rpc("get_public_summary");
 
     if (participantsResult.error || summaryResult.error || !summaryResult.data) {
       throw new Error("The Supabase leaderboard could not be loaded. Check the migration and database connection.");

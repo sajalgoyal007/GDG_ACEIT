@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronRight, CircleHelp, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, Medal, RefreshCw, Search, ShieldCheck, Users, Menu, X } from "lucide-react";
+import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronDown, ChevronRight, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, RefreshCw, Search, ShieldCheck, Users, Menu, X, Gamepad2, Layers } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { importParticipantsAction, setVerifiedBadgeCountAction, signOutAdmin } from "@/app/admin/actions";
 import { initialAdminActionState } from "@/app/admin/action-state";
@@ -58,14 +58,19 @@ type RefreshAllReply = {
   results?: { participantId: string; status: string; message: string }[];
 };
 
-const sidebarItems = [
+// Primary sidebar items — always visible
+const primarySidebarItems = [
   { href: "#overview", label: "Overview", icon: LayoutDashboard },
+  { href: "#classified-badge-import", label: "Badge Import", icon: Award },
   { href: "#participants", label: "Participants", icon: Users },
+  { href: "#audit-history", label: "Audit History", icon: ClipboardList },
+];
+
+// Advanced tools — collapsed by default
+const advancedSidebarItems = [
   { href: "#google-form-sync", label: "Google Form Sync", icon: Database },
   { href: "#automatic-progress", label: "Automatic Progress", icon: RefreshCw },
-  { href: "#classified-badge-import", label: "Classified Badges", icon: Award },
   { href: "#badge-verification", label: "Badge Verification", icon: BadgeCheck },
-  { href: "#audit-history", label: "Audit History", icon: ClipboardList },
 ];
 
 function formatDate(value: string) {
@@ -101,6 +106,7 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
   const [filter, setFilter] = useState<ParticipantFilter>("all");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [refreshAllPending, setRefreshAllPending] = useState(false);
   const [refreshAllReply, setRefreshAllReply] = useState<RefreshAllReply | null>(null);
   const refreshAllInFlight = useRef(false);
@@ -143,8 +149,13 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
     return () => { window.removeEventListener("keydown", closeOnEscape); menuButton?.focus(); };
   }, [mobileNavOpen]);
 
+  const allSidebarItems = useMemo(
+    () => [...primarySidebarItems, ...advancedSidebarItems],
+    [],
+  );
+
   useEffect(() => {
-    const sections = sidebarItems.map(({ href }) => document.getElementById(href.slice(1))).filter((section): section is HTMLElement => section instanceof HTMLElement);
+    const sections = allSidebarItems.map(({ href }) => document.getElementById(href.slice(1))).filter((section): section is HTMLElement => section instanceof HTMLElement);
     if (!("IntersectionObserver" in window) || sections.length === 0) return;
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -152,29 +163,27 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
     }, { rootMargin: "-12% 0px -68% 0px", threshold: [0, 0.2, 0.5, 0.8] });
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, []);
+  }, [allSidebarItems]);
 
-  const { registeredCount, verifiedBadges, fiveBadgeCount, tenBadgeCount, pendingRegistrations } = useMemo(() => {
+  const { registeredCount, totalSkillBadges, totalArcadeBadges, totalBadges, pendingRegistrations } = useMemo(() => {
     let regCount = 0;
-    let badges = 0;
-    let fiveCount = 0;
-    let tenCount = 0;
+    const skillTotal = 0;
+    const arcadeTotal = 0;
+    let badgeTotal = 0;
     for (const p of participants) {
       if (p.registrationStatus === "registered") {
         regCount += 1;
         const reviewedCount = getReviewedBadgeCount(p.verifiedBadgeCount, p.lastVerifiedAt);
         if (reviewedCount !== null) {
-          badges += reviewedCount;
-          if (reviewedCount >= 5) fiveCount += 1;
-          if (reviewedCount >= 10) tenCount += 1;
+          badgeTotal += reviewedCount;
         }
       }
     }
     return {
       registeredCount: regCount,
-      verifiedBadges: badges,
-      fiveBadgeCount: fiveCount,
-      tenBadgeCount: tenCount,
+      totalSkillBadges: skillTotal,
+      totalArcadeBadges: arcadeTotal,
+      totalBadges: badgeTotal,
       pendingRegistrations: participants.length - regCount,
     };
   }, [participants]);
@@ -190,13 +199,14 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
 
   const activities = useMemo(() => participants.flatMap((participant) => participant.audit.map((event) => ({ ...event, participantName: participant.displayName })))
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)), [participants]);
-  const latestSyncActivity = activities.find((event) => event.source === "google_sheets_sync");
-  const metrics: { Icon: LucideIcon; tone: string; label: string; value: number; note: string }[] = [
-    { Icon: Users, tone: "blue", label: "REGISTERED PARTICIPANTS", value: registeredCount, note: `${pendingRegistrations} pending` },
-    { Icon: BadgeCheck, tone: "green", label: "VERIFIED BADGES", value: verifiedBadges, note: "Recorded progress" },
-    { Icon: Medal, tone: "amber", label: "5+ BADGE MILESTONE", value: fiveBadgeCount, note: "Registered learners" },
-    { Icon: Activity, tone: "violet", label: "10+ BADGE MILESTONE", value: tenBadgeCount, note: "Registered learners" },
+
+  const overviewMetrics: { Icon: LucideIcon; tone: string; label: string; value: number; note: string }[] = [
+    { Icon: Users, tone: "blue", label: "REGISTERED", value: registeredCount, note: `${pendingRegistrations} pending` },
+    { Icon: Award, tone: "green", label: "SKILL BADGES", value: totalSkillBadges, note: "After migration applied" },
+    { Icon: Gamepad2, tone: "amber", label: "ARCADE BADGES", value: totalArcadeBadges, note: "After migration applied" },
+    { Icon: Layers, tone: "violet", label: "TOTAL BADGES", value: totalBadges, note: "Recorded progress" },
   ];
+
   return <div className="admin-app dark-community">
     <header className="admin-app-topbar">
       <Link className="admin-brand" href="/" aria-label="GDG On Campus ACEIT public leaderboard">
@@ -214,7 +224,18 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
       <aside id="admin-workspace-navigation" className={`admin-sidebar${mobileNavOpen ? " is-open" : ""}`} aria-label="Administrator dashboard navigation">
         <p className="admin-sidebar-label">WORKSPACE</p>
         <nav className="admin-sidebar-nav">
-          {sidebarItems.map(({ href, label, icon: Icon }) => <a key={href} href={href} onClick={() => setMobileNavOpen(false)} aria-current={activeSection === href.slice(1) ? "location" : undefined}><Icon size={16} aria-hidden="true" /><span>{label}</span><ChevronRight size={13} aria-hidden="true" />{activeSection === href.slice(1) && <motion.i layoutId="admin-nav-active" className="admin-nav-indicator" transition={{ duration: reduceMotion ? 0 : .2 }} />}</a>)}
+          {primarySidebarItems.map(({ href, label, icon: Icon }) => <a key={href} href={href} onClick={() => setMobileNavOpen(false)} aria-current={activeSection === href.slice(1) ? "location" : undefined}><Icon size={16} aria-hidden="true" /><span>{label}</span><ChevronRight size={13} aria-hidden="true" />{activeSection === href.slice(1) && <motion.i layoutId="admin-nav-active" className="admin-nav-indicator" transition={{ duration: reduceMotion ? 0 : .2 }} />}</a>)}
+          <button
+            type="button"
+            className="admin-sidebar-advanced-toggle"
+            aria-expanded={advancedOpen}
+            onClick={() => setAdvancedOpen((open) => !open)}
+          >
+            <Activity size={16} aria-hidden="true" />
+            <span>Advanced Tools</span>
+            <ChevronDown size={13} aria-hidden="true" className={advancedOpen ? "rotate-180" : ""} style={{ transition: "transform .18s", transform: advancedOpen ? "rotate(180deg)" : "rotate(0deg)" }} />
+          </button>
+          {advancedOpen && advancedSidebarItems.map(({ href, label, icon: Icon }) => <a key={href} href={href} onClick={() => setMobileNavOpen(false)} aria-current={activeSection === href.slice(1) ? "location" : undefined} className="admin-sidebar-advanced-item"><Icon size={15} aria-hidden="true" /><span>{label}</span><ChevronRight size={12} aria-hidden="true" />{activeSection === href.slice(1) && <motion.i layoutId="admin-nav-active" className="admin-nav-indicator" transition={{ duration: reduceMotion ? 0 : .2 }} />}</a>)}
         </nav>
         <div className="admin-sidebar-bottom">
           <div className="admin-sidebar-security"><ShieldCheck size={15} aria-hidden="true" /><span>Supabase Auth<br /><small>Role checked per request</small></span></div>
@@ -224,46 +245,37 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
 
       <main className="admin-main">
         <header className="admin-main-header" id="overview">
-          <div><p className="admin-main-kicker"><span />COMMUNITY OPERATIONS <span className="admin-kicker-slash">/</span> ACEIT</p><h1>Admin workspace.</h1><p>Manage participant records, review registration syncs, and record badge verification.</p></div>
+          <div><p className="admin-main-kicker"><span />COMMUNITY OPERATIONS <span className="admin-kicker-slash">/</span> ACEIT</p><h1>Badge Management.</h1><p>Import classified badge data, manage participants, and review audit history.</p></div>
           <div className="admin-header-health"><ShieldCheck size={16} aria-hidden="true" /><span><strong>Access verified</strong><small>Authenticated admin session</small></span></div>
         </header>
 
-        <section className="admin-stat-grid" aria-label="Community overview statistics">
-          {metrics.map(({ Icon, tone, label, value, note }, index) => <motion.article key={label} className="admin-stat-card" initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .3, delay: reduceMotion ? 0 : index * .055 }}><span className={`admin-stat-icon ${tone}`}><Icon size={17} aria-hidden="true" /></span><span className="admin-stat-copy"><small>{label}</small><strong>{value.toLocaleString("en-IN")}</strong></span><span className="admin-stat-note">{note}</span></motion.article>)}
+        {/* Compact overview stats */}
+        <section className="admin-stat-grid" aria-label="Community badge overview">
+          {overviewMetrics.map(({ Icon, tone, label, value, note }, index) => <motion.article key={label} className="admin-stat-card" initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .3, delay: reduceMotion ? 0 : index * .055 }}><span className={`admin-stat-icon ${tone}`}><Icon size={17} aria-hidden="true" /></span><span className="admin-stat-copy"><small>{label}</small><strong>{value.toLocaleString("en-IN")}</strong></span><span className="admin-stat-note">{note}</span></motion.article>)}
         </section>
 
-        <section className="admin-overview-grid" aria-label="Sync status and recent activity">
-          <article className="admin-panel admin-sync-status-panel">
-            <div className="admin-panel-heading"><span className="admin-panel-icon"><Database size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">REGISTRATION SOURCE</p><h2>Google Form sync</h2></div><span className="admin-status-pill"><span />Manual</span></div>
-            <p className="admin-panel-copy">Sheets are read only. Review a fresh preview before approving any participant changes.</p>
-            <div className="admin-sync-meta"><span>Scheduling</span><strong>Not configured</strong></div>
-            <div className="admin-sync-meta"><span>Last recorded sync activity</span><strong>{latestSyncActivity ? formatDate(latestSyncActivity.createdAt) : "No sync activity recorded"}</strong></div>
-            <a className="admin-inline-link" href="#google-form-sync">Open sync review <ChevronRight size={14} aria-hidden="true" /></a>
-          </article>
-          <article className="admin-panel admin-recent-panel">
-            <div className="admin-panel-heading"><span className="admin-panel-icon green"><Activity size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">RECENT RECORDS</p><h2>Recent activity</h2></div><a className="admin-panel-viewall" href="#audit-history">View audit <ArrowDownToLine size={13} aria-hidden="true" /></a></div>
-            {activities.length === 0 ? <div className="admin-panel-empty"><span><CircleHelp size={17} aria-hidden="true" /></span><p>No audit activity yet.</p><small>Recorded imports and verification updates will appear here.</small></div> : <ul className="admin-activity-list">{activities.slice(0, 4).map((event) => <li key={event.id}><span className="admin-activity-dot" /><span className="admin-activity-copy"><strong>{eventTitle(event.eventType)}</strong><small>{event.participantName} · {sourceTitle(event.source)}</small></span><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ul>}
-          </article>
+        {/* ═══════════════════════════════════════════════════════════════
+            CLASSIFIED BADGE DATA IMPORT — Primary admin action
+            ═══════════════════════════════════════════════════════════════ */}
+        <section id="classified-badge-import" className="admin-section" aria-labelledby="classified-import-title">
+          <div className="admin-section-heading">
+            <div>
+              <p className="admin-panel-eyebrow">CLASSIFIED BADGE DATA IMPORT</p>
+              <h2 id="classified-import-title">Import Skill &amp; Arcade Badge Counts</h2>
+            </div>
+            <span className="admin-section-count">114 participants · 123 Skill + 11 Arcade</span>
+          </div>
+          <div className="admin-feedback success" role="note" style={{ marginBottom: "1rem" }}>
+            <p><strong>✅ Upload this file:</strong> <code>data/classified-badge-import.csv</code></p>
+            <p style={{ marginTop: ".35rem", fontSize: ".85em" }}>Required headers: <code>participant_id,skill_badge_count,arcade_game_badge_count,total_badge_count,review_note</code></p>
+          </div>
+          <ClassifiedBadgeCsvImport />
         </section>
 
+        {/* Participants */}
         <section id="participants" className="admin-section" aria-labelledby="participants-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">REGISTRATION</p><h2 id="participants-title">Participants</h2></div><span className="admin-section-count">{participants.length} records</span></div>
           <div className="admin-participant-tools">
-            <article className="admin-panel admin-import-panel" id="roster-import">
-              <div className="admin-panel-heading"><span className="admin-panel-icon"><FileUp size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">PARTICIPANT REGISTRATION ONLY</p><h3>Register participants</h3></div></div>
-              <div className="admin-import-guidance"><strong>Roster columns (NOT for badge counts)</strong><code>participant_key, display_name, profile_url</code><p>Registers new participant accounts only. To import badge counts (Skill &amp; Arcade), use the <a href="#classified-badge-import"><strong>Classified Badges</strong></a> section below.</p><a href="/participants-import-template.csv" download>Download roster template <ArrowDownToLine size={13} aria-hidden="true" /></a></div>
-              <form action={importAction} className="admin-form" onSubmit={(event) => {
-                if (!window.confirm("Import valid participant rows from this CSV? Existing records and verified badge counts will remain unchanged.")) event.preventDefault();
-              }}>
-                <label htmlFor="participants-csv">Select participant roster CSV</label>
-                <input id="participants-csv" type="file" name="participantsCsv" accept=".csv,text/csv" required disabled={importPending} />
-                <label className="admin-confirm"><input type="checkbox" name="confirmImport" value="confirmed" required disabled={importPending} />I reviewed this CSV and confirm the import.</label>
-                <button type="submit" disabled={importPending}>{importPending ? "Validating and importing…" : "Validate and import roster CSV"}</button>
-              </form>
-              <p className="admin-help">Duplicates and invalid rows are reported. Existing badge counts are preserved.</p>
-              <ActionFeedback state={importState} />
-            </article>
-
             <article className="admin-panel admin-people-panel">
               <div className="admin-panel-heading"><span className="admin-panel-icon"><Users size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">DIRECTORY</p><h3>Participant records</h3></div></div>
               <div className="admin-directory-controls">
@@ -280,6 +292,17 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
           </div>
         </section>
 
+        {/* Audit History */}
+        <section id="audit-history" className="admin-section" aria-labelledby="audit-section-title">
+          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">RECORD OF CHANGES</p><h2 id="audit-section-title">Audit History</h2></div><span className="admin-section-count">{activities.length} events</span></div>
+          <article className="admin-panel admin-audit-panel">
+            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, and badge verification updates will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Database size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
+          </article>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            ADVANCED TOOLS — collapsed by default
+            ═══════════════════════════════════════════════════════════════ */}
         <section id="google-form-sync" className="admin-section" aria-labelledby="sync-section-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">READ ONLY SOURCE · MANUAL REVIEW</p><h2 id="sync-section-title">Google Form Sync</h2></div><span className="admin-section-count">Preview before applying</span></div>
           <GoogleFormSync />
@@ -305,8 +328,28 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         </section>
 
         <section id="badge-verification" className="admin-section" aria-labelledby="verification-section-title">
-          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">AUDITED ADMIN ACTION</p><h2 id="verification-section-title">Badge Verification</h2></div><span className="admin-section-count">Manual review only</span></div>
-          <ClassifiedBadgeCsvImport />
+          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">ADVANCED · AUDITED ADMIN ACTION</p><h2 id="verification-section-title">Badge Verification</h2></div><span className="admin-section-count">Manual review only</span></div>
+
+          {/* Participant Roster CSV Import — moved here as advanced tool with explicit warning */}
+          <article className="admin-panel admin-import-panel" id="roster-import">
+            <div className="admin-panel-heading"><span className="admin-panel-icon"><FileUp size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">PARTICIPANT REGISTRATION ONLY</p><h3>Register participants</h3></div></div>
+            <div className="admin-feedback" role="note" style={{ marginBottom: "1rem", borderColor: "var(--color-amber, #d97706)", background: "color-mix(in srgb, var(--color-amber, #d97706) 8%, transparent)" }}>
+              <p><strong>⚠ DO NOT UPLOAD BADGE COUNT FILES HERE.</strong> This importer accepts only registration roster CSVs.</p>
+              <p style={{ marginTop: ".35rem", fontSize: ".85em" }}>Required headers: <code>participant_key, display_name, profile_url</code> — to import badge counts use the <a href="#classified-badge-import"><strong>Classified Badge Import</strong></a> section above.</p>
+            </div>
+            <div className="admin-import-guidance"><strong>Roster columns (NOT for badge counts)</strong><code>participant_key, display_name, profile_url</code><a href="/participants-import-template.csv" download>Download roster template <ArrowDownToLine size={13} aria-hidden="true" /></a></div>
+            <form action={importAction} className="admin-form" onSubmit={(event) => {
+              if (!window.confirm("Import valid participant rows from this CSV? Existing records and verified badge counts will remain unchanged.")) event.preventDefault();
+            }}>
+              <label htmlFor="participants-csv">Select participant roster CSV</label>
+              <input id="participants-csv" type="file" name="participantsCsv" accept=".csv,text/csv" required disabled={importPending} />
+              <label className="admin-confirm"><input type="checkbox" name="confirmImport" value="confirmed" required disabled={importPending} />I reviewed this CSV and confirm the import.</label>
+              <button type="submit" disabled={importPending}>{importPending ? "Validating and importing…" : "Validate and import roster CSV"}</button>
+            </form>
+            <p className="admin-help">Duplicates and invalid rows are reported. Existing badge counts are preserved.</p>
+            <ActionFeedback state={importState} />
+          </article>
+
           <VerifiedBadgeCsvImport />
           <article className="admin-panel admin-verification-panel">
             <div className="admin-panel-heading"><span className="admin-panel-icon green"><BadgeCheck size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">VERIFIED PROGRESS</p><h3>Record badge count</h3></div></div>
@@ -331,12 +374,6 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
           </article>
         </section>
 
-        <section id="audit-history" className="admin-section" aria-labelledby="audit-section-title">
-          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">RECORD OF CHANGES</p><h2 id="audit-section-title">Audit History</h2></div><span className="admin-section-count">{activities.length} events</span></div>
-          <article className="admin-panel admin-audit-panel">
-            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, and badge verification updates will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Database size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
-          </article>
-        </section>
         <footer className="admin-footer"><span>GDG On Campus ACEIT · Learn with Communities 2026</span><span>Admin actions are authenticated and audited.</span></footer>
       </main>
     </div>
