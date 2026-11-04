@@ -100,3 +100,20 @@
 - [ ] Confirm leaderboard table loads with columns: `RANK | PARTICIPANT | SKILL BADGES | ARCADE BADGES | TOTAL | PROGRESS | STATUS`.
 - [ ] Confirm that learners are ranked by Skill Badge count (with total badges as tiebreaker).
 - [ ] Test mobile view and dialog popup to verify responsive layout and category breakdown.
+
+
+---
+
+## 5. Production Admin Server Components Render Fix (Digest 2386694273)
+
+### Incident & Diagnosis
+- **Symptom:** In production, visiting `/admin` while authenticated resulted in:
+  `"An error occurred in the Server Components render. The specific message is omitted in production builds."` with diagnostic digest `2386694273`.
+- **Root Cause Investigation:**
+  1. In `src/app/admin/page.tsx`, `Promise.all` called `authorization.client.rpc("admin_get_latest_auto_progress_job")` without `.catch()`. When the RPC was missing or rejected in the database, the unhandled promise rejection crashed the Server Component render.
+  2. In `src/lib/supabase/admin-data.ts`, `getAdminParticipants()` executed both `participants` and `participant_audit_events` queries, failing the entire operation if `auditResult.error` was truthy (`if (participantsResult.error || auditResult.error)`). Audit log query issues crashed the entire workspace even when participant records were fully loadable.
+- **Resolution:**
+  1. Handled `authorization.client.rpc("admin_get_latest_auto_progress_job")` with `.catch((error: unknown) => ({ data: null, error }))` and guarded `latestAutoProgressJob` parsing.
+  2. Separated mandatory participant data failures (`if (participantsResult.error) throw ...`) from non-fatal audit history loading, ensuring audit failures default safely to `[]` without crashing the admin workspace.
+  3. Extracted `buildAdminParticipantRows` into `src/lib/supabase/admin-data-helper.ts` and added regression tests in `src/lib/supabase/admin-data.test.ts`.
+  4. Full test suite: 208 Node tests and 76 Python tests passing. Production build succeeded.

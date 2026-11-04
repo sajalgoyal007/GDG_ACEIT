@@ -27,10 +27,14 @@ export default async function AdminPage() {
 
   const [rows, jobStatusResult, progressObservations] = await Promise.all([
     getAdminParticipants(),
-    authorization.client.rpc("admin_get_latest_auto_progress_job"),
+    Promise.resolve(authorization.client.rpc("admin_get_latest_auto_progress_job"))
+      .catch((error: unknown) => ({ data: null, error })),
     getProgressObservationSummaries().catch(() => []),
   ]);
-  const latestAutoProgressJob = jobStatusResult.error ? null : parseAdminAutoProgressJob(jobStatusResult.data);
+  const latestAutoProgressJob =
+    jobStatusResult && !jobStatusResult.error && jobStatusResult.data
+      ? parseAdminAutoProgressJob(jobStatusResult.data)
+      : null;
   const participants = rows.map((row) => ({
     id: row.id,
     participantKey: row.participant_key,
@@ -39,7 +43,7 @@ export default async function AdminPage() {
     registrationStatus: row.registration_status,
     verifiedBadgeCount: row.verified_badge_count,
     lastVerifiedAt: row.last_verified_at,
-    audit: row.audit,
+    audit: row.audit ?? [],
   }));
   const observationEnabled = isAutoProgressEnabled();
   const workerConfigured = isWorkerKeyConfigured(process.env.SUPABASE_SERVICE_ROLE_KEY);
