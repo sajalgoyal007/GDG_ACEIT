@@ -89,3 +89,4 @@ test("buildAdminParticipantRows handles empty participant list", () => {
   const rows = buildAdminParticipantRows([], mockAuditEvents);
   assert.deepEqual(rows, []);
 });
+

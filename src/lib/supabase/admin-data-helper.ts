@@ -64,3 +64,4 @@ export function buildAdminParticipantRows(
     audit: auditByParticipant.get(participant.id) ?? [],
   }));
 }
+
