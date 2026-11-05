@@ -48,7 +48,7 @@ export function AdminUpdatePasswordForm() {
     <div className="admin-auth-brand"><span className="auth-icon"><ShieldCheck size={20} aria-hidden="true" /></span><span><strong>GDG On Campus ACEIT</strong><small>ACCOUNT RECOVERY</small></span></div>
     <p className="auth-eyebrow">LEARN WITH COMMUNITIES 2026</p>
     <h1 id="update-password-title">Choose a new password.</h1>
-    <p className="auth-description">This updates the password for the Supabase account that opened the reset link. It does not grant administrator access.</p>
+    <p className="auth-description">This updates the password for the account that opened the reset link. It does not grant administrator access without authorization.</p>
     <form onSubmit={handleSubmit} className="auth-form admin-auth-form">
       <label htmlFor="new-admin-password">New password</label>
       <div className="auth-password-wrap"><input id="new-admin-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={12} maxLength={1024} required disabled={pending} /><button className="auth-password-toggle" type="button" aria-label={showPassword ? "Hide new password" : "Show new password"} aria-pressed={showPassword} onClick={() => setShowPassword((visible) => !visible)} disabled={pending}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>

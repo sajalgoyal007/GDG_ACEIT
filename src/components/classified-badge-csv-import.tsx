@@ -173,7 +173,7 @@ export function ClassifiedBadgeCsvImport() {
             </button>
           </form>
           <p className="admin-help">
-            The database locks participants in a stable UUID order, updates total verified counts and category breakdowns in a single transaction, and records audit trail events.
+            Updates total verified counts and category breakdowns in a single transaction and records audit trail events.
           </p>
         </>
       )}

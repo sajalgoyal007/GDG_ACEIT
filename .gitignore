@@ -38,6 +38,9 @@ out/
 /data/reviewed-badge-counts-validated.csv
 /data/reviewed-badge-counts.csv
 /data/verified-badge-import-admin.csv
+/data/current-production-roster.csv
+*.bak
+*.xlsx
 
 # Environment files & secrets
 .env*

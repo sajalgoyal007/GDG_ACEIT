@@ -1,0 +1,49 @@
+{
+  "validation_status": "passed",
+  "total_rows": 112,
+  "total_skill_badges": 123,
+  "total_arcade_game_badges": 11,
+  "total_badges": 134,
+  "zero_badge_participants": 88,
+  "nonzero_badge_participants": 24,
+  "invariants": {
+    "all_ids_unique": true,
+    "row_sums_match": true,
+    "total_skill_is_123": true,
+    "total_arcade_is_11": true,
+    "total_badges_is_134": true,
+    "all_participants_in_production_roster": true
+  },
+  "excluded_participants_absent_from_production_roster": [
+    {
+      "excel_row": 126,
+      "participant_name": "ABHINANDAN JAIN",
+      "profile_url": "https://www.skills.google/public_profiles/c8f32095-a494-4115-95a8-c55606a0a8c0",
+      "slug": "c8f32095-a494-4115-95a8-c55606a0a8c0",
+      "in_classification_dataset": true,
+      "classified_skill_badges": 0,
+      "classified_arcade_badges": 0,
+      "classified_total_badges": 0
+    },
+    {
+      "excel_row": 127,
+      "participant_name": "Nishant",
+      "profile_url": "https://www.skills.google/public_profiles/bafe8c95-96f2-46c2-9e66-8e7100789a13",
+      "slug": "bafe8c95-96f2-46c2-9e66-8e7100789a13",
+      "in_classification_dataset": true,
+      "classified_skill_badges": 0,
+      "classified_arcade_badges": 0,
+      "classified_total_badges": 0
+    },
+    {
+      "excel_row": 129,
+      "participant_name": "Navya shah",
+      "profile_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+      "slug": "8cca2507-a840-4eba-936d-5146c0eeba17",
+      "in_classification_dataset": false,
+      "classified_skill_badges": null,
+      "classified_arcade_badges": null,
+      "classified_total_badges": null
+    }
+  ]
+}

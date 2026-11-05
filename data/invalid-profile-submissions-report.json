@@ -1,0 +1,98 @@
+{
+  "report_title": "Invalid Profile Submissions Report",
+  "total_invalid_submissions": 13,
+  "policy": "No emails or phone numbers exposed; submissions kept for manual review and profile correction",
+  "submissions": [
+    {
+      "excel_row": 2,
+      "participant_name": "Deepak Singh",
+      "submitted_profile_link": "Nothing",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 6,
+      "participant_name": "SUMAN KUMAR",
+      "submitted_profile_link": "GDGC-ACEIT",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 17,
+      "participant_name": "Devansh Johari",
+      "submitted_profile_link": "https://www.skills.google/my_account/profile",
+      "rejection_reason": "Account settings URL, not a public profile",
+      "suggested_action": "Share public badge profile URL from Skills Boost settings"
+    },
+    {
+      "excel_row": 29,
+      "participant_name": "Vinay thakur",
+      "submitted_profile_link": "No",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 30,
+      "participant_name": "UDAY SINGH JADOUN",
+      "submitted_profile_link": "[email address redacted]",
+      "rejection_reason": "Email entered instead of profile URL",
+      "suggested_action": "Provide public profile URL instead of email address"
+    },
+    {
+      "excel_row": 44,
+      "participant_name": "Raman sharma",
+      "submitted_profile_link": "https://www.skills.google/",
+      "rejection_reason": "Google Skills homepage, not a public profile",
+      "suggested_action": "Navigate to public profile and share the URL with profile UUID"
+    },
+    {
+      "excel_row": 57,
+      "participant_name": "Rohit kumar yogi",
+      "submitted_profile_link": "No",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 59,
+      "participant_name": "Prerak kaushik",
+      "submitted_profile_link": "No",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 64,
+      "participant_name": "Priya Prajapati",
+      "submitted_profile_link": "Non",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 90,
+      "participant_name": "Arpit Kumar",
+      "submitted_profile_link": "https://www.skills.google/",
+      "rejection_reason": "Google Skills homepage, not a public profile",
+      "suggested_action": "Navigate to public profile and share the URL with profile UUID"
+    },
+    {
+      "excel_row": 91,
+      "participant_name": "Puja Barman",
+      "submitted_profile_link": "Your prhttps://www.skills.google/public_profiles/030368cb-bd87-4468-9205-5d0a4c3ba431",
+      "rejection_reason": "Profile URL appears to have extra text before it",
+      "suggested_action": "Remove leading/trailing characters; format as https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 123,
+      "participant_name": "Piyush Singh",
+      "submitted_profile_link": "Dhee",
+      "rejection_reason": "Response is not a profile URL",
+      "suggested_action": "Provide public profile URL: https://www.skills.google/public_profiles/<uuid>"
+    },
+    {
+      "excel_row": 128,
+      "participant_name": "Diksha",
+      "submitted_profile_link": "https://www.skills.google/",
+      "rejection_reason": "Google Skills homepage, not a public profile",
+      "suggested_action": "Navigate to public profile and share the URL with profile UUID"
+    }
+  ]
+}

@@ -58,7 +58,7 @@ export function AdminLoginForm({ notice, returnPath = "/admin", participantMode 
       const redirectTo = `${window.location.origin}/auth/callback?next=%2Fadmin%2Fupdate-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
       setFeedback(error
-        ? { kind: "error", message: "We couldn’t request a password reset. Check Supabase Auth settings and try again." }
+        ? { kind: "error", message: "We couldn’t request a password reset. Check authentication settings and try again." }
         : { kind: "success", message: "If an account exists for this email, password reset instructions have been sent." });
     } catch {
       setFeedback({ kind: "error", message: "Authentication is temporarily unavailable. Please try again." });
@@ -76,7 +76,7 @@ export function AdminLoginForm({ notice, returnPath = "/admin", participantMode 
     <div className="admin-auth-brand"><Image src="/gdg-mark.png" alt="" width={38} height={38} priority /><span><strong>GDG On Campus ACEIT</strong><small>{participantMode ? "PARTICIPANT SIGN IN" : "ADMINISTRATOR ACCESS"}</small></span></div>
     <p className="auth-eyebrow">LEARN WITH COMMUNITIES 2026</p>
     <h1 id="admin-login-title">{title}</h1>
-    <p className="auth-description">{participantMode ? "Sign in using an existing Supabase account with the same confirmed email used for your GDG ACEIT registration. This does not create a new account." : "Sign in with an existing Supabase account. Administrator access is checked separately; signing in does not grant an admin role."}</p>
+    <p className="auth-description">{participantMode ? "Sign in using the confirmed email address from your GDG ACEIT registration. This does not create a new account." : "Sign in with your administrator account. Administrator access is checked per request; signing in does not grant an admin role without permission."}</p>
 
     <form onSubmit={handleSubmit} className="auth-form admin-auth-form">
       <label htmlFor="admin-email">Email address</label>
@@ -95,7 +95,7 @@ export function AdminLoginForm({ notice, returnPath = "/admin", participantMode 
       {mode === "magic-link" && <button type="button" className="auth-text-button" onClick={() => changeMode("password")}>Back to password sign-in</button>}
       {mode === "reset" && <button type="button" className="auth-text-button" onClick={() => changeMode("password")}>Back to sign in</button>}
     </div>
-    <div className="admin-auth-security"><ShieldCheck size={14} aria-hidden="true" /><span>Protected by Supabase Auth and the ACEIT administrator allowlist.</span></div>
+    <div className="admin-auth-security"><ShieldCheck size={14} aria-hidden="true" /><span>Protected by secure authentication and the ACEIT administrator allowlist.</span></div>
     <Link href="/" className="auth-back"><ArrowLeft size={14} aria-hidden="true" /> Back to public leaderboard</Link>
   </section>;
 }

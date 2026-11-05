@@ -21,7 +21,11 @@ export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "databas
           <Link href="/progress" aria-current={pathname === "/progress" ? "page" : undefined}>Progress</Link>
           <Link href="/about" aria-current={pathname === "/about" ? "page" : undefined}>About</Link>
         </nav>
-        {dataMode && <span className={dataMode === "demo" ? "demo-label" : "demo-label database-label"}><span aria-hidden="true" />{dataMode === "demo" ? "DEMO DATA" : "DATABASE"}</span>}
+        {dataMode === "demo" ? (
+          <span className="demo-label"><span aria-hidden="true" />DEMO DATA</span>
+        ) : (
+          <span className="demo-label live-label"><span aria-hidden="true" />LIVE</span>
+        )}
         <ThemeControl />
         <Link className="header-admin" href="/admin/login" aria-label="Admin sign in"><LockKeyhole size={14} aria-hidden="true" /><span>Admin</span></Link>
       </div>

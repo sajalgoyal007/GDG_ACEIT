@@ -1,0 +1,14 @@
+excel_row,participant_name,submitted_profile_link,rejection_reason,suggested_action
+2,Deepak Singh,Nothing,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+6,SUMAN KUMAR,GDGC-ACEIT,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+17,Devansh Johari,https://www.skills.google/my_account/profile,"Account settings URL, not a public profile",Share public badge profile URL from Skills Boost settings
+29,Vinay thakur,No,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+30,UDAY SINGH JADOUN,[email address redacted],Email entered instead of profile URL,Provide public profile URL instead of email address
+44,Raman sharma,https://www.skills.google/,"Google Skills homepage, not a public profile",Navigate to public profile and share the URL with profile UUID
+57,Rohit kumar yogi,No,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+59,Prerak kaushik,No,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+64,Priya Prajapati,Non,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+90,Arpit Kumar,https://www.skills.google/,"Google Skills homepage, not a public profile",Navigate to public profile and share the URL with profile UUID
+91,Puja Barman,Your prhttps://www.skills.google/public_profiles/030368cb-bd87-4468-9205-5d0a4c3ba431,Profile URL appears to have extra text before it,Remove leading/trailing characters; format as https://www.skills.google/public_profiles/<uuid>
+123,Piyush Singh,Dhee,Response is not a profile URL,Provide public profile URL: https://www.skills.google/public_profiles/<uuid>
+128,Diksha,https://www.skills.google/,"Google Skills homepage, not a public profile",Navigate to public profile and share the URL with profile UUID

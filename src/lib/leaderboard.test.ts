@@ -17,7 +17,7 @@ for (const [count, milestone, label] of [
   });
 }
 
-test("ranking uses UUID order for ties and competition rank numbering", () => {
+test("ranking assigns unique sequential ranks and breaks ties with Arcade, Total, and stable ID", () => {
   const records = [
     { id: "c", displayName: "Zulu", verifiedBadgeCount: 10, skillBadgeCount: 10, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
     { id: "b", displayName: "Beta", verifiedBadgeCount: 10, skillBadgeCount: 10, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
@@ -25,8 +25,82 @@ test("ranking uses UUID order for ties and competition rank numbering", () => {
     { id: "d", displayName: "Delta", verifiedBadgeCount: 5, skillBadgeCount: 5, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
   ].map((record) => ({ ...record, initials: "X", color: "blue" }));
   assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
-    ["b", 1], ["c", 1], ["a", 3], ["d", 3],
+    ["b", 1], ["c", 2], ["a", 3], ["d", 4],
   ]);
+});
+
+test("specification example: unique ranking with skill primary, arcade secondary tiebreaker, stable ID final", () => {
+  // Example from specification:
+  // Participant A: Skill 12, Arcade 2 -> Rank 1
+  // Participant B: Skill 12, Arcade 1 -> Rank 2
+  // Participant C: Skill 10, Arcade 3 -> Rank 3
+  // Participant D: Skill 10, Arcade 3 -> Rank 4
+  const records = [
+    { id: "part-d", displayName: "Participant D", verifiedBadgeCount: 13, skillBadgeCount: 10, arcadeGameBadgeCount: 3, lastCheckedAt: "2026-10-30T10:00:00Z" },
+    { id: "part-b", displayName: "Participant B", verifiedBadgeCount: 13, skillBadgeCount: 12, arcadeGameBadgeCount: 1, lastCheckedAt: "2026-10-30T10:00:00Z" },
+    { id: "part-a", displayName: "Participant A", verifiedBadgeCount: 14, skillBadgeCount: 12, arcadeGameBadgeCount: 2, lastCheckedAt: "2026-10-30T10:00:00Z" },
+    { id: "part-c", displayName: "Participant C", verifiedBadgeCount: 13, skillBadgeCount: 10, arcadeGameBadgeCount: 3, lastCheckedAt: "2026-10-30T10:00:00Z" },
+  ].map((record) => ({ ...record, initials: "P", color: "blue" }));
+
+  assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
+    ["part-a", 1],
+    ["part-b", 2],
+    ["part-c", 3],
+    ["part-d", 4],
+  ]);
+});
+
+test("rank freeze at 10 Skill Badges preserves original rank despite subsequent badge updates", () => {
+  // Participant Alpha reached 10 skill badges earlier and was ranked #1
+  const alphaFrozen = {
+    id: "alpha",
+    displayName: "Alpha Learner",
+    verifiedBadgeCount: 10,
+    skillBadgeCount: 10,
+    arcadeGameBadgeCount: 0,
+    frozenRank: 1,
+    milestoneCompletedAt: "2026-10-25T10:00:00Z",
+    lastCheckedAt: "2026-10-25T10:00:00Z",
+    initials: "AL",
+    color: "blue",
+  };
+
+  // Participant Beta later earns 15 skill badges
+  const betaLater = {
+    id: "beta",
+    displayName: "Beta Learner",
+    verifiedBadgeCount: 15,
+    skillBadgeCount: 15,
+    arcadeGameBadgeCount: 0,
+    lastCheckedAt: "2026-11-01T10:00:00Z",
+    initials: "BL",
+    color: "green",
+  };
+
+  // Alpha's frozen rank of 1 is preserved; Beta cannot take Alpha's rank 1
+  const ranked = rankParticipants([betaLater, alphaFrozen]);
+  assert.equal(ranked.find((r) => r.participant.id === "alpha")?.rank, 1);
+  assert.equal(ranked.find((r) => r.participant.id === "beta")?.rank, 2);
+
+  // Even if Alpha earns additional badges (10 -> 14), Alpha's frozen rank remains 1
+  const alphaUpdated = { ...alphaFrozen, skillBadgeCount: 14, verifiedBadgeCount: 14 };
+  const rankedAfterUpdate = rankParticipants([betaLater, alphaUpdated]);
+  assert.equal(rankedAfterUpdate.find((r) => r.participant.id === "alpha")?.rank, 1);
+  assert.equal(rankedAfterUpdate.find((r) => r.participant.id === "beta")?.rank, 2);
+});
+
+test("participants below 10 Skill Badges remain dynamically ranked", () => {
+  const p1 = { id: "p1", displayName: "Learner 1", verifiedBadgeCount: 4, skillBadgeCount: 4, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z", initials: "L1", color: "blue" };
+  const p2 = { id: "p2", displayName: "Learner 2", verifiedBadgeCount: 7, skillBadgeCount: 7, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z", initials: "L2", color: "blue" };
+
+  // Initial: p2 (7 skill) is rank 1, p1 (4 skill) is rank 2
+  let ranked = rankParticipants([p1, p2]);
+  assert.deepEqual(ranked.map((r) => [r.participant.id, r.rank]), [["p2", 1], ["p1", 2]]);
+
+  // When p1 earns more badges (4 -> 9 skill), p1 dynamically overtakes p2
+  const p1Updated = { ...p1, skillBadgeCount: 9, verifiedBadgeCount: 9 };
+  ranked = rankParticipants([p1Updated, p2]);
+  assert.deepEqual(ranked.map((r) => [r.participant.id, r.rank]), [["p1", 1], ["p2", 2]]);
 });
 
 test("ranking prioritizes skill badge count over total badge count", () => {

@@ -1,0 +1,56 @@
+{
+  "reconciliation_status": "passed",
+  "source_workbook": "GDG On Campus ACEIT _ Learn with Communities 2026 \u2013 Participant Registration (Responses) (1).xlsx",
+  "total_workbook_submissions": 128,
+  "valid_profile_links": 115,
+  "invalid_submissions": 13,
+  "matched_production_participants": 112,
+  "absent_from_production_roster": [
+    {
+      "excel_row": 126,
+      "participant_name": "ABHINANDAN JAIN",
+      "profile_url": "https://www.skills.google/public_profiles/c8f32095-a494-4115-95a8-c55606a0a8c0",
+      "slug": "c8f32095-a494-4115-95a8-c55606a0a8c0",
+      "in_classification_dataset": true,
+      "classified_skill_badges": 0,
+      "classified_arcade_badges": 0,
+      "classified_total_badges": 0
+    },
+    {
+      "excel_row": 127,
+      "participant_name": "Nishant",
+      "profile_url": "https://www.skills.google/public_profiles/bafe8c95-96f2-46c2-9e66-8e7100789a13",
+      "slug": "bafe8c95-96f2-46c2-9e66-8e7100789a13",
+      "in_classification_dataset": true,
+      "classified_skill_badges": 0,
+      "classified_arcade_badges": 0,
+      "classified_total_badges": 0
+    },
+    {
+      "excel_row": 129,
+      "participant_name": "Navya shah",
+      "profile_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+      "slug": "8cca2507-a840-4eba-936d-5146c0eeba17",
+      "in_classification_dataset": false,
+      "classified_skill_badges": null,
+      "classified_arcade_badges": null,
+      "classified_total_badges": null
+    }
+  ],
+  "newly_identified_participants": [
+    {
+      "excel_row": 129,
+      "participant_name": "Navya shah",
+      "submitted_profile_link": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+      "normalized_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+      "slug": "8cca2507-a840-4eba-936d-5146c0eeba17"
+    }
+  ],
+  "duplicate_profile_urls": [],
+  "url_changes": [],
+  "badge_metrics": {
+    "total_skill_badges": 123,
+    "total_arcade_game_badges": 11,
+    "total_badges": 134
+  }
+}

@@ -48,29 +48,69 @@ export function matchesMilestoneFilter(participant: PublicParticipant, threshold
 /**
  * Ranking rules (in priority order):
  * 1. Reviewed participants rank before unreviewed.
- * 2. Among reviewed: sort by skillBadgeCount DESC (nulls last — un-classified reviewed participants
- *    sort after classified ones but still have a rank from their total).
- * 3. Within the same skill count: sort by verifiedBadgeCount DESC (total as tiebreak).
- * 4. Final stable tiebreak: UUID ascending.
+ * 2. If participants have an established frozenRank (milestone freeze), that rank is strictly honored.
+ * 3. Primary criterion: Skill Badges DESC (nulls last).
+ * 4. For participants with >= 10 Skill Badges, earlier milestone completion timestamp ranks ahead if available.
+ * 5. Secondary tiebreaker: Arcade Game Badges DESC.
+ * 6. Tertiary tiebreaker: Total Badges DESC.
+ * 7. Final tiebreaker: Deterministic stable ordering by participant ID ascending.
  *
- * "Reviewed" is determined by lastCheckedAt — the existing convention is preserved.
+ * Every reviewed participant receives a strictly unique sequential rank: 1, 2, 3, 4...
+ * No participants share a rank.
  */
-export function compareLeaderboardParticipants(a: PublicParticipant, b: PublicParticipant) {
+export function compareLeaderboardParticipants(a: PublicParticipant, b: PublicParticipant): number {
   const aIsUnreviewed = !a.lastCheckedAt;
   const bIsUnreviewed = !b.lastCheckedAt;
   if (aIsUnreviewed !== bIsUnreviewed) return Number(aIsUnreviewed) - Number(bIsUnreviewed);
   if (aIsUnreviewed) return compareStableId(a.id, b.id);
 
-  // Both reviewed: rank by skill badges first (nulls last).
+  // 1. If both have established frozen ranks, sort by frozenRank
+  const aFrozen = a.frozenRank ?? null;
+  const bFrozen = b.frozenRank ?? null;
+  if (aFrozen !== null && bFrozen !== null) {
+    if (aFrozen !== bFrozen) return aFrozen - bFrozen;
+  } else if (aFrozen !== null) {
+    // a was frozen earlier
+    return -1;
+  } else if (bFrozen !== null) {
+    // b was frozen earlier
+    return 1;
+  }
+
+  // 2. Primary criterion: Skill Badges DESC
   const aSkill = a.skillBadgeCount ?? null;
   const bSkill = b.skillBadgeCount ?? null;
   if (aSkill !== bSkill) {
-    if (aSkill === null) return 1;   // a has no classification → sort after b
-    if (bSkill === null) return -1;  // b has no classification → sort after a
+    if (aSkill === null) return 1;
+    if (bSkill === null) return -1;
     return bSkill - aSkill;
   }
-  // Same skill count (or both null): tiebreak on total then UUID.
-  return b.verifiedBadgeCount - a.verifiedBadgeCount || compareStableId(a.id, b.id);
+
+  // 3. For participants who have reached the 10-skill milestone, earlier milestone timestamp wins
+  const aReached10 = aSkill !== null && aSkill >= 10;
+  const bReached10 = bSkill !== null && bSkill >= 10;
+  if (aReached10 && bReached10) {
+    const aTime = a.milestoneCompletedAt ?? null;
+    const bTime = b.milestoneCompletedAt ?? null;
+    if (aTime && bTime && aTime !== bTime) {
+      return aTime < bTime ? -1 : 1;
+    }
+  }
+
+  // 4. Secondary tiebreaker: Arcade Game Badges DESC
+  const aArcade = a.arcadeGameBadgeCount ?? 0;
+  const bArcade = b.arcadeGameBadgeCount ?? 0;
+  if (aArcade !== bArcade) {
+    return bArcade - aArcade;
+  }
+
+  // 5. Tertiary tiebreaker: Total Badges DESC
+  if (a.verifiedBadgeCount !== b.verifiedBadgeCount) {
+    return b.verifiedBadgeCount - a.verifiedBadgeCount;
+  }
+
+  // 6. Final tiebreaker: Deterministic stable ordering by ID ascending
+  return compareStableId(a.id, b.id);
 }
 
 function compareStableId(a: string, b: string) {
@@ -78,25 +118,30 @@ function compareStableId(a: string, b: string) {
 }
 
 /**
- * Rank is determined by skillBadgeCount (when available) or verifiedBadgeCount.
- * Two participants share a rank only when their primary sort key is identical.
+ * Ranks participants with unique sequential ranks (1, 2, 3, 4...).
+ * - Never generates duplicate ranks or skips numbers.
+ * - Freezes rank when a participant reaches the 10 Skill Badge milestone.
+ * - Preserves existing frozen ranks and milestone timestamps.
+ * - Dynamic ranking for participants who have not reached 10 Skill Badges.
  */
 export function rankParticipants(participants: readonly PublicParticipant[]) {
   const sorted = [...participants].sort(compareLeaderboardParticipants);
-  let previousSkill: number | null | undefined;
-  let previousTotal: number | undefined;
-  let previousRank = 0;
   return sorted.map((participant, index) => {
     if (!participant.lastCheckedAt) return { participant, rank: null };
-    const skill = participant.skillBadgeCount ?? null;
-    const total = participant.verifiedBadgeCount;
-    // Two participants share a rank only if both their skill count AND total match.
-    const sameAsPrevious = skill === previousSkill && total === previousTotal;
-    const rank = sameAsPrevious ? previousRank : index + 1;
-    previousSkill = skill;
-    previousTotal = total;
-    previousRank = rank;
-    return { participant, rank };
+    const sequentialRank = index + 1;
+    const rank = participant.frozenRank ?? sequentialRank;
+    const isMilestone10 = participant.skillBadgeCount !== null && participant.skillBadgeCount >= 10;
+    const frozenRank = participant.frozenRank ?? (isMilestone10 ? rank : null);
+    const milestoneCompletedAt = participant.milestoneCompletedAt ?? (isMilestone10 ? (participant.lastCheckedAt ?? null) : null);
+
+    return {
+      participant: {
+        ...participant,
+        frozenRank,
+        milestoneCompletedAt,
+      },
+      rank,
+    };
   });
 }
 

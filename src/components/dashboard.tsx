@@ -5,7 +5,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Award, BadgeCheck, Check, Clock3, ExternalLink, Medal, RefreshCw, Search, ShieldCheck, Users, X } from "lucide-react";
+import { Award, BadgeCheck, Check, Clock3, ExternalLink, Gamepad2, Lock, Medal, RefreshCw, Search, ShieldCheck, Users, X } from "lucide-react";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import type { LeaderboardSnapshot, PublicParticipant } from "@/lib/types";
@@ -127,7 +127,7 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
               <div className="leaderboard-title-line"><span className="leaderboard-icon"><Medal size={18} aria-hidden="true" /></span><h2 id="leaderboard-title">{isProgressPage ? "Participant progress" : "Community leaderboard"}</h2><span className="results-count">{visible.length}</span></div>
               <p>{snapshot.dataMode === "demo" ? "Synthetic examples preview the ranking layout; they are not participant data." : "Verified records are ranked by manually recorded count. Unreviewed registrations stay unranked until evidence is reviewed."}</p>
             </div>
-            <div className="freshness-indicator"><span aria-hidden="true" />{snapshot.dataMode === "demo" ? "Demo provider" : "Supabase"}</div>
+            <div className="freshness-indicator"><span aria-hidden="true" />{snapshot.dataMode === "demo" ? "Demo mode" : "Leaderboard"}</div>
           </div>
 
           <div className="leaderboard-controls">
@@ -165,7 +165,7 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
                     const count = participant.verifiedBadgeCount;
                     const primaryCount = participant.skillBadgeCount ?? count;
                     return <tr key={participant.id}>
-                      <td><RankBadge rank={rank} /></td>
+                      <td><RankBadge rank={rank} frozen={Boolean(participant.frozenRank)} /></td>
                       <td><button type="button" className="participant-cell" onClick={() => setSelected(participant)} aria-label={`Open participant details for ${participant.displayName}`}><Avatar participant={participant} /><span><strong>{participant.displayName}</strong><small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small></span></button></td>
                       <td>{participant.lastCheckedAt ? <span className="badge-total"><Award size={15} aria-hidden="true" />{participant.skillBadgeCount !== null ? participant.skillBadgeCount : "—"}<small>{participant.skillBadgeCount !== null ? "skill" : "unclassified"}</small></span> : <span className="badge-unreviewed">Not reviewed</span>}</td>
                       <td>{participant.lastCheckedAt ? <span>{participant.arcadeGameBadgeCount !== null ? participant.arcadeGameBadgeCount : "—"}</span> : <span className="badge-unreviewed">—</span>}</td>
@@ -181,8 +181,33 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
                   const count = participant.verifiedBadgeCount;
                   const primaryCount = participant.skillBadgeCount ?? count;
                   return <li key={participant.id}><button type="button" className="mobile-participant" onClick={() => setSelected(participant)} aria-label={`Open participant details for ${participant.displayName}`}>
-                    <span className="mobile-participant-top"><RankBadge rank={rank} /><Avatar participant={participant} /><span className="mobile-person-copy"><strong>{participant.displayName}</strong><small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small></span>{participant.lastCheckedAt ? <span className="mobile-badge-total"><Award size={15} aria-hidden="true" />{participant.skillBadgeCount !== null ? `${participant.skillBadgeCount} Skill / ${participant.arcadeGameBadgeCount ?? 0} Arcade` : `${count} total`}</span> : <span className="badge-unreviewed">Not reviewed</span>}</span>
-                    <span className="mobile-participant-bottom">{participant.lastCheckedAt ? <ProgressPair count={primaryCount} /> : <span className="progress-unavailable">Progress appears after manual review</span>}{participant.lastCheckedAt && <MilestoneBadge count={primaryCount} />}</span>
+                    <span className="mobile-participant-top">
+                      <RankBadge rank={rank} frozen={Boolean(participant.frozenRank)} />
+                      <Avatar participant={participant} />
+                      <span className="mobile-person-copy">
+                        <strong>{participant.displayName}</strong>
+                        <small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small>
+                      </span>
+                      {participant.frozenRank ? (
+                        <span className="rank-frozen-chip" title="Rank locked after reaching 10 skill badges">
+                          <Lock size={10} aria-hidden="true" />
+                          <span>Locked</span>
+                        </span>
+                      ) : null}
+                    </span>
+                    {participant.lastCheckedAt ? (
+                      <span className="mobile-badges-row">
+                        <span className="mobile-badge-pill pill-skill"><Award size={12} aria-hidden="true" /><strong>{participant.skillBadgeCount ?? "—"}</strong> Skill</span>
+                        <span className="mobile-badge-pill pill-arcade"><Gamepad2 size={12} aria-hidden="true" /><strong>{participant.arcadeGameBadgeCount ?? "—"}</strong> Arcade</span>
+                        <span className="mobile-badge-pill pill-total"><strong>{count}</strong> Total</span>
+                      </span>
+                    ) : (
+                      <span className="mobile-badges-row"><span className="badge-unreviewed">Not reviewed</span></span>
+                    )}
+                    <span className="mobile-participant-bottom">
+                      {participant.lastCheckedAt ? <ProgressPair count={primaryCount} /> : <span className="progress-unavailable">Progress appears after manual review</span>}
+                      {participant.lastCheckedAt && <MilestoneBadge count={primaryCount} />}
+                    </span>
                   </button></li>;
                 })}
               </ul>
@@ -211,9 +236,17 @@ function Avatar({ participant }: { participant: PublicParticipant }) {
   return <span className={`person-avatar avatar-${participant.color}`}>{participant.initials}</span>;
 }
 
-function RankBadge({ rank }: { rank: number | null }) {
+function RankBadge({ rank, frozen }: { rank: number | null; frozen?: boolean }) {
   if (rank === null) return <span className="rank-badge rank-unreviewed" aria-label="Unranked until badge verification">—</span>;
-  return <span className={rank <= 3 ? `rank-badge rank-${rank}` : "rank-badge"}>{rank <= 3 ? <Medal size={15} aria-label={`Rank ${rank}`} /> : `#${rank}`}</span>;
+  return (
+    <span
+      className={`${rank <= 3 ? `rank-badge rank-${rank}` : "rank-badge"}${frozen ? " rank-frozen" : ""}`}
+      title={frozen ? `Rank #${rank} (Locked at 10 skill badges)` : undefined}
+    >
+      {rank <= 3 ? <Medal size={15} aria-label={`Rank ${rank}`} /> : `#${rank}`}
+      {frozen && <Lock size={10} className="rank-lock-icon" aria-label="Frozen rank" />}
+    </span>
+  );
 }
 
 function ProgressPair({ count }: { count: number }) {
@@ -270,8 +303,8 @@ function ParticipantDialog({ participant, onClose, reduceMotion }: { participant
           <span>{participant.lastCheckedAt ? (participant.skillBadgeCount !== null ? `Total: ${count} badges` : "verified badges") : "manual verification"}</span>
         </div>
         <div>
-          <strong>{participant.lastCheckedAt ? getMilestoneLabel(participant.skillBadgeCount ?? count) : "Not ranked"}</strong>
-          <span>milestone status</span>
+          <strong>{participant.frozenRank ? `Rank #${participant.frozenRank} (Locked)` : participant.lastCheckedAt ? getMilestoneLabel(participant.skillBadgeCount ?? count) : "Not ranked"}</strong>
+          <span>{participant.frozenRank ? "milestone rank locked" : "milestone status"}</span>
         </div>
       </div>
       <section className="profile-progress" aria-labelledby="progress-title">
@@ -282,10 +315,10 @@ function ParticipantDialog({ participant, onClose, reduceMotion }: { participant
         {participant.lastCheckedAt ? <><ProgressMeter count={participant.skillBadgeCount ?? count} target={5} /><ProgressMeter count={participant.skillBadgeCount ?? count} target={10} /></> : <p className="profile-no-badges">A registration default is not an evidence-reviewed badge count. Progress will appear after manual verification.</p>}
       </section>
       <section className="profile-badges" aria-labelledby="badges-title"><div className="profile-section-heading"><h3 id="badges-title">Badge records</h3><span>{hasReviewedCount ? count : "—"}</span></div>
-        {!hasReviewedCount ? <p className="profile-no-badges" role="status">No badge records have been submitted for manual review yet.</p> : participant.badges?.length ? <ul>{participant.badges.filter((badge) => badge.status === "verified").map((badge) => <li key={badge.id}><span className="profile-badge-icon"><BadgeCheck size={15} aria-hidden="true" /></span><span className="profile-badge-copy"><strong>{badge.name}</strong><small>Observed {formatTimestamp(badge.verifiedAt)} IST</small></span></li>)}</ul> : count > 0 ? <p className="profile-no-badges">This database record stores an aggregate count; individual badge names are not available.</p> : <p className="profile-no-badges" role="status">No badge records were confirmed in the latest manual review.</p>}
+        {!hasReviewedCount ? <p className="profile-no-badges" role="status">No badge records have been submitted for manual review yet.</p> : participant.badges?.length ? <ul>{participant.badges.filter((badge) => badge.status === "verified").map((badge) => <li key={badge.id}><span className="profile-badge-icon"><BadgeCheck size={15} aria-hidden="true" /></span><span className="profile-badge-copy"><strong>{badge.name}</strong><small>Observed {formatTimestamp(badge.verifiedAt)} IST</small></span></li>)}</ul> : count > 0 ? <p className="profile-no-badges">This participant record stores an aggregate count; individual badge names are not available.</p> : <p className="profile-no-badges" role="status">No badge records were confirmed in the latest manual review.</p>}
       </section>
       {participant.profileUrl ? <a className="public-profile-link" href={participant.profileUrl} target="_blank" rel="noreferrer"><span><ExternalLink size={15} aria-hidden="true" />Open public profile</span><ExternalLink size={14} aria-hidden="true" /></a> : <p className="profile-no-link">No public profile link is provided for this record.</p>}
-      <section className="verification-card" aria-labelledby="verification-title"><div className="verification-card-heading"><ShieldCheck size={16} aria-hidden="true" /><h3 id="verification-title">Verification information</h3></div><dl><div><dt>Provider</dt><dd>{participant.verificationSource ?? "Not recorded"}</dd></div><div><dt>Last checked</dt><dd>{participant.lastCheckedAt ? <time dateTime={participant.lastCheckedAt}>{formatTimestamp(participant.lastCheckedAt)} IST</time> : "No count verification recorded"}</dd></div></dl><p id="profile-disclaimer">{participant.badges ? "Synthetic data only. Demo status does not mean Google verified this profile or its badges." : "Provider-recorded data is not verified by Google unless explicitly supported by evidence."} Observed timestamps are separate from badge-earned timestamps; earned dates are not inferred from count updates.</p></section>
+      <section className="verification-card" aria-labelledby="verification-title"><div className="verification-card-heading"><ShieldCheck size={16} aria-hidden="true" /><h3 id="verification-title">Verification information</h3></div><dl><div><dt>Provider</dt><dd>{participant.verificationSource ?? "Not recorded"}</dd></div><div><dt>Last checked</dt><dd>{participant.lastCheckedAt ? <time dateTime={participant.lastCheckedAt}>{formatTimestamp(participant.lastCheckedAt)} IST</time> : "No count verification recorded"}</dd></div></dl><p id="profile-disclaimer">{participant.badges ? "Synthetic data only. Demo status does not mean Google verified this profile or its badges." : "Community-recorded data is not verified by Google unless explicitly supported by evidence."} Observed timestamps are separate from badge-earned timestamps; earned dates are not inferred from count updates.</p></section>
     </motion.section>
   </motion.div>;
 }

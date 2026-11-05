@@ -45,6 +45,10 @@ export interface PublicParticipant {
   lastCheckedAt?: string;
   verificationSource?: string;
   badges?: BadgeRecord[];
+  /** Frozen rank captured when 10 skill badges were reached. */
+  frozenRank?: number | null;
+  /** Timestamp when the 10-skill-badge milestone was reached. */
+  milestoneCompletedAt?: string | null;
 }
 
 export interface LeaderboardSnapshot {

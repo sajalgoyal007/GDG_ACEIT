@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronDown, ChevronRight, ClipboardList, Database, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, RefreshCw, Search, ShieldCheck, Users, Menu, X, Gamepad2, Layers } from "lucide-react";
+import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronDown, ChevronRight, ClipboardList, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, RefreshCw, Search, ShieldCheck, Users, Menu, X, Gamepad2, Layers } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { importParticipantsAction, setVerifiedBadgeCountAction, signOutAdmin } from "@/app/admin/actions";
 import { initialAdminActionState } from "@/app/admin/action-state";
@@ -68,7 +68,7 @@ const primarySidebarItems = [
 
 // Advanced tools — collapsed by default
 const advancedSidebarItems = [
-  { href: "#google-form-sync", label: "Google Form Sync", icon: Database },
+  { href: "#google-form-sync", label: "Google Form Sync", icon: Layers },
   { href: "#automatic-progress", label: "Automatic Progress", icon: RefreshCw },
   { href: "#badge-verification", label: "Badge Verification", icon: BadgeCheck },
 ];
@@ -238,7 +238,7 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
           {advancedOpen && advancedSidebarItems.map(({ href, label, icon: Icon }) => <a key={href} href={href} onClick={() => setMobileNavOpen(false)} aria-current={activeSection === href.slice(1) ? "location" : undefined} className="admin-sidebar-advanced-item"><Icon size={15} aria-hidden="true" /><span>{label}</span><ChevronRight size={12} aria-hidden="true" />{activeSection === href.slice(1) && <motion.i layoutId="admin-nav-active" className="admin-nav-indicator" transition={{ duration: reduceMotion ? 0 : .2 }} />}</a>)}
         </nav>
         <div className="admin-sidebar-bottom">
-          <div className="admin-sidebar-security"><ShieldCheck size={15} aria-hidden="true" /><span>Supabase Auth<br /><small>Role checked per request</small></span></div>
+          <div className="admin-sidebar-security"><ShieldCheck size={15} aria-hidden="true" /><span>Administrator Auth<br /><small>Role checked per request</small></span></div>
           <Link href="/" className="admin-sidebar-back"><ArrowLeft size={14} aria-hidden="true" />Back to public site</Link>
         </div>
       </aside>
@@ -296,7 +296,7 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         <section id="audit-history" className="admin-section" aria-labelledby="audit-section-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">RECORD OF CHANGES</p><h2 id="audit-section-title">Audit History</h2></div><span className="admin-section-count">{activities.length} events</span></div>
           <article className="admin-panel admin-audit-panel">
-            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, and badge verification updates will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Database size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
+            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, and badge verification updates will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Layers size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
           </article>
         </section>
 

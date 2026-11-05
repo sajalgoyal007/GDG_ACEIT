@@ -38,7 +38,7 @@ export function UnverifiedProgressImport() {
         <label className="admin-confirm"><input type="checkbox" name="confirmProgressImport" value="confirmed" required disabled={applyPending} />I reviewed this preview and confirm these counts are unverified organizer-reported progress.</label>
         <button type="submit" disabled={applyPending}>{applyPending ? "Importing…" : `Import ${rows.length} valid row${rows.length === 1 ? "" : "s"}`}</button>
       </form>
-      <p className="admin-help">The database rechecks every identity before writing. If any participant or profile changed after preview, no rows are imported.</p>
+      <p className="admin-help">Rechecks every participant before importing. If any record changed after preview, no rows are imported.</p>
     </>}
     <Feedback state={applied} />
   </article>;

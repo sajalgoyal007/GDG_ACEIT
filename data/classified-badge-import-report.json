@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-11-04T11:09:47.753950+00:00",
+  "generated_at": "2026-11-04T17:48:38.700158+00:00",
   "source_classification_report": "C:\\Users\\Sajal Goyal\\Projects\\GDG_ACEIT\\data\\badge-classification-report.json",
-  "source_roster": "C:\\Users\\Sajal Goyal\\Projects\\GDG_ACEIT\\data\\verified-badge-counts-source.csv",
+  "source_roster": "C:\\Users\\Sajal Goyal\\Projects\\GDG_ACEIT\\data\\current-production-roster.csv",
   "output_csv": "C:\\Users\\Sajal Goyal\\Projects\\GDG_ACEIT\\data\\classified-badge-import.csv",
-  "total_rows": 114,
-  "zero_badge_rows": 90,
+  "total_rows": 112,
+  "zero_badge_rows": 88,
   "nonzero_badge_rows": 24,
   "total_skill_badges": 123,
   "total_arcade_badges": 11,
   "total_verified_badges": 134,
-  "skipped_participants": [],
+  "unmatched_source_participants_count": 2,
   "issues": []
 }

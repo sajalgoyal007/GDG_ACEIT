@@ -56,7 +56,7 @@ export function VerifiedBadgeCsvImport() {
         <label className="admin-confirm"><input type="checkbox" name="confirmVerifiedBadgeImport" value="confirmed" required disabled={applyPending} />I reviewed every eligible count and note and confirm this audited bulk verification.</label>
         <button type="submit" disabled={applyPending}>{applyPending ? "Applying verification…" : `Apply ${rows.length} reviewed count${rows.length === 1 ? "" : "s"}`}</button>
       </form>
-      <p className="admin-help">The database rechecks the reviewed state, locks participants in a stable order, and applies the whole eligible batch in one transaction. If any item becomes stale, that transaction makes no changes.</p>
+      <p className="admin-help">Rechecks the reviewed state and applies the eligible batch in one atomic transaction. If any item becomes stale, no changes are made.</p>
     </>}
     {appliedForPreview && applied.status !== "idle" && <div className={`admin-feedback ${applied.status}`} role={applied.status === "error" ? "alert" : "status"}>
       <p>{applied.message}</p>
