@@ -3,8 +3,8 @@
 
 Features:
 - Standard HTTP client (urllib.request) with custom User-Agent and Accept headers.
-- Sequential pacing (configurable delay between requests, default 1.5s).
-- Timeout protection and transient error handling.
+- Bounded concurrency (default 1 worker, configurable) with per-request pacing.
+- Timeout protection, retry/backoff for transient errors, and transient-error handling.
 - Saves raw HTML responses locally: data/raw_profiles/<participant_uuid>.html
 - Resumable fetch manifest: data/raw_profiles/fetch_manifest.json
 - Preserves individual HTTP status, final URL, headers, and error details.
@@ -19,11 +19,14 @@ import argparse
 import csv
 import json
 import os
+import random
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -140,6 +143,9 @@ def fetch_single_profile(
         return 0, url, b"", {}, f"FETCH_EXCEPTION: {type(err).__name__}: {err}"
 
 
+TRANSIENT_STATUSES = {0, 408, 425, 429, 500, 502, 503, 504}
+
+
 def run_collection(
     roster: list[dict[str, str]],
     output_dir: Path,
@@ -147,98 +153,183 @@ def run_collection(
     delay_seconds: float = 1.5,
     timeout_seconds: float = 15.0,
     force_refetch: bool = False,
+    concurrency: int = 1,
+    retries: int = 2,
+    backoff_base: float = 2.0,
 ) -> dict[str, Any]:
-    """Run sequential profile collection with pacing and manifest tracking."""
+    """Run bounded-concurrency profile collection with pacing, retries, and caching.
+
+    The manifest is the cache: previously fetched HTTP 200 profiles are skipped
+    unless ``force_refetch`` is set. Each failed attempt is retried with
+    exponential backoff plus jitter for transient errors only.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     manifest = load_manifest(manifest_path)
     profiles_dict = manifest.setdefault("profiles", {})
 
     total = len(roster)
+    workers = max(1, min(concurrency, total)) if total else 1
     print(f"Starting fetch operation for {total} profile(s)...")
-    print(f"Pacing: {delay_seconds:.1f}s delay between requests | Timeout: {timeout_seconds:.1f}s")
+    print(
+        f"Concurrency: {workers} worker(s) | Pacing: {delay_seconds:.2f}s per request | "
+        f"Timeout: {timeout_seconds:.1f}s | Retries: {retries}"
+    )
     print(f"Storage: {output_dir.resolve()}\n")
 
-    consecutive_rate_limits = 0
+    lock = threading.Lock()
+    stop_event = threading.Event()
+    state = {"consecutive_blocks": 0, "cache_hits": 0, "fetched": 0, "failed": 0}
 
-    for idx, item in enumerate(roster, start=1):
+    def save_entry(uuid: str, entry: dict[str, Any]) -> None:
+        with lock:
+            profiles_dict[uuid] = entry
+            save_manifest_atomic(manifest_path, manifest)
+
+    def process(item: dict[str, str], idx: int) -> None:
         uuid = item["participant_uuid"]
         name = item["participant_name"]
         raw_url = item["profile_url"]
         html_file = output_dir / f"{uuid}.html"
 
-        # Check existing manifest entry
         existing = profiles_dict.get(uuid)
         if existing and existing.get("status") == 200 and html_file.is_file() and not force_refetch:
-            print(f"[{idx}/{total}] Skipping (already fetched): {name} ({uuid[:8]}...) -> HTTP 200")
-            continue
+            with lock:
+                state["cache_hits"] += 1
+            print(f"[{idx}/{total}] Cached HTTP 200: {name} ({uuid[:8]}...)")
+            return
 
         try:
             target_url = normalize_profile_url(raw_url)
         except ValueError as err:
             print(f"[{idx}/{total}] URL Error for {name}: {err}")
-            profiles_dict[uuid] = {
-                "participant_name": name,
-                "profile_url": raw_url,
-                "status": 0,
-                "final_url": raw_url,
-                "content_length": 0,
-                "error": str(err),
-                "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                "html_path": None,
-            }
-            save_manifest_atomic(manifest_path, manifest)
-            continue
+            save_entry(
+                uuid,
+                {
+                    "participant_name": name,
+                    "profile_url": raw_url,
+                    "status": 0,
+                    "final_url": raw_url,
+                    "content_length": 0,
+                    "error": str(err),
+                    "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "html_path": None,
+                },
+            )
+            with lock:
+                state["failed"] += 1
+            return
 
-        print(f"[{idx}/{total}] Fetching: {name} ({uuid[:8]}...) -> {target_url} ...", end=" ", flush=True)
+        attempt = 0
+        attempts: list[dict[str, Any]] = []
+        final_status = 0
+        final_url = target_url
+        error_msg: str | None = None
+        headers: dict[str, str] = {}
+        html_bytes = b""
 
-        status, final_url, html_bytes, headers, error_msg = fetch_single_profile(
-            target_url, timeout=timeout_seconds
-        )
+        while attempt <= retries:
+            if stop_event.is_set():
+                error_msg = "ABORTED: collection stopped after repeated access restrictions"
+                break
+            if attempt > 0:
+                backoff = backoff_base * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
+                time.sleep(backoff)
+            if delay_seconds > 0:
+                time.sleep(delay_seconds)
+
+            print(
+                f"[{idx}/{total}] Fetching (attempt {attempt + 1}/{retries + 1}): "
+                f"{name} ({uuid[:8]}...) -> {target_url}",
+                flush=True,
+            )
+            final_status, final_url, html_bytes, headers, error_msg = fetch_single_profile(
+                target_url, timeout=timeout_seconds
+            )
+            attempts.append(
+                {
+                    "attempt": attempt + 1,
+                    "status": final_status,
+                    "error": error_msg,
+                    "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                }
+            )
+            if final_status == 200 and len(html_bytes) > 0:
+                break
+            if final_status in (403, 429):
+                with lock:
+                    state["consecutive_blocks"] += 1
+                    if state["consecutive_blocks"] >= 2:
+                        stop_event.set()
+            if final_status not in TRANSIENT_STATUSES:
+                break
+            attempt += 1
 
         content_length = len(html_bytes)
         html_path_saved = None
 
-        if status == 200 and content_length > 0:
+        if final_status == 200 and content_length > 0:
             html_file.write_bytes(html_bytes)
             html_path_saved = str(html_file.resolve())
-            consecutive_rate_limits = 0
-            print(f"HTTP {status} ({content_length:,} bytes) [SAVED]")
+            with lock:
+                state["fetched"] += 1
+                state["consecutive_blocks"] = 0
+            print(f"[{idx}/{total}] HTTP 200 ({content_length:,} bytes) [SAVED] {name}")
         else:
-            if content_length > 0 and status in (404, 403, 500):
+            if content_length > 0 and final_status in (404, 403, 500):
                 # Save error page HTML for diagnosis
-                error_html_file = output_dir / f"{uuid}_error_{status}.html"
+                error_html_file = output_dir / f"{uuid}_error_{final_status}.html"
                 error_html_file.write_bytes(html_bytes)
                 html_path_saved = str(error_html_file.resolve())
-            print(f"HTTP {status} - Error: {error_msg}")
+            with lock:
+                state["failed"] += 1
+            print(f"[{idx}/{total}] HTTP {final_status} - Error: {error_msg}")
 
-        profiles_dict[uuid] = {
-            "participant_name": name,
-            "profile_url": target_url,
-            "final_url": final_url,
-            "status": status,
-            "content_length": content_length,
-            "error": error_msg,
-            "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "html_path": html_path_saved,
-            "content_type": headers.get("content-type"),
-        }
+        save_entry(
+            uuid,
+            {
+                "participant_name": name,
+                "profile_url": target_url,
+                "final_url": final_url,
+                "status": final_status,
+                "content_length": content_length,
+                "error": error_msg,
+                "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "html_path": html_path_saved,
+                "content_type": headers.get("content-type"),
+                "attempts": len(attempts),
+                "retry_history": attempts,
+            },
+        )
 
-        save_manifest_atomic(manifest_path, manifest)
+    if workers == 1:
+        for idx, item in enumerate(roster, start=1):
+            process(item, idx)
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {
+                executor.submit(process, item, idx): item
+                for idx, item in enumerate(roster, start=1)
+            }
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as err:  # keep other workers running
+                    item = futures[future]
+                    print(f"Worker error for {item['participant_name']}: {err}")
 
-        # Check for rate limiting / blocking
-        if status in (429, 403):
-            consecutive_rate_limits += 1
-            if consecutive_rate_limits >= 2:
-                print(f"\n[ALERT] Stopping collection: Received repeated HTTP {status} (Access Restriction / Rate Limit).")
-                print("Aborting to avoid triggering upstream security blocks.")
-                break
-
-        # Respectful request pacing (don't sleep after the last item)
-        if idx < total:
-            time.sleep(delay_seconds)
+    if stop_event.is_set():
+        print(
+            "\n[ALERT] Collection stopped early after repeated HTTP 403/429 responses. "
+            "Cached entries are preserved."
+        )
 
     print("\nFetch execution finished.")
-    save_manifest_atomic(manifest_path, manifest)
+    print(
+        f"Summary: {state['fetched']} fetched, {state['cache_hits']} cached, "
+        f"{state['failed']} failed."
+    )
+    with lock:
+        save_manifest_atomic(manifest_path, manifest)
     return manifest
 
 
@@ -292,6 +383,24 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Force re-fetching even if already present in manifest with HTTP 200",
     )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=1,
+        help="Bounded number of concurrent fetch workers (default: 1)",
+    )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=2,
+        help="Retries for transient errors such as timeouts and HTTP 5xx (default: 2)",
+    )
+    parser.add_argument(
+        "--backoff-base",
+        type=float,
+        default=2.0,
+        help="Base seconds for exponential retry backoff (default: 2.0)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -318,6 +427,9 @@ def main(argv: list[str] | None = None) -> int:
         delay_seconds=args.delay,
         timeout_seconds=args.timeout,
         force_refetch=args.force,
+        concurrency=args.concurrency,
+        retries=args.retries,
+        backoff_base=args.backoff_base,
     )
 
     # Print summary statistics
