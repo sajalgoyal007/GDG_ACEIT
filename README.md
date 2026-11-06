@@ -21,12 +21,15 @@ Open <http://localhost:3000>. Without Supabase environment variables, the dashbo
 
 The app uses the publishable key with the signed-in user's cookies for admin operations and a separate anonymous client for the public leaderboard. The public table grant exposes only display name, public profile URL, badge aggregate, and verification metadata; RLS limits rows to registered participants. Aggregate statistics come from `get_public_summary()`. Admin reads and writes are additionally role-checked by PostgreSQL. No participant email is collected in this workflow. Supabase Auth may process admin login addresses for authentication, but participant registration data must not be placed there or in the participant CSV.
 
-## Milestones and ranking
+## Rank freeze and ranking
 
-- 0–4 recorded verified badges: **In Progress**.
-- 5–9: **5-Badge Milestone**.
-- 10 or more: **10-Badge Milestone**, which also qualifies for the 5+ threshold and filter.
-- Participants are ordered by badge count descending, then stable participant UUID ascending for tied counts. Equal counts share a competition rank (`1, 1, 3`); verification timestamps and milestone-earned times are not used for ranking.
+- 0–9 **Skill Badges**: **In Progress**. The participant keeps a dynamic rank.
+- 10 or more **Skill Badges**: the leaderboard rank is **frozen exactly once**. Later badge gains never change it, and no participant can move above a frozen rank.
+- Only Skill Badges count toward the threshold. Arcade Game Badges and the combined total never freeze a rank, even when they are 10 or more.
+- Ranking is by the persisted frozen rank first, then for unfrozen participants by Skill Badges descending, Arcade Game Badges descending, total Badges descending, and finally stable participant UUID ascending. Equal counts never share a rank: every reviewed participant receives a distinct sequential rank (`1, 2, 3`).
+- Simultaneous threshold crossings are allocated once, deterministically, in the same order (Skill, Arcade, Total, UUID) and receive the next distinct sequential ranks.
+- `frozen_rank` and `rank_frozen_at` are written by the database only. The application reads the persisted rank and never regenerates it. This requires migration `20261105000100_ten_skill_badge_rank_freeze.sql`; until it is applied, the public UI shows threshold status but no locked ranks.
+- The 5-badge milestone, filter, progress meter, and summary field have been removed entirely.
 - The dashboard keeps public fields separate from the admin audit history. Admins can expand each participant's audit events to review count changes, notes, actor ID, event time, and verification time.
 - CSV import requires an explicit confirmation checkbox; the server action independently rejects submissions without that confirmation.
 

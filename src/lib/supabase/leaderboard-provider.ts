@@ -8,8 +8,10 @@ interface PublicParticipantRow {
   display_name: string;
   profile_url: string | null;
   verified_badge_count: number;
-  skill_badge_count: number | null;
-  arcade_game_badge_count: number | null;
+  skill_badge_count?: number | null;
+  arcade_game_badge_count?: number | null;
+  frozen_rank?: number | null;
+  rank_frozen_at?: string | null;
   last_verified_at: string | null;
   verification_source: string | null;
 }
@@ -17,12 +19,24 @@ interface PublicParticipantRow {
 interface PublicSummary {
   registered_count: number;
   total_verified_badges: number;
-  total_skill_badges: number;
-  total_arcade_badges: number;
-  five_badge_count: number;
-  ten_badge_count: number;
+  total_skill_badges?: number;
+  total_arcade_badges?: number;
+  frozen_rank_count?: number;
+  ten_badge_count?: number;
   last_updated_at: string;
 }
+
+type ParticipantsResult = {
+  data: unknown;
+  error: { code?: string; message?: string } | null;
+};
+
+const PARTICIPANT_COLUMNS_WITH_FROZEN =
+  "id,display_name,profile_url,verified_badge_count,skill_badge_count,arcade_game_badge_count,frozen_rank,rank_frozen_at,last_verified_at,verification_source";
+const PARTICIPANT_COLUMNS_CLASSIFIED =
+  "id,display_name,profile_url,verified_badge_count,skill_badge_count,arcade_game_badge_count,last_verified_at,verification_source";
+const PARTICIPANT_COLUMNS_BASE =
+  "id,display_name,profile_url,verified_badge_count,last_verified_at,verification_source";
 
 function initials(name: string) {
   return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "?";
@@ -38,19 +52,29 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
   name: "Supabase public projection",
   async getPublicSnapshot(): Promise<LeaderboardSnapshot> {
     const supabase = createSupabasePublicClient();
-    // Backward-compatibility: if the classified badge migration has not yet been applied to the database,
-    // gracefully fall back to selecting the base verified columns instead of failing the public homepage.
-    // Both queries cast through unknown so TypeScript does not enforce the full column shape on the fallback.
-    let participantsResult: { data: unknown; error: { code?: string; message?: string } | null } =
-      await supabase.from("participants")
-        .select("id,display_name,profile_url,verified_badge_count,skill_badge_count,arcade_game_badge_count,last_verified_at,verification_source")
+
+    // Backward-compatibility ladder:
+    //   1. Full projection with persisted frozen ranks.
+    //   2. Classified counts without the rank-freeze migration.
+    //   3. Original base projection.
+    // A missing column (42703) falls back; any other error still fails closed.
+    let participantsResult: ParticipantsResult = await supabase.from("participants")
+      .select(PARTICIPANT_COLUMNS_WITH_FROZEN)
+      .order("skill_badge_count", { ascending: false, nullsFirst: false })
+      .order("verified_badge_count", { ascending: false })
+      .order("id", { ascending: true });
+
+    if (participantsResult.error?.code === "42703") {
+      participantsResult = await supabase.from("participants")
+        .select(PARTICIPANT_COLUMNS_CLASSIFIED)
         .order("skill_badge_count", { ascending: false, nullsFirst: false })
         .order("verified_badge_count", { ascending: false })
         .order("id", { ascending: true });
+    }
 
-    if (participantsResult.error && (participantsResult.error.code === "42703" || participantsResult.error.message?.includes("skill_badge_count"))) {
+    if (participantsResult.error?.code === "42703") {
       participantsResult = await supabase.from("participants")
-        .select("id,display_name,profile_url,verified_badge_count,last_verified_at,verification_source")
+        .select(PARTICIPANT_COLUMNS_BASE)
         .order("verified_badge_count", { ascending: false })
         .order("id", { ascending: true });
     }
@@ -71,10 +95,17 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
       verifiedBadgeCount: row.verified_badge_count,
       skillBadgeCount: row.skill_badge_count ?? null,
       arcadeGameBadgeCount: row.arcade_game_badge_count ?? null,
+      frozenRank: row.frozen_rank ?? null,
+      rankFrozenAt: row.rank_frozen_at ?? null,
       ...(row.profile_url ? { profileUrl: row.profile_url } : {}),
       ...(row.last_verified_at ? { lastCheckedAt: row.last_verified_at } : {}),
       ...(row.verification_source ? { verificationSource: row.verification_source } : {}),
     }));
+
+    const frozenRankCount = participants.reduce(
+      (count, participant) => participant.frozenRank != null ? count + 1 : count,
+      0,
+    );
 
     return {
       dataMode: "database",
@@ -83,8 +114,8 @@ export const supabaseLeaderboardProvider: LeaderboardProvider = {
       totalVerifiedBadges: Number(summary.total_verified_badges),
       totalSkillBadges: Number(summary.total_skill_badges ?? 0),
       totalArcadeBadges: Number(summary.total_arcade_badges ?? 0),
-      fiveBadgeCount: Number(summary.five_badge_count),
-      tenBadgeCount: Number(summary.ten_badge_count),
+      frozenRankCount,
+      tenBadgeCount: Number(summary.ten_badge_count ?? 0),
       lastSyncedAt: summary.last_updated_at,
     };
   },

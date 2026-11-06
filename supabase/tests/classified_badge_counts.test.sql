@@ -1,5 +1,5 @@
 begin;
-select plan(21);
+select plan(22);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -112,10 +112,11 @@ select is((
     and note like '%[rollback_state:%'
 ), 1, 'participant audit trail records classified update with embedded rollback metadata');
 
--- Test 5: Summary RPC incorporates classified milestone counts
+-- Test 5: Summary RPC incorporates classified badge totals
 select is((select total_skill_badges from public.get_public_summary()), 5, 'summary RPC calculates total_skill_badges');
 select is((select total_arcade_badges from public.get_public_summary()), 2, 'summary RPC calculates total_arcade_badges');
-select is((select five_badge_count from public.get_public_summary()), 1, 'milestone count uses skill badge count');
+select is((select ten_badge_count from public.get_public_summary()), 0, 'summary RPC counts only 10+ skill badge holders');
+select is((select frozen_rank_count from public.get_public_summary()), 0, 'no participant is frozen below 10 skill badges');
 
 -- Test 6: Dedicated rollback RPC restores prior state completely
 select is((

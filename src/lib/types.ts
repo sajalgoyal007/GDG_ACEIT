@@ -45,10 +45,10 @@ export interface PublicParticipant {
   lastCheckedAt?: string;
   verificationSource?: string;
   badges?: BadgeRecord[];
-  /** Frozen rank captured when 10 skill badges were reached. */
+  /** Persisted rank captured exactly once when the participant reached 10 Skill Badges. */
   frozenRank?: number | null;
-  /** Timestamp when the 10-skill-badge milestone was reached. */
-  milestoneCompletedAt?: string | null;
+  /** Timestamp of the one-time frozen-rank capture. */
+  rankFrozenAt?: string | null;
 }
 
 export interface LeaderboardSnapshot {
@@ -58,7 +58,9 @@ export interface LeaderboardSnapshot {
   totalVerifiedBadges: number;
   totalSkillBadges: number;
   totalArcadeBadges: number;
-  fiveBadgeCount: number;
+  /** Participants whose 10-Skill-Badge rank has been captured. */
+  frozenRankCount: number;
+  /** Participants currently at or above 10 Skill Badges. */
   tenBadgeCount: number;
   lastSyncedAt: string;
 }

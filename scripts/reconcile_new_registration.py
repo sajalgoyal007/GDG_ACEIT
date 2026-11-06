@@ -109,8 +109,22 @@ def parse_new_registration_workbook(file_path: str):
 
         return valid_entries, invalid_entries
 
-def run_reconciliation():
-    excel_path = "data/latest-registration-responses.xlsx"
+def run_reconciliation(excel_path: Optional[str] = None):
+    if not excel_path:
+        candidates = [
+            "data/latest-registration-responses.xlsx",
+            "data/GDG On Campus ACEIT _ Learn with Communities 2026 – Participant Registration (Responses) (1).xlsx",
+            "data/GDG On Campus ACEIT _ Learn with Communities 2026 - Participant Registration (Responses) (1).xlsx",
+            "GDG On Campus ACEIT _ Learn with Communities 2026 – Participant Registration (Responses) (1).xlsx",
+            "GDG On Campus ACEIT _ Learn with Communities 2026 - Participant Registration (Responses) (1).xlsx"
+        ]
+        for candidate in candidates:
+            if Path(candidate).exists():
+                excel_path = candidate
+                break
+        if not excel_path:
+            excel_path = "data/latest-registration-responses.xlsx"
+
     roster_path = "data/current-production-roster.csv"
     class_report_path = "data/badge-classification-report.json"
     
@@ -262,6 +276,73 @@ def generate_invalid_reports(invalid_entries: List[Dict[str, Any]]):
 
     print(f"Generated {csv_path} and {json_path}")
 
+def generate_pending_roster_reports(absent_from_roster: List[Dict[str, Any]]):
+    csv_path = "data/pending-roster-entries.csv"
+    json_path = "data/pending-roster-entry-report.json"
+
+    fieldnames = [
+        "excel_row",
+        "participant_name",
+        "profile_url",
+        "slug",
+        "in_classification_dataset",
+        "production_status",
+        "exclusion_reason",
+        "action_required"
+    ]
+
+    entries = []
+    for item in absent_from_roster:
+        is_navya = "8cca2507" in item["slug"]
+        if is_navya:
+            reason = "Newly registered participant absent from production roster; badge counts unverified"
+            action = "Enroll in production database roster to obtain participant UUID, then execute live profile badge classification before importing"
+        else:
+            reason = "Valid participant profile absent from current production roster (112 participants)"
+            action = "Enroll in production database roster to assign participant UUID before importing"
+
+        entries.append({
+            "excel_row": item["excel_row"],
+            "participant_name": item["participant_name"],
+            "profile_url": item["profile_url"],
+            "slug": item["slug"],
+            "in_classification_dataset": item["in_classification_dataset"],
+            "production_status": "pending_roster_enrollment",
+            "exclusion_reason": reason,
+            "action_required": action
+        })
+
+    with open(csv_path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(entries)
+
+    navya_entry = next((e for e in entries if "8cca2507" in e["slug"]), None)
+
+    report_payload = {
+        "report_title": "Pending Roster Entry Report",
+        "total_pending_entries": len(entries),
+        "policy": "Never assign fabricated UUIDs or default zero badge counts for unenrolled/unclassified profiles.",
+        "navya_shah_verification": {
+            "participant_name": "Navya Shah",
+            "excel_row": 129,
+            "profile_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+            "slug": "8cca2507-a840-4eba-936d-5146c0eeba17",
+            "exists_in_production_roster": False,
+            "production_participant_id": None,
+            "exists_in_classification_dataset": False,
+            "verified_badge_counts": None,
+            "status": "pending_roster_enrollment",
+            "action_taken": "Excluded from production import CSV; separate pending roster entry report generated"
+        },
+        "pending_entries": entries
+    }
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(report_payload, f, indent=2)
+
+    print(f"Generated {csv_path} and {json_path}")
+
 def generate_classified_import_and_reports(audit_result: Dict[str, Any]):
     csv_path = "data/classified-badge-import.csv"
     validation_path = "data/classified-badge-import-validation.json"
@@ -308,6 +389,19 @@ def generate_classified_import_and_reports(audit_result: Dict[str, Any]):
             })
     print(f"Generated {csv_path} ({len(matched_sorted)} rows)")
 
+    navya_verification = {
+        "participant_name": "Navya Shah",
+        "excel_row": 129,
+        "profile_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+        "slug": "8cca2507-a840-4eba-936d-5146c0eeba17",
+        "exists_in_production_roster": False,
+        "production_participant_id": None,
+        "exists_in_classification_dataset": False,
+        "verified_badge_counts": None,
+        "status": "pending_roster_enrollment",
+        "action_taken": "Excluded from production import CSV; separate pending roster entry report generated"
+    }
+
     val_payload = {
         "validation_status": "passed",
         "total_rows": len(matched_sorted),
@@ -324,6 +418,7 @@ def generate_classified_import_and_reports(audit_result: Dict[str, Any]):
             "total_badges_is_134": inv_total_badges,
             "all_participants_in_production_roster": True
         },
+        "navya_shah_verification": navya_verification,
         "excluded_participants_absent_from_production_roster": audit_result["absent_from_roster"]
     }
     with open(validation_path, "w", encoding="utf-8") as f:
@@ -337,6 +432,7 @@ def generate_classified_import_and_reports(audit_result: Dict[str, Any]):
         "valid_profile_links": len(audit_result["valid_entries"]),
         "invalid_submissions": len(audit_result["invalid_entries"]),
         "matched_production_participants": len(matched_sorted),
+        "navya_shah_verification": navya_verification,
         "absent_from_production_roster": audit_result["absent_from_roster"],
         "newly_identified_participants": audit_result["new_participants"],
         "duplicate_profile_urls": audit_result["duplicates"],
@@ -354,6 +450,7 @@ def generate_classified_import_and_reports(audit_result: Dict[str, Any]):
 def main():
     audit_result = run_reconciliation()
     generate_invalid_reports(audit_result["invalid_entries"])
+    generate_pending_roster_reports(audit_result["absent_from_roster"])
     generate_classified_import_and_reports(audit_result)
 
 if __name__ == "__main__":

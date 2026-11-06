@@ -9,9 +9,9 @@ import { Award, BadgeCheck, Check, Clock3, ExternalLink, Gamepad2, Lock, Medal, 
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import type { LeaderboardSnapshot, PublicParticipant } from "@/lib/types";
-import { getMilestoneLabel, hasMilestone, matchesMilestoneFilter, rankParticipants } from "@/lib/leaderboard";
+import { matchesRankFreezeFilter, qualifiesForRankFreeze, rankParticipants } from "@/lib/leaderboard";
 
-type FilterKey = "all" | "five" | "ten";
+type FilterKey = "all" | "ten";
 
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -35,16 +35,13 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
   const awaitingVerification = participants.filter((participant) => !participant.lastCheckedAt).length;
   const reviewedParticipants = participants.filter((participant) => participant.lastCheckedAt);
   const hasReviewedParticipants = reviewedParticipants.length > 0;
-  const reviewedBadgeTotal = reviewedParticipants.reduce((sum, participant) => sum + participant.verifiedBadgeCount, 0);
-  const reviewedFiveBadgeCount = reviewedParticipants.filter((participant) => hasMilestone(participant.skillBadgeCount ?? participant.verifiedBadgeCount, 5)).length;
-  const reviewedTenBadgeCount = reviewedParticipants.filter((participant) => hasMilestone(participant.skillBadgeCount ?? participant.verifiedBadgeCount, 10)).length;
   const visible = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return ranked.filter(({ participant }) => {
       const matchesName = !query || participant.displayName.toLocaleLowerCase().includes(query);
-      const threshold = filter === "all" ? null : filter === "five" ? 5 : 10;
-      const matchesMilestone = matchesMilestoneFilter(participant, threshold);
-      return matchesName && matchesMilestone;
+      const threshold = filter === "all" ? null : 10;
+      const matchesRankFilter = matchesRankFreezeFilter(participant, threshold);
+      return matchesName && matchesRankFilter;
     });
   }, [ranked, search, filter]);
 
@@ -96,9 +93,9 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
 
         <section className="summary-grid" aria-label={isProgressPage ? "Live community progress" : "Live community overview"}>
           <SummaryCard index={0} reduceMotion={reduceMotion} icon={<Users size={18} />} label="Registered participants" value={registeredCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples" : "Current records"} tone="blue" />
-          <SummaryCard index={1} reduceMotion={reduceMotion} icon={<BadgeCheck size={18} />} label={snapshot.dataMode === "demo" ? "Example badge count" : "Verified badges recorded"} value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : reviewedBadgeTotal} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? (snapshot.totalSkillBadges > 0 || snapshot.totalArcadeBadges > 0 ? `${snapshot.totalSkillBadges} Skill · ${snapshot.totalArcadeBadges} Arcade` : "Manual evidence review only") : "Awaiting first review"} tone="green" />
-          <SummaryCard index={2} reduceMotion={reduceMotion} icon={<Medal size={18} />} label="Reached 5+ badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : reviewedFiveBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Skill badge milestone" : "Awaiting first review"} tone="amber" />
-          <SummaryCard index={3} reduceMotion={reduceMotion} icon={<Award size={18} />} label="Reached 10+ badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : reviewedTenBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Skill badge milestone" : "Awaiting first review"} tone="violet" />
+          <SummaryCard index={1} reduceMotion={reduceMotion} icon={<BadgeCheck size={18} />} label={snapshot.dataMode === "demo" ? "Example badge count" : "Verified badges recorded"} value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? (snapshot.totalSkillBadges > 0 || snapshot.totalArcadeBadges > 0 ? `${snapshot.totalSkillBadges} Skill · ${snapshot.totalArcadeBadges} Arcade` : "Manual evidence review only") : "Awaiting first review"} tone="green" />
+          <SummaryCard index={2} reduceMotion={reduceMotion} icon={<Lock size={18} />} label="Ranks locked" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.frozenRankCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "10 Skill Badge threshold" : "Awaiting first review"} tone="amber" />
+          <SummaryCard index={3} reduceMotion={reduceMotion} icon={<Award size={18} />} label="Reached 10+ Skill badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.tenBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Rank freeze threshold" : "Awaiting first review"} tone="violet" />
         </section>
 
         {snapshot.dataMode === "database" && awaitingVerification > 0 && <section className="verification-notice" role="status" aria-live="polite">
@@ -137,10 +134,9 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
               <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by participant name" />
               {search && <button type="button" className="clear-search" onClick={() => setSearch("")} aria-label="Clear search"><X size={14} /></button>}
             </label>
-            <div className="milestone-filters" role="group" aria-label="Filter by badge milestone">
+            <div className="rank-filters" role="group" aria-label="Filter by Skill Badge rank threshold">
               <FilterButton current={filter} value="all" onSelect={setFilter}>All participants</FilterButton>
-              <FilterButton current={filter} value="five" onSelect={setFilter}>5+ badges</FilterButton>
-              <FilterButton current={filter} value="ten" onSelect={setFilter}>10+ badges</FilterButton>
+              <FilterButton current={filter} value="ten" onSelect={setFilter}>10+ Skill badges</FilterButton>
             </div>
           </div>
 
@@ -163,15 +159,14 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
                   </thead>
                   <tbody>{visible.map(({ participant, rank }) => {
                     const count = participant.verifiedBadgeCount;
-                    const primaryCount = participant.skillBadgeCount ?? count;
                     return <tr key={participant.id}>
                       <td><RankBadge rank={rank} frozen={Boolean(participant.frozenRank)} /></td>
                       <td><button type="button" className="participant-cell" onClick={() => setSelected(participant)} aria-label={`Open participant details for ${participant.displayName}`}><Avatar participant={participant} /><span><strong>{participant.displayName}</strong><small>{snapshot.dataMode === "demo" ? "Synthetic example" : "Registered participant"}</small></span></button></td>
                       <td>{participant.lastCheckedAt ? <span className="badge-total"><Award size={15} aria-hidden="true" />{participant.skillBadgeCount !== null ? participant.skillBadgeCount : "—"}<small>{participant.skillBadgeCount !== null ? "skill" : "unclassified"}</small></span> : <span className="badge-unreviewed">Not reviewed</span>}</td>
                       <td>{participant.lastCheckedAt ? <span>{participant.arcadeGameBadgeCount !== null ? participant.arcadeGameBadgeCount : "—"}</span> : <span className="badge-unreviewed">—</span>}</td>
                       <td>{participant.lastCheckedAt ? <strong>{count}</strong> : <span className="badge-unreviewed">—</span>}</td>
-                      <td>{participant.lastCheckedAt ? <ProgressPair count={primaryCount} /> : <span className="progress-unavailable">After review</span>}</td>
-                      <td>{participant.lastCheckedAt ? <MilestoneBadge count={primaryCount} /> : <span className="milestone-unreviewed">Awaiting verification</span>}</td>
+                      <td>{participant.lastCheckedAt ? (participant.skillBadgeCount !== null ? <ProgressMeter count={participant.skillBadgeCount} target={10} /> : <span className="progress-unavailable">Not classified</span>) : <span className="progress-unavailable">After review</span>}</td>
+                      <td>{participant.lastCheckedAt ? <RankStatus skillBadgeCount={participant.skillBadgeCount} frozenRank={participant.frozenRank} /> : <span className="status-unreviewed">Awaiting verification</span>}</td>
                     </tr>;
                   })}</tbody>
                 </table>
@@ -179,7 +174,6 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
               <ul className="mobile-leaderboard" aria-label="Leaderboard participants">
                 {visible.map(({ participant, rank }) => {
                   const count = participant.verifiedBadgeCount;
-                  const primaryCount = participant.skillBadgeCount ?? count;
                   return <li key={participant.id}><button type="button" className="mobile-participant" onClick={() => setSelected(participant)} aria-label={`Open participant details for ${participant.displayName}`}>
                     <span className="mobile-participant-top">
                       <RankBadge rank={rank} frozen={Boolean(participant.frozenRank)} />
@@ -205,8 +199,8 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
                       <span className="mobile-badges-row"><span className="badge-unreviewed">Not reviewed</span></span>
                     )}
                     <span className="mobile-participant-bottom">
-                      {participant.lastCheckedAt ? <ProgressPair count={primaryCount} /> : <span className="progress-unavailable">Progress appears after manual review</span>}
-                      {participant.lastCheckedAt && <MilestoneBadge count={primaryCount} />}
+                      {participant.lastCheckedAt ? (participant.skillBadgeCount !== null ? <ProgressMeter count={participant.skillBadgeCount} target={10} /> : <span className="progress-unavailable">Skill badges not classified</span>) : <span className="progress-unavailable">Progress appears after manual review</span>}
+                      {participant.lastCheckedAt && <RankStatus skillBadgeCount={participant.skillBadgeCount} frozenRank={participant.frozenRank} />}
                     </span>
                   </button></li>;
                 })}
@@ -249,26 +243,24 @@ function RankBadge({ rank, frozen }: { rank: number | null; frozen?: boolean }) 
   );
 }
 
-function ProgressPair({ count }: { count: number }) {
-  return <div className="progress-pair" aria-label={`${count} badges: ${Math.min(count, 5)} of 5 and ${Math.min(count, 10)} of 10 toward milestones`}>
-    <ProgressMeter count={count} target={5} />
-    <ProgressMeter count={count} target={10} />
-  </div>;
-}
-
 function ProgressMeter({ count, target }: { count: number; target: number }) {
   const value = Math.min(count, target);
-  return <span className="progress-meter"><span className="progress-meter-label">{target} badges</span><span className="progress-track" role="progressbar" aria-label={`Progress toward ${target} badges`} aria-valuemin={0} aria-valuemax={target} aria-valuenow={value}><span style={{ width: `${(value / target) * 100}%` }} /></span><small>{value}/{target}</small></span>;
+  return <span className="progress-meter"><span className="progress-meter-label">{target} skill badges</span><span className="progress-track" role="progressbar" aria-label={`Progress toward ${target} skill badges`} aria-valuemin={0} aria-valuemax={target} aria-valuenow={value}><span style={{ width: `${(value / target) * 100}%` }} /></span><small>{value}/{target}</small></span>;
 }
 
-function MilestoneBadge({ count }: { count: number }) {
-  const kind = count >= 10 ? "milestone-status status-ten" : count >= 5 ? "milestone-status status-five" : "milestone-status status-progress";
-  return <span className={kind}>{count >= 5 && <Check size={12} aria-hidden="true" />}{getMilestoneLabel(count)}</span>;
+function RankStatus({ skillBadgeCount, frozenRank }: { skillBadgeCount: number | null; frozenRank?: number | null }) {
+  if (skillBadgeCount === null) return <span className="rank-status status-progress">Unclassified</span>;
+  if (qualifiesForRankFreeze(skillBadgeCount)) {
+    return frozenRank != null
+      ? <span className="rank-status status-ten"><Check size={12} aria-hidden="true" />Rank locked</span>
+      : <span className="rank-status status-ten"><Check size={12} aria-hidden="true" />Threshold met</span>;
+  }
+  return <span className="rank-status status-progress">In progress</span>;
 }
 
 function EmptyState({ hasParticipants, isDemo, onReset }: { hasParticipants: boolean; isDemo: boolean; onReset: () => void }) {
   const title = hasParticipants ? "No participants match these filters" : isDemo ? "No demo records available" : "No participants yet";
-  const description = hasParticipants ? "Try another name or choose a different badge milestone." : isDemo ? "The active demo provider returned no participant records." : "Registered participant records will appear here after they are added by an administrator.";
+  const description = hasParticipants ? "Try another name or choose a different rank filter." : isDemo ? "The active demo provider returned no participant records." : "Registered participant records will appear here after they are added by an administrator.";
   return <div className="leaderboard-empty" role="status"><span className="empty-icon"><Search size={18} aria-hidden="true" /></span><strong>{title}</strong><p>{description}</p>{hasParticipants && <button type="button" onClick={onReset}>Clear search and filters</button>}</div>;
 }
 
@@ -303,16 +295,20 @@ function ParticipantDialog({ participant, onClose, reduceMotion }: { participant
           <span>{participant.lastCheckedAt ? (participant.skillBadgeCount !== null ? `Total: ${count} badges` : "verified badges") : "manual verification"}</span>
         </div>
         <div>
-          <strong>{participant.frozenRank ? `Rank #${participant.frozenRank} (Locked)` : participant.lastCheckedAt ? getMilestoneLabel(participant.skillBadgeCount ?? count) : "Not ranked"}</strong>
-          <span>{participant.frozenRank ? "milestone rank locked" : "milestone status"}</span>
+          <strong>{participant.frozenRank ? `Rank #${participant.frozenRank} (Locked)` : participant.lastCheckedAt ? (qualifiesForRankFreeze(participant.skillBadgeCount) ? "Rank threshold met" : "In progress") : "Not ranked"}</strong>
+          <span>{participant.frozenRank ? "rank locked at 10 Skill Badges" : "rank status"}</span>
         </div>
       </div>
       <section className="profile-progress" aria-labelledby="progress-title">
         <div className="profile-section-heading">
-          <h3 id="progress-title">Milestone progress</h3>
-          <span>{participant.lastCheckedAt ? `${participant.skillBadgeCount ?? count} skill badges` : "Not yet available"}</span>
+          <h3 id="progress-title">Skill badge progress</h3>
+          <span>{participant.lastCheckedAt ? (participant.skillBadgeCount !== null ? `${participant.skillBadgeCount} Skill ${participant.skillBadgeCount === 1 ? "badge" : "badges"}` : "Not yet classified") : "Not yet available"}</span>
         </div>
-        {participant.lastCheckedAt ? <><ProgressMeter count={participant.skillBadgeCount ?? count} target={5} /><ProgressMeter count={participant.skillBadgeCount ?? count} target={10} /></> : <p className="profile-no-badges">A registration default is not an evidence-reviewed badge count. Progress will appear after manual verification.</p>}
+        {participant.lastCheckedAt
+          ? (participant.skillBadgeCount !== null
+            ? <ProgressMeter count={participant.skillBadgeCount} target={10} />
+            : <p className="profile-no-badges">Skill and Arcade badge classification is not available for this participant yet.</p>)
+          : <p className="profile-no-badges">A registration default is not an evidence-reviewed badge count. Progress will appear after manual verification.</p>}
       </section>
       <section className="profile-badges" aria-labelledby="badges-title"><div className="profile-section-heading"><h3 id="badges-title">Badge records</h3><span>{hasReviewedCount ? count : "—"}</span></div>
         {!hasReviewedCount ? <p className="profile-no-badges" role="status">No badge records have been submitted for manual review yet.</p> : participant.badges?.length ? <ul>{participant.badges.filter((badge) => badge.status === "verified").map((badge) => <li key={badge.id}><span className="profile-badge-icon"><BadgeCheck size={15} aria-hidden="true" /></span><span className="profile-badge-copy"><strong>{badge.name}</strong><small>Observed {formatTimestamp(badge.verifiedAt)} IST</small></span></li>)}</ul> : count > 0 ? <p className="profile-no-badges">This participant record stores an aggregate count; individual badge names are not available.</p> : <p className="profile-no-badges" role="status">No badge records were confirmed in the latest manual review.</p>}

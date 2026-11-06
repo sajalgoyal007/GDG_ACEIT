@@ -1,0 +1,125 @@
+{
+  "generated_at": "2026-11-06T05:49:10.875116+00:00",
+  "identity_key": "normalized Google Skills public profile URL",
+  "source": {
+    "csv_rows": 195,
+    "distinct_profile_urls": 195,
+    "duplicate_profile_urls": {},
+    "invalid_profile_urls": 0
+  },
+  "classification": {
+    "exact_url_and_name_matches": 190,
+    "url_matches_with_name_conflict": 5,
+    "new_participants": 0,
+    "production_only_absent_from_csv": 7,
+    "duplicate_roster_profile_urls": {},
+    "total_accounted": 195
+  },
+  "verification": {
+    "profiles_verified": 195,
+    "verified_nonzero": 40,
+    "verified_zero": 155,
+    "inaccessible_or_unverified": 0,
+    "skill_badge_total": 200,
+    "arcade_badge_total": 16,
+    "combined_badge_total": 216
+  },
+  "removal": {
+    "count": 7,
+    "badge_totals": {
+      "skill": 15,
+      "arcade": 5,
+      "total": 20
+    },
+    "application_status": "prepared_only_no_approved_unregister_workflow"
+  },
+  "name_corrections": [
+    {
+      "participant_id": "1aba2a95-8cfb-43bf-adb4-9a3c73366d92",
+      "profile_url": "https://www.skills.google/public_profiles/d92bff85-82b7-46f4-81d5-614bbfd66dbe",
+      "current_display_name": "Danish Usman and",
+      "csv_display_name": "Danish Usman",
+      "public_profile_display_name": "Danish Usman",
+      "proposed_display_name": "Danish Usman",
+      "action": "correct",
+      "basis": "URL identity match; public profile heading and CSV compared",
+      "application_status": "prepared_only_no_approved_rename_workflow"
+    },
+    {
+      "participant_id": "3fd4444d-7b4e-482c-a775-fa7577c36c96",
+      "profile_url": "https://www.skills.google/public_profiles/77f75b00-f45a-4be5-9049-bb0d47050407",
+      "current_display_name": "Gautan Jangid",
+      "csv_display_name": "Gautam jangid",
+      "public_profile_display_name": "Gautam Jangid",
+      "proposed_display_name": "Gautam Jangid",
+      "action": "correct",
+      "basis": "URL identity match; public profile heading and CSV compared",
+      "application_status": "prepared_only_no_approved_rename_workflow"
+    },
+    {
+      "participant_id": "e8f0688f-b418-4f15-9886-ebdd7e97fbe3",
+      "profile_url": "https://www.skills.google/public_profiles/d400ecf9-c045-4ce7-8d56-aa23aee72470",
+      "current_display_name": "Ridhima Gupta",
+      "csv_display_name": "Ridhima",
+      "public_profile_display_name": "Ridhima Gupta",
+      "proposed_display_name": "Ridhima Gupta",
+      "action": "keep_current",
+      "basis": "URL identity match; public profile heading and CSV compared",
+      "application_status": "prepared_only_no_approved_rename_workflow"
+    },
+    {
+      "participant_id": "588b78eb-4705-4dba-80a0-f2ea6cdf7084",
+      "profile_url": "https://www.skills.google/public_profiles/81bcfa1b-c2e4-42de-b623-4ddbeabbbc0d",
+      "current_display_name": "Rocky yogi",
+      "csv_display_name": "Rocky",
+      "public_profile_display_name": "Rocky Yogi",
+      "proposed_display_name": "Rocky Yogi",
+      "action": "keep_current",
+      "basis": "URL identity match; public profile heading and CSV compared",
+      "application_status": "prepared_only_no_approved_rename_workflow"
+    },
+    {
+      "participant_id": "a8142567-1b1f-42da-9451-273e53dd5103",
+      "profile_url": "https://www.skills.google/public_profiles/b4095205-015b-4ef8-88ba-b83378a7257d",
+      "current_display_name": "Ujjwal Singh",
+      "csv_display_name": "Ujjwal Kumar Singh",
+      "public_profile_display_name": "Ujjwal Singh",
+      "proposed_display_name": "Ujjwal Singh",
+      "action": "keep_current",
+      "basis": "URL identity match; public profile heading and CSV compared",
+      "application_status": "prepared_only_no_approved_rename_workflow"
+    }
+  ],
+  "validation": {
+    "generated_at": "2026-11-06T05:49:10.875116+00:00",
+    "source_rows": 195,
+    "distinct_source_profile_urls": 195,
+    "final_manifest_rows": 195,
+    "distinct_final_profile_urls": 195,
+    "import_rows": 195,
+    "distinct_import_ids": 195,
+    "removal_proposals": 7,
+    "manual_review_rows": 0,
+    "duplicate_source_urls": {},
+    "duplicate_roster_urls": {},
+    "all_source_rows_accounted_once": true,
+    "import_excludes_removal_proposals": true,
+    "sum_invariant_valid": true,
+    "proposed_public_totals_after_removal": {
+      "skill": 200,
+      "arcade": 16,
+      "total": 216
+    },
+    "removed_badge_totals": {
+      "skill": 15,
+      "arcade": 5,
+      "total": 20
+    },
+    "combined_totals_if_removals_not_applied": {
+      "skill": 215,
+      "arcade": 21,
+      "total": 236
+    },
+    "validation_status": "passed"
+  }
+}

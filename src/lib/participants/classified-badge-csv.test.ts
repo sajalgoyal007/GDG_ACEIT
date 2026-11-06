@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   parseClassifiedBadgeCsv,
   resolveClassifiedBadgeCsvRows,
 } from "./classified-badge-csv.ts";
+
+function dataFile(name: string) {
+  return new URL(`../../../data/${name}`, import.meta.url);
+}
 
 const idOne = "11111111-1111-4111-8111-111111111111";
 const idTwo = "22222222-2222-4222-8222-222222222222";
@@ -113,5 +118,42 @@ test("CSV parser bounds row issue creation at 500 data rows", () => {
   assert.equal(parsed.rows.length, 0);
   assert.equal(parsed.issues.length, 1);
   assert.match(parsed.issues[0]!.message, /limited to 500/);
+});
+
+function firstColumn(fileName: string) {
+  return readFileSync(dataFile(fileName), "utf8")
+    .replace(/^\uFEFF/, "")
+    .trim()
+    .split(/\r?\n/)
+    .slice(1)
+    .map((line) => line.split(",")[0]?.trim())
+    .filter((value): value is string => Boolean(value));
+}
+
+test("production classified import matches the finalized 195-participant roster", () => {
+  const parsed = parseClassifiedBadgeCsv(readFileSync(dataFile("classified-badge-import.csv"), "utf8"));
+  assert.equal(parsed.issues.length, 0);
+  assert.equal(parsed.rows.length, 195);
+  const byId = new Map(parsed.rows.map((row) => [row.participantId, row]));
+  assert.equal(byId.size, 195);
+
+  const manifestIds = firstColumn("final-reconciliation-05nov-2026/participant-manifest.csv");
+  assert.equal(manifestIds.length, 195);
+  for (const participantId of manifestIds) {
+    assert.ok(byId.has(participantId), `missing final participant ${participantId}`);
+  }
+
+  const removalIds = firstColumn("final-reconciliation-05nov-2026/removal-proposals.csv");
+  assert.equal(removalIds.length, 7);
+  for (const participantId of removalIds) {
+    assert.ok(!byId.has(participantId), `removal proposal leaked into import ${participantId}`);
+  }
+
+  const totals = parsed.rows.reduce((accumulator, row) => ({
+    skill: accumulator.skill + row.skillBadgeCount,
+    arcade: accumulator.arcade + row.arcadeGameBadgeCount,
+    total: accumulator.total + row.totalBadgeCount,
+  }), { skill: 0, arcade: 0, total: 0 });
+  assert.deepEqual(totals, { skill: 200, arcade: 16, total: 216 });
 });
 

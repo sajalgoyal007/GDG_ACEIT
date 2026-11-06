@@ -15,7 +15,7 @@
 --   7. The public anon grant is extended to expose the two new columns.
 --   8. The existing rank index is rebuilt to order by skill_badge_count DESC
 --      (nulls last) then verified_badge_count DESC then id ASC.
---   9. get_public_summary now also returns skill_badge earner milestone counts.
+--   9. get_public_summary now also returns classified Skill and Arcade totals.
 --  10. This migration is fully additive; existing data is not modified.
 
 -- ----------------------------------------------------------------
@@ -47,7 +47,7 @@ create index participants_public_rank_idx
   where registration_status = 'registered';
 
 -- ----------------------------------------------------------------
--- 4. Replace get_public_summary to include new milestone columns
+-- 4. Replace get_public_summary to include classified badge totals
 -- ----------------------------------------------------------------
 create or replace function public.get_public_summary()
 returns jsonb
@@ -61,7 +61,6 @@ as $$
     'total_verified_badges',    coalesce(sum(participants.verified_badge_count), 0)::integer,
     'total_skill_badges',       coalesce(sum(participants.skill_badge_count), 0)::integer,
     'total_arcade_badges',      coalesce(sum(participants.arcade_game_badge_count), 0)::integer,
-    'five_badge_count',         count(*) filter (where participants.skill_badge_count >= 5)::integer,
     'ten_badge_count',          count(*) filter (where participants.skill_badge_count >= 10)::integer,
     'last_updated_at',          coalesce(max(participants.updated_at), now())
   )

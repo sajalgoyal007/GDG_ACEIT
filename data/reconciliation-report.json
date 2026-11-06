@@ -5,6 +5,18 @@
   "valid_profile_links": 115,
   "invalid_submissions": 13,
   "matched_production_participants": 112,
+  "navya_shah_verification": {
+    "participant_name": "Navya Shah",
+    "excel_row": 129,
+    "profile_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+    "slug": "8cca2507-a840-4eba-936d-5146c0eeba17",
+    "exists_in_production_roster": false,
+    "production_participant_id": null,
+    "exists_in_classification_dataset": false,
+    "verified_badge_counts": null,
+    "status": "pending_roster_enrollment",
+    "action_taken": "Excluded from production import CSV; separate pending roster entry report generated"
+  },
   "absent_from_production_roster": [
     {
       "excel_row": 126,

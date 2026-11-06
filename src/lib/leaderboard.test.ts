@@ -1,46 +1,211 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatVerifiedBadgeCount, getMilestone, getMilestoneLabel, getReviewedBadgeCount, hasMilestone, matchesMilestoneFilter, rankParticipants } from "./leaderboard.ts";
+import type { PublicParticipant } from "./types.ts";
+import {
+  RANK_FREEZE_SKILL_BADGE_THRESHOLD,
+  formatVerifiedBadgeCount,
+  getReviewedBadgeCount,
+  matchesRankFreezeFilter,
+  qualifiesForRankFreeze,
+  rankParticipants,
+} from "./leaderboard.ts";
+import * as leaderboard from "./leaderboard.ts";
 import { parseVerifiedBadgeCount } from "./admin-validation.ts";
 
-for (const [count, milestone, label] of [
-  [0, "in_progress", "In Progress"],
-  [4, "in_progress", "In Progress"],
-  [5, "five_badge", "5-Badge Milestone"],
-  [9, "five_badge", "5-Badge Milestone"],
-  [10, "ten_badge", "10-Badge Milestone"],
-  [13, "ten_badge", "10-Badge Milestone"],
-] as const) {
-  test(`${count} verified badges maps to ${label}`, () => {
-    assert.equal(getMilestone(count), milestone);
-    assert.equal(getMilestoneLabel(count), label);
-  });
+const CHECKED_AT = "2026-10-30T10:00:00Z";
+
+function makeParticipant(
+  overrides: Partial<PublicParticipant> & Pick<PublicParticipant, "id">,
+): PublicParticipant {
+  return {
+    displayName: overrides.displayName ?? overrides.id,
+    initials: "XX",
+    color: "blue",
+    verifiedBadgeCount: overrides.verifiedBadgeCount ?? 0,
+    skillBadgeCount: overrides.skillBadgeCount === undefined ? 0 : overrides.skillBadgeCount,
+    arcadeGameBadgeCount: overrides.arcadeGameBadgeCount === undefined ? 0 : overrides.arcadeGameBadgeCount,
+    lastCheckedAt: CHECKED_AT,
+    ...overrides,
+  };
 }
 
-test("ranking assigns unique sequential ranks and breaks ties with Arcade, Total, and stable ID", () => {
-  const records = [
-    { id: "c", displayName: "Zulu", verifiedBadgeCount: 10, skillBadgeCount: 10, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    { id: "b", displayName: "Beta", verifiedBadgeCount: 10, skillBadgeCount: 10, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    { id: "a", displayName: "Alpha", verifiedBadgeCount: 5, skillBadgeCount: 5, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    { id: "d", displayName: "Delta", verifiedBadgeCount: 5, skillBadgeCount: 5, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
-  ].map((record) => ({ ...record, initials: "X", color: "blue" }));
-  assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
-    ["b", 1], ["c", 2], ["a", 3], ["d", 4],
+// Scenario 1: nine Skill Badges do not freeze a rank.
+test("9 Skill Badges stay dynamically ranked and are not frozen", () => {
+  const participant = makeParticipant({
+    id: "nine-skill",
+    skillBadgeCount: 9,
+    verifiedBadgeCount: 9,
+  });
+
+  assert.equal(qualifiesForRankFreeze(participant.skillBadgeCount), false);
+  const ranked = rankParticipants([participant]);
+  assert.equal(ranked[0]?.rank, 1);
+  assert.equal(ranked[0]?.participant.frozenRank ?? null, null);
+});
+
+// Scenario 2: exactly 10 Skill Badges is the threshold.
+test("exactly 10 Skill Badges qualifies for rank freeze", () => {
+  assert.equal(RANK_FREEZE_SKILL_BADGE_THRESHOLD, 10);
+  assert.equal(qualifiesForRankFreeze(9), false);
+  assert.equal(qualifiesForRankFreeze(10), true);
+  assert.equal(qualifiesForRankFreeze(11), true);
+  assert.equal(qualifiesForRankFreeze(null), false);
+  assert.equal(qualifiesForRankFreeze(undefined), false);
+});
+
+// Scenario 3: Arcade badges never count toward the 10-Skill-Badge threshold.
+test("Arcade Game Badges never qualify a participant for rank freeze", () => {
+  const arcadeHeavy = makeParticipant({
+    id: "arcade-heavy",
+    skillBadgeCount: 9,
+    arcadeGameBadgeCount: 9,
+    verifiedBadgeCount: 18,
+  });
+
+  assert.equal(qualifiesForRankFreeze(arcadeHeavy.skillBadgeCount), false);
+  assert.equal(matchesRankFreezeFilter(arcadeHeavy, 10), false);
+  assert.equal(rankParticipants([arcadeHeavy])[0]?.participant.frozenRank ?? null, null);
+});
+
+// Scenario 4: total badges alone never qualify.
+test("total badge count alone never satisfies the rank-freeze threshold", () => {
+  const totalOnly = makeParticipant({
+    id: "total-only",
+    skillBadgeCount: 0,
+    arcadeGameBadgeCount: 12,
+    verifiedBadgeCount: 12,
+  });
+
+  assert.equal(matchesRankFreezeFilter(totalOnly, 10), false);
+  assert.equal(rankParticipants([totalOnly])[0]?.rank, 1);
+});
+
+// Scenario 5: a persisted frozen rank is authoritative, even against a higher current skill count.
+test("persisted frozen rank is honored over a higher current skill count", () => {
+  const frozen = makeParticipant({
+    id: "alpha",
+    skillBadgeCount: 10,
+    verifiedBadgeCount: 10,
+    frozenRank: 1,
+    rankFrozenAt: "2026-10-25T10:00:00Z",
+  });
+  const laterHigher = makeParticipant({
+    id: "beta",
+    skillBadgeCount: 30,
+    verifiedBadgeCount: 30,
+  });
+
+  const ranked = rankParticipants([laterHigher, frozen]);
+  assert.deepEqual(ranked.map(({ participant, rank }) => [participant.id, rank]), [
+    ["alpha", 1],
+    ["beta", 2],
   ]);
 });
 
-test("specification example: unique ranking with skill primary, arcade secondary tiebreaker, stable ID final", () => {
-  // Example from specification:
-  // Participant A: Skill 12, Arcade 2 -> Rank 1
-  // Participant B: Skill 12, Arcade 1 -> Rank 2
-  // Participant C: Skill 10, Arcade 3 -> Rank 3
-  // Participant D: Skill 10, Arcade 3 -> Rank 4
+// Scenario 6: later badge gains do not change an existing frozen rank.
+test("frozen rank survives later badge gains", () => {
+  const initial = makeParticipant({
+    id: "grower",
+    skillBadgeCount: 10,
+    verifiedBadgeCount: 10,
+    frozenRank: 2,
+    rankFrozenAt: "2026-10-25T10:00:00Z",
+  });
+  const afterGrowth = { ...initial, skillBadgeCount: 40, verifiedBadgeCount: 40 };
+
+  assert.equal(rankParticipants([initial])[0]?.rank, 2);
+  assert.equal(rankParticipants([afterGrowth])[0]?.rank, 2);
+  assert.equal(rankParticipants([afterGrowth])[0]?.participant.frozenRank, 2);
+  assert.equal(rankParticipants([afterGrowth])[0]?.participant.rankFrozenAt, "2026-10-25T10:00:00Z");
+});
+
+// Scenario 7: other participants' gains cannot displace a frozen rank.
+test("frozen rank is unaffected by another participant's later badge gains", () => {
+  const frozen = makeParticipant({
+    id: "frozen",
+    skillBadgeCount: 10,
+    verifiedBadgeCount: 10,
+    frozenRank: 1,
+    rankFrozenAt: "2026-10-25T10:00:00Z",
+  });
+  const other = makeParticipant({
+    id: "other",
+    skillBadgeCount: 15,
+    verifiedBadgeCount: 15,
+  });
+  const otherAfterGain = { ...other, skillBadgeCount: 99, verifiedBadgeCount: 99 };
+
+  assert.equal(rankParticipants([frozen, otherAfterGain])[0]?.rank, 1);
+  assert.equal(rankParticipants([frozen, otherAfterGain]).find(({ participant }) => participant.id === "frozen")?.rank, 1);
+  assert.equal(rankParticipants([frozen, otherAfterGain]).find(({ participant }) => participant.id === "other")?.rank, 2);
+});
+
+// Scenario 8: repeated reads/render passes never rewrite the persisted rank.
+test("ranking never derives or overwrites a frozen rank in memory", () => {
+  const participant = makeParticipant({
+    id: "not-yet-frozen",
+    skillBadgeCount: 10,
+    verifiedBadgeCount: 10,
+  });
+
+  const first = rankParticipants([participant]);
+  const second = rankParticipants(first.map(({ participant: current }) => current));
+
+  assert.equal(first[0]?.rank, 1);
+  assert.equal(first[0]?.participant.frozenRank ?? null, null);
+  assert.equal(second[0]?.rank, 1);
+  assert.equal(second[0]?.participant.frozenRank ?? null, null);
+});
+
+// Scenario 9: simultaneous crossings use distinct, deterministic sequential ranks.
+test("simultaneous threshold crossings keep deterministic distinct sequential ranks", () => {
+  // The database allocates these in one deterministic pass:
+  // higher Skill first, then Arcade, then Total, then stable UUID.
+  const first = makeParticipant({
+    id: "cross-b",
+    skillBadgeCount: 12,
+    verifiedBadgeCount: 12,
+    frozenRank: 1,
+    rankFrozenAt: "2026-11-05T10:00:00Z",
+  });
+  const second = makeParticipant({
+    id: "cross-a",
+    skillBadgeCount: 10,
+    verifiedBadgeCount: 10,
+    frozenRank: 2,
+    rankFrozenAt: "2026-11-05T10:00:00Z",
+  });
+
+  const ranked = rankParticipants([second, first]);
+  assert.deepEqual(ranked.map(({ participant, rank }) => [participant.id, rank]), [
+    ["cross-b", 1],
+    ["cross-a", 2],
+  ]);
+  assert.equal(new Set(ranked.map(({ rank }) => rank)).size, ranked.length);
+});
+
+// Scenario 10: tie order is deterministic and every rank is unique.
+test("ranking assigns unique sequential ranks and breaks ties with Arcade, Total, and stable ID", () => {
   const records = [
-    { id: "part-d", displayName: "Participant D", verifiedBadgeCount: 13, skillBadgeCount: 10, arcadeGameBadgeCount: 3, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    { id: "part-b", displayName: "Participant B", verifiedBadgeCount: 13, skillBadgeCount: 12, arcadeGameBadgeCount: 1, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    { id: "part-a", displayName: "Participant A", verifiedBadgeCount: 14, skillBadgeCount: 12, arcadeGameBadgeCount: 2, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    { id: "part-c", displayName: "Participant C", verifiedBadgeCount: 13, skillBadgeCount: 10, arcadeGameBadgeCount: 3, lastCheckedAt: "2026-10-30T10:00:00Z" },
-  ].map((record) => ({ ...record, initials: "P", color: "blue" }));
+    makeParticipant({ id: "c", skillBadgeCount: 10, verifiedBadgeCount: 10 }),
+    makeParticipant({ id: "b", skillBadgeCount: 10, verifiedBadgeCount: 10 }),
+    makeParticipant({ id: "a", skillBadgeCount: 5, verifiedBadgeCount: 5 }),
+    makeParticipant({ id: "d", skillBadgeCount: 5, verifiedBadgeCount: 5 }),
+  ];
+  const ranked = rankParticipants(records);
+  assert.deepEqual(ranked.map(({ participant, rank }) => [participant.id, rank]), [
+    ["b", 1], ["c", 2], ["a", 3], ["d", 4],
+  ]);
+  assert.equal(new Set(ranked.map(({ rank }) => rank)).size, ranked.length);
+});
+
+test("specification example: skill primary, arcade secondary tiebreaker, stable ID final", () => {
+  const records = [
+    makeParticipant({ id: "part-d", skillBadgeCount: 10, arcadeGameBadgeCount: 3, verifiedBadgeCount: 13 }),
+    makeParticipant({ id: "part-b", skillBadgeCount: 12, arcadeGameBadgeCount: 1, verifiedBadgeCount: 13 }),
+    makeParticipant({ id: "part-a", skillBadgeCount: 12, arcadeGameBadgeCount: 2, verifiedBadgeCount: 14 }),
+    makeParticipant({ id: "part-c", skillBadgeCount: 10, arcadeGameBadgeCount: 3, verifiedBadgeCount: 13 }),
+  ];
 
   assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
     ["part-a", 1],
@@ -50,70 +215,46 @@ test("specification example: unique ranking with skill primary, arcade secondary
   ]);
 });
 
-test("rank freeze at 10 Skill Badges preserves original rank despite subsequent badge updates", () => {
-  // Participant Alpha reached 10 skill badges earlier and was ranked #1
-  const alphaFrozen = {
-    id: "alpha",
-    displayName: "Alpha Learner",
-    verifiedBadgeCount: 10,
-    skillBadgeCount: 10,
-    arcadeGameBadgeCount: 0,
-    frozenRank: 1,
-    milestoneCompletedAt: "2026-10-25T10:00:00Z",
-    lastCheckedAt: "2026-10-25T10:00:00Z",
-    initials: "AL",
-    color: "blue",
-  };
+test("frozen ranks and dynamic ranks never collide", () => {
+  const records = [
+    makeParticipant({ id: "frozen-2", skillBadgeCount: 10, verifiedBadgeCount: 10, frozenRank: 2, rankFrozenAt: CHECKED_AT }),
+    makeParticipant({ id: "frozen-1", skillBadgeCount: 10, verifiedBadgeCount: 10, frozenRank: 1, rankFrozenAt: CHECKED_AT }),
+    makeParticipant({ id: "dynamic-9", skillBadgeCount: 9, verifiedBadgeCount: 9 }),
+    makeParticipant({ id: "dynamic-8", skillBadgeCount: 8, verifiedBadgeCount: 8 }),
+  ];
 
-  // Participant Beta later earns 15 skill badges
-  const betaLater = {
-    id: "beta",
-    displayName: "Beta Learner",
-    verifiedBadgeCount: 15,
-    skillBadgeCount: 15,
-    arcadeGameBadgeCount: 0,
-    lastCheckedAt: "2026-11-01T10:00:00Z",
-    initials: "BL",
-    color: "green",
-  };
-
-  // Alpha's frozen rank of 1 is preserved; Beta cannot take Alpha's rank 1
-  const ranked = rankParticipants([betaLater, alphaFrozen]);
-  assert.equal(ranked.find((r) => r.participant.id === "alpha")?.rank, 1);
-  assert.equal(ranked.find((r) => r.participant.id === "beta")?.rank, 2);
-
-  // Even if Alpha earns additional badges (10 -> 14), Alpha's frozen rank remains 1
-  const alphaUpdated = { ...alphaFrozen, skillBadgeCount: 14, verifiedBadgeCount: 14 };
-  const rankedAfterUpdate = rankParticipants([betaLater, alphaUpdated]);
-  assert.equal(rankedAfterUpdate.find((r) => r.participant.id === "alpha")?.rank, 1);
-  assert.equal(rankedAfterUpdate.find((r) => r.participant.id === "beta")?.rank, 2);
+  const ranked = rankParticipants(records);
+  assert.deepEqual(ranked.map(({ participant, rank }) => [participant.id, rank]), [
+    ["frozen-1", 1],
+    ["frozen-2", 2],
+    ["dynamic-9", 3],
+    ["dynamic-8", 4],
+  ]);
+  assert.equal(new Set(ranked.map(({ rank }) => rank)).size, ranked.length);
 });
 
-test("participants below 10 Skill Badges remain dynamically ranked", () => {
-  const p1 = { id: "p1", displayName: "Learner 1", verifiedBadgeCount: 4, skillBadgeCount: 4, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z", initials: "L1", color: "blue" };
-  const p2 = { id: "p2", displayName: "Learner 2", verifiedBadgeCount: 7, skillBadgeCount: 7, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z", initials: "L2", color: "blue" };
+// Scenario 11: all 5-badge ranking/milestone/filter helpers are gone.
+test("removed 5-badge milestone and filter helpers are no longer exported", () => {
+  assert.equal("hasMilestone" in leaderboard, false);
+  assert.equal("getMilestone" in leaderboard, false);
+  assert.equal("getMilestoneLabel" in leaderboard, false);
+  assert.equal("matchesMilestoneFilter" in leaderboard, false);
+  assert.equal("Milestone" in leaderboard, false);
 
-  // Initial: p2 (7 skill) is rank 1, p1 (4 skill) is rank 2
-  let ranked = rankParticipants([p1, p2]);
-  assert.deepEqual(ranked.map((r) => [r.participant.id, r.rank]), [["p2", 1], ["p1", 2]]);
-
-  // When p1 earns more badges (4 -> 9 skill), p1 dynamically overtakes p2
-  const p1Updated = { ...p1, skillBadgeCount: 9, verifiedBadgeCount: 9 };
-  ranked = rankParticipants([p1Updated, p2]);
-  assert.deepEqual(ranked.map((r) => [r.participant.id, r.rank]), [["p1", 1], ["p2", 2]]);
+  const fiveSkill = makeParticipant({ id: "five-skill", skillBadgeCount: 5, verifiedBadgeCount: 5 });
+  const tenSkill = makeParticipant({ id: "ten-skill", skillBadgeCount: 10, verifiedBadgeCount: 10 });
+  assert.equal(matchesRankFreezeFilter(fiveSkill, null), true);
+  assert.equal(matchesRankFreezeFilter(fiveSkill, 10), false);
+  assert.equal(matchesRankFreezeFilter(tenSkill, 10), true);
 });
 
 test("ranking prioritizes skill badge count over total badge count", () => {
   const records = [
-    // Alice has 8 skill, 2 arcade = 10 total
-    { id: "alice", displayName: "Alice", verifiedBadgeCount: 10, skillBadgeCount: 8, arcadeGameBadgeCount: 2, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    // Bob has 6 skill, 6 arcade = 12 total (higher total, but lower skill!)
-    { id: "bob", displayName: "Bob", verifiedBadgeCount: 12, skillBadgeCount: 6, arcadeGameBadgeCount: 6, lastCheckedAt: "2026-10-30T10:00:00Z" },
-    // Charlie has 8 skill, 4 arcade = 12 total (same skill as Alice, but higher total tiebreak!)
-    { id: "charlie", displayName: "Charlie", verifiedBadgeCount: 12, skillBadgeCount: 8, arcadeGameBadgeCount: 4, lastCheckedAt: "2026-10-30T10:00:00Z" },
-  ].map((record) => ({ ...record, initials: "X", color: "blue" }));
+    makeParticipant({ id: "alice", skillBadgeCount: 8, arcadeGameBadgeCount: 2, verifiedBadgeCount: 10 }),
+    makeParticipant({ id: "bob", skillBadgeCount: 6, arcadeGameBadgeCount: 6, verifiedBadgeCount: 12 }),
+    makeParticipant({ id: "charlie", skillBadgeCount: 8, arcadeGameBadgeCount: 4, verifiedBadgeCount: 12 }),
+  ];
 
-  // Charlie should be rank 1 (skill 8, total 12), Alice rank 2 (skill 8, total 10), Bob rank 3 (skill 6, total 12)
   assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
     ["charlie", 1],
     ["alice", 2],
@@ -123,10 +264,10 @@ test("ranking prioritizes skill badge count over total badge count", () => {
 
 test("unreviewed zero-count registrations remain visible but unranked after verified records", () => {
   const records = [
-    { id: "unreviewed-b", displayName: "Awaiting review B", verifiedBadgeCount: 100, skillBadgeCount: null, arcadeGameBadgeCount: null },
-    { id: "unreviewed-a", displayName: "Awaiting review A", verifiedBadgeCount: 0, skillBadgeCount: null, arcadeGameBadgeCount: null },
-    { id: "verified", displayName: "Verified zero", verifiedBadgeCount: 0, skillBadgeCount: 0, arcadeGameBadgeCount: 0, lastCheckedAt: "2026-10-30T10:00:00Z" },
-  ].map((record) => ({ ...record, initials: "X", color: "blue" }));
+    makeParticipant({ id: "unreviewed-b", skillBadgeCount: null, arcadeGameBadgeCount: null, verifiedBadgeCount: 100, lastCheckedAt: undefined }),
+    makeParticipant({ id: "unreviewed-a", skillBadgeCount: null, arcadeGameBadgeCount: null, verifiedBadgeCount: 0, lastCheckedAt: undefined }),
+    makeParticipant({ id: "verified", skillBadgeCount: 0, arcadeGameBadgeCount: 0, verifiedBadgeCount: 0 }),
+  ];
 
   assert.deepEqual(rankParticipants(records).map(({ participant, rank }) => [participant.id, rank]), [
     ["verified", 1],
@@ -135,56 +276,24 @@ test("unreviewed zero-count registrations remain visible but unranked after veri
   ]);
 });
 
+test("unreviewed participants cannot match the rank-freeze filter", () => {
+  const unreviewed = makeParticipant({
+    id: "unreviewed",
+    skillBadgeCount: 100,
+    verifiedBadgeCount: 100,
+    lastCheckedAt: undefined,
+  });
+
+  assert.equal(matchesRankFreezeFilter(unreviewed, null), true);
+  assert.equal(matchesRankFreezeFilter(unreviewed, 10), false);
+});
+
 test("stored zero and nonzero counts remain unknown until verification is recorded", () => {
   assert.equal(getReviewedBadgeCount(0, null), null);
   assert.equal(formatVerifiedBadgeCount(0, null), "Not reviewed");
   assert.equal(getReviewedBadgeCount(0, "2026-10-30T10:00:00Z"), 0);
   assert.equal(formatVerifiedBadgeCount(0, "2026-10-30T10:00:00Z"), "0");
   assert.equal(getReviewedBadgeCount(12, undefined), null);
-});
-
-test("unreviewed stored counts cannot match badge milestone filters", () => {
-  const unreviewed = { id: "unreviewed", displayName: "Awaiting review", verifiedBadgeCount: 100, skillBadgeCount: 100, arcadeGameBadgeCount: 0, initials: "AR", color: "blue" };
-  const reviewed = { ...unreviewed, id: "reviewed", lastCheckedAt: "2026-10-30T10:00:00Z" };
-
-  assert.equal(matchesMilestoneFilter(unreviewed, null), true);
-  assert.equal(matchesMilestoneFilter(unreviewed, 5), false);
-  assert.equal(matchesMilestoneFilter(unreviewed, 10), false);
-  assert.equal(matchesMilestoneFilter(reviewed, 5), true);
-  assert.equal(matchesMilestoneFilter(reviewed, 10), true);
-});
-
-test("classified milestone filter uses skill badge count, not arcade or total", () => {
-  // Participant with 4 skill and 6 arcade = 10 total. Does NOT meet 5-skill milestone!
-  const participantWithArcade = {
-    id: "p1",
-    displayName: "Player 1",
-    verifiedBadgeCount: 10,
-    skillBadgeCount: 4,
-    arcadeGameBadgeCount: 6,
-    initials: "P1",
-    color: "blue",
-    lastCheckedAt: "2026-10-30T10:00:00Z",
-  };
-  assert.equal(matchesMilestoneFilter(participantWithArcade, 5), false);
-  assert.equal(matchesMilestoneFilter(participantWithArcade, 10), false);
-
-  // Participant with 5 skill and 0 arcade = 5 total. Meets 5-skill milestone!
-  const participantWithSkill = {
-    ...participantWithArcade,
-    id: "p2",
-    verifiedBadgeCount: 5,
-    skillBadgeCount: 5,
-    arcadeGameBadgeCount: 0,
-  };
-  assert.equal(matchesMilestoneFilter(participantWithSkill, 5), true);
-  assert.equal(matchesMilestoneFilter(participantWithSkill, 10), false);
-});
-
-test("the 10-badge milestone also qualifies for the 5-badge threshold", () => {
-  assert.equal(hasMilestone(10, 5), true);
-  assert.equal(hasMilestone(10, 10), true);
-  assert.equal(hasMilestone(9, 10), false);
 });
 
 test("server badge-count validation rejects missing, fractional, negative, and out-of-range counts", () => {

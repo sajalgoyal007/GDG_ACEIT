@@ -1,5 +1,5 @@
 import type { LeaderboardProvider, Participant } from "./types";
-import { hasMilestone } from "./leaderboard";
+import { qualifiesForRankFreeze } from "./leaderboard";
 
 // Synthetic records for interface development. No records represent real participants.
 const demoParticipants: Participant[] = [
@@ -21,8 +21,19 @@ export const demoProvider: LeaderboardProvider = {
   async getLastSyncedAt() { return DEMO_LAST_SYNCED_AT; },
   async getPublicSnapshot() {
     const registered = demoParticipants.filter((participant) => participant.registrationStatus === "registered");
+    const verifiedCounts = new Map(registered.map((participant) => [
+      participant.id,
+      participant.badges.filter((badge) => badge.status === "verified").length,
+    ]));
+    const frozenRankById = new Map(
+      registered
+        .filter((participant) => qualifiesForRankFreeze(verifiedCounts.get(participant.id) ?? 0))
+        .sort((a, b) => (verifiedCounts.get(b.id) ?? 0) - (verifiedCounts.get(a.id) ?? 0) || a.id.localeCompare(b.id))
+        .map((participant, index) => [participant.id, index + 1]),
+    );
     const participants = registered.map((participant) => {
-      const verifiedBadgeCount = participant.badges.filter((badge) => badge.status === "verified").length;
+      const verifiedBadgeCount = verifiedCounts.get(participant.id) ?? 0;
+      const frozenRank = frozenRankById.get(participant.id) ?? null;
       return {
         id: participant.id,
         displayName: participant.displayName,
@@ -31,6 +42,8 @@ export const demoProvider: LeaderboardProvider = {
         verifiedBadgeCount,
         skillBadgeCount: verifiedBadgeCount,
         arcadeGameBadgeCount: 0,
+        frozenRank,
+        rankFrozenAt: frozenRank === null ? null : (participant.lastCheckedAt ?? DEMO_LAST_SYNCED_AT),
         ...(participant.profileUrl ? { profileUrl: participant.profileUrl } : {}),
         ...(participant.lastCheckedAt ? { lastCheckedAt: participant.lastCheckedAt } : {}),
         verificationSource: participant.verificationSource,
@@ -45,8 +58,8 @@ export const demoProvider: LeaderboardProvider = {
       totalVerifiedBadges,
       totalSkillBadges: totalVerifiedBadges,
       totalArcadeBadges: 0,
-      fiveBadgeCount: participants.filter((participant) => hasMilestone(participant.verifiedBadgeCount, 5)).length,
-      tenBadgeCount: participants.filter((participant) => hasMilestone(participant.verifiedBadgeCount, 10)).length,
+      frozenRankCount: frozenRankById.size,
+      tenBadgeCount: participants.filter((participant) => qualifiesForRankFreeze(participant.skillBadgeCount)).length,
       lastSyncedAt: DEMO_LAST_SYNCED_AT,
     };
   },

@@ -153,7 +153,6 @@ as $$
   select jsonb_build_object(
     'registered_count', count(*)::integer,
     'total_verified_badges', coalesce(sum(participants.verified_badge_count), 0)::integer,
-    'five_badge_count', count(*) filter (where participants.verified_badge_count >= 5)::integer,
     'ten_badge_count', count(*) filter (where participants.verified_badge_count >= 10)::integer,
     'last_updated_at', coalesce(max(participants.updated_at), now())
   )

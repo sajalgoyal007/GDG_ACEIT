@@ -1,0 +1,2357 @@
+{
+  "tool": "google_skills_html_diagnostic",
+  "mode": "offline_local_html_only",
+  "files_scanned": 117,
+  "classification_counts": {
+    "badge_container_missing": 92,
+    "badge_cards_detected": 25
+  },
+  "comparison": {
+    "zero_or_empty_candidate_files": 92,
+    "badge_bearing_files": 25,
+    "both_groups_present": true,
+    "interpretation": "Structural comparison only. Candidate cards are not verified totals; empty-state markers are not proof of a complete zero."
+  },
+  "results": [
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/0d390a52-fa26-41b3-9467-0c072d918a20",
+      "profile_uuid": "0d390a52-fa26-41b3-9467-0c072d918a20",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "00f0eb58-4396-4fdb-af04-4582ed4593b8.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/2dcbdb6a-0aba-4291-929b-094aaf081384",
+      "profile_uuid": "2dcbdb6a-0aba-4291-929b-094aaf081384",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0210f893-d75b-4f8d-b6d0-56aca5d68a47.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/35d739fd-571e-4829-97f8-35ba7a15883e",
+      "profile_uuid": "35d739fd-571e-4829-97f8-35ba7a15883e",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0277b9e9-d7b1-4687-95c1-30fc59748eef.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/113c73c0-5f2a-4d5f-a7ac-ba134e276283",
+      "profile_uuid": "113c73c0-5f2a-4d5f-a7ac-ba134e276283",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "03a5c179-8318-4eff-828a-c4469e9ccdb9.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/d400ecf9-c045-4ce7-8d56-aa23aee72470",
+      "profile_uuid": "d400ecf9-c045-4ce7-8d56-aa23aee72470",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0708defd-d0e1-49fe-ae97-e38a22bf7c93.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/36323622-7b9a-49f6-8ab0-0859e7d2cbc5",
+      "profile_uuid": "36323622-7b9a-49f6-8ab0-0859e7d2cbc5",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "07921738-67fb-45e9-842c-9bcbc39652ce.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/4d660fdc-fc63-4eaa-9741-8cffd85ea06c",
+      "profile_uuid": "4d660fdc-fc63-4eaa-9741-8cffd85ea06c",
+      "badge_container_count": 1,
+      "badge_card_count": 10,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "08e4b658-6997-47a9-ad37-cfaa1e77cecb.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/8cb7e3cc-2197-48d8-8f9c-85a859d6dd5c",
+      "profile_uuid": "8cb7e3cc-2197-48d8-8f9c-85a859d6dd5c",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0b8543b1-fe5a-4ddf-b37e-ca13a9e17973.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/9f198d75-6065-4563-bb97-070e05a14fec",
+      "profile_uuid": "9f198d75-6065-4563-bb97-070e05a14fec",
+      "badge_container_count": 1,
+      "badge_card_count": 6,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0bc900f1-d41b-495a-8491-9ba3d631b39d.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/bafe8c95-96f2-46c2-9e66-8e7100789a13",
+      "profile_uuid": "bafe8c95-96f2-46c2-9e66-8e7100789a13",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0c5d230d-ad40-45a3-a54a-0ebf4dc40c90.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a4240f2b-1022-41ad-87d2-7b9074a3ec0e",
+      "profile_uuid": "a4240f2b-1022-41ad-87d2-7b9074a3ec0e",
+      "badge_container_count": 1,
+      "badge_card_count": 10,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "0d2b0a1b-fc05-43f9-b8ed-593383623e53.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/e4f859c4-80d6-495c-9ca8-39d99b102c95",
+      "profile_uuid": "e4f859c4-80d6-495c-9ca8-39d99b102c95",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "13360c74-dd08-45a7-8bdf-14618dc672e0.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/41f6be8b-4d04-4849-b250-6ecfaee526c0",
+      "profile_uuid": "41f6be8b-4d04-4849-b250-6ecfaee526c0",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "14cbc39a-00dc-4955-9050-735c9532963b.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/738e8bf9-0286-4ed4-b007-a40d2a529397",
+      "profile_uuid": "738e8bf9-0286-4ed4-b007-a40d2a529397",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "18413207-fe9d-44ba-b93a-f0f7656d48ab.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/43525e03-c896-41e8-afee-5b58f7967108",
+      "profile_uuid": "43525e03-c896-41e8-afee-5b58f7967108",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "190aa3e8-0f9c-487c-bbb5-ee7e9046571e.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/038e96b8-f3a2-4f61-9fc3-9bf93a5197f9",
+      "profile_uuid": "038e96b8-f3a2-4f61-9fc3-9bf93a5197f9",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "1b5da4b8-b6fa-4d22-894d-6ee00f02bd88.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a313e72a-23e6-4e68-92e0-cc277ab4da98",
+      "profile_uuid": "a313e72a-23e6-4e68-92e0-cc277ab4da98",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "1d9a9bb7-a65f-4496-9844-24bca8e2a993.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/5f45074f-8ceb-404e-b1a0-365fbd79dd87",
+      "profile_uuid": "5f45074f-8ceb-404e-b1a0-365fbd79dd87",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "236c9ad8-e36a-4383-871b-84967f44bcf1.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/c59c094d-fa09-4440-86b7-fe121089bb19",
+      "profile_uuid": "c59c094d-fa09-4440-86b7-fe121089bb19",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "23b88382-6bfe-4c43-b51b-2be84bf8a8d5.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/beab46e4-c97d-4394-ade8-d616cc030a8c",
+      "profile_uuid": "beab46e4-c97d-4394-ade8-d616cc030a8c",
+      "badge_container_count": 1,
+      "badge_card_count": 9,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "23c96174-2c0a-4345-8998-a4800c3b4db2.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/37528521-c794-4e61-9b88-b73d6adb1116",
+      "profile_uuid": "37528521-c794-4e61-9b88-b73d6adb1116",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "27a5ef6b-a832-4e5e-8d7f-a9289d51693e.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/23c893ff-38ba-4d5f-bc53-27226032229f",
+      "profile_uuid": "23c893ff-38ba-4d5f-bc53-27226032229f",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "29be8f20-20cb-47ec-8658-890f026a4740.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/0f2ba6be-8cfe-4c88-ab11-7fa593727f3f",
+      "profile_uuid": "0f2ba6be-8cfe-4c88-ab11-7fa593727f3f",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "2a0f7fc6-ae5f-4a3f-bfc6-98f88048ad58.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/ab0f275b-2582-4426-96de-29aec23371c8",
+      "profile_uuid": "ab0f275b-2582-4426-96de-29aec23371c8",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "2c99ea80-ece5-4eea-96bb-67f6bd8c6fd7.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/42b8376b-79f8-4ff9-8460-ee5225e0fd67",
+      "profile_uuid": "42b8376b-79f8-4ff9-8460-ee5225e0fd67",
+      "badge_container_count": 1,
+      "badge_card_count": 3,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "2ee8aa1d-8c2d-40d4-8642-5cc6f8a4f630.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/f55aa2db-7130-4db0-8887-787457458c90",
+      "profile_uuid": "f55aa2db-7130-4db0-8887-787457458c90",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "32395086-f4a7-466d-a766-802b9f44047c.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/68a8adcb-f855-4376-bc66-571442d27763",
+      "profile_uuid": "68a8adcb-f855-4376-bc66-571442d27763",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "32d30f18-b7f2-41d8-9418-12789e5f289b.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/8167e488-5d78-4fac-b766-08bc5cc6d647",
+      "profile_uuid": "8167e488-5d78-4fac-b766-08bc5cc6d647",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "33a37de5-1d51-4fdc-b6be-fff07e3abc23.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/c9965c48-1d58-4a4d-b4fa-a0c4d80bbeb8",
+      "profile_uuid": "c9965c48-1d58-4a4d-b4fa-a0c4d80bbeb8",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "3477fbe2-c268-4496-930d-5a8936278126.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/552de5ae-e7b7-4b76-8f32-1cf27a281361",
+      "profile_uuid": "552de5ae-e7b7-4b76-8f32-1cf27a281361",
+      "badge_container_count": 1,
+      "badge_card_count": 3,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "38c80862-794a-4a03-a213-5270176facfb.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/40c46a09-22d4-4bf3-9951-7b57989fd8ec",
+      "profile_uuid": "40c46a09-22d4-4bf3-9951-7b57989fd8ec",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "3b378094-24ad-4983-a61a-8bedaadf3311.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/d0fb016f-2dde-49dd-b22b-b3e2718de721",
+      "profile_uuid": "d0fb016f-2dde-49dd-b22b-b3e2718de721",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "3b8b4690-a6a6-487b-87a2-a7bbbc693369.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/044bc1a6-5e04-425b-b80d-27984ba5d2b9",
+      "profile_uuid": "044bc1a6-5e04-425b-b80d-27984ba5d2b9",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "3bb8578f-a4f3-4e68-8ad9-ba43d6710eec.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/04836db8-d931-4ecb-85b3-11488badbdba",
+      "profile_uuid": "04836db8-d931-4ecb-85b3-11488badbdba",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "3d3b4c0f-a1c0-4821-9718-6f7733c3007a.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/6498d02e-b235-4733-9a31-c361ae247b52",
+      "profile_uuid": "6498d02e-b235-4733-9a31-c361ae247b52",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "3dcd3a3c-01d7-47fa-b114-1e542324acb1.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/6991512f-ea4f-4741-8246-d25db9b94d9c",
+      "profile_uuid": "6991512f-ea4f-4741-8246-d25db9b94d9c",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "4461a458-4a8b-4b90-a436-3444a409a027.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/7cb6752a-38d9-4554-8430-3a69698021de",
+      "profile_uuid": "7cb6752a-38d9-4554-8430-3a69698021de",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "44ad47bb-8cb0-4ca2-aff4-343b264d42c1.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/1f172d66-7e62-4ac4-a1d2-4baa737c506e",
+      "profile_uuid": "1f172d66-7e62-4ac4-a1d2-4baa737c506e",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "49558655-f190-4669-b9ef-55a7b2de362f.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/83a98798-67d5-4ec5-a0a0-a8b697959795",
+      "profile_uuid": "83a98798-67d5-4ec5-a0a0-a8b697959795",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "49614f5f-d644-427e-84f6-6fd8b588f8dc.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/54ff8f3d-a0ce-4efd-8207-66576ca93b7d",
+      "profile_uuid": "54ff8f3d-a0ce-4efd-8207-66576ca93b7d",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "4a95c88d-7ecb-46ca-8035-e439f3f141be.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/c4ad3dec-6529-4640-a426-d31fa22d752d",
+      "profile_uuid": "c4ad3dec-6529-4640-a426-d31fa22d752d",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "54504026-04b5-4a61-b6a8-ef2978eddae8.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/4e9d08e0-2497-4c27-ba15-4086cb03a7fe",
+      "profile_uuid": "4e9d08e0-2497-4c27-ba15-4086cb03a7fe",
+      "badge_container_count": 1,
+      "badge_card_count": 11,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "5a4f4394-339e-45d3-8842-8f1bc9b9d0c7.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/71ca2fcd-4dea-428f-bacd-28606e7cbebb",
+      "profile_uuid": "71ca2fcd-4dea-428f-bacd-28606e7cbebb",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "5f0e18e8-ea2e-4c36-98ed-a35822d297f9.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/950efeca-3ba9-4448-971c-9517ac4c49c0",
+      "profile_uuid": "950efeca-3ba9-4448-971c-9517ac4c49c0",
+      "badge_container_count": 1,
+      "badge_card_count": 4,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "5fea898f-2e73-4744-893f-c61f83bd509f.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/3f0aa614-8479-446f-8e3c-c6ba788da5b2",
+      "profile_uuid": "3f0aa614-8479-446f-8e3c-c6ba788da5b2",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6584aada-e5c6-4b0e-9a7d-99d9bd302d63.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/b0f9bbd1-f789-4132-80cb-634f300aa0d6",
+      "profile_uuid": "b0f9bbd1-f789-4132-80cb-634f300aa0d6",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "66c29636-ed59-44fe-bd18-65d2610e1d9d.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a2a981f0-b099-440f-8b2a-9ae8b9e3fb6a",
+      "profile_uuid": "a2a981f0-b099-440f-8b2a-9ae8b9e3fb6a",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "66d33581-2527-4407-9857-a3ecbb0ce834.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a65f959b-6c39-4f2b-b5b9-29f230189cf4",
+      "profile_uuid": "a65f959b-6c39-4f2b-b5b9-29f230189cf4",
+      "badge_container_count": 1,
+      "badge_card_count": 18,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "67223e53-45af-4a64-93ed-5c6171b94589.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/8781a852-35a4-4349-93ae-e86257e2adc8",
+      "profile_uuid": "8781a852-35a4-4349-93ae-e86257e2adc8",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6bb36290-d9a9-44b0-aca6-bd9a5e56515b.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/75fad47f-8ead-4816-9396-89556208b519",
+      "profile_uuid": "75fad47f-8ead-4816-9396-89556208b519",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6c4c3dcc-169d-4c79-87a0-40574587013d.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/ab4c75da-acd2-4901-aff5-192338bcf083",
+      "profile_uuid": "ab4c75da-acd2-4901-aff5-192338bcf083",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6d36ddcf-2285-4cb1-8aec-68e43df8300c.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/84d75c29-775e-4431-90fc-b5bba68fff31",
+      "profile_uuid": "84d75c29-775e-4431-90fc-b5bba68fff31",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6dee012e-04a6-4348-9dce-480508e98ae9.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/e5a728d5-a3a9-4f6e-ac78-a3258061dfce",
+      "profile_uuid": "e5a728d5-a3a9-4f6e-ac78-a3258061dfce",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6ebf91ea-3d48-4b56-95a7-1e896a9b6ab2.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/182ebea9-22b1-46e5-87f0-1a05f44158b1",
+      "profile_uuid": "182ebea9-22b1-46e5-87f0-1a05f44158b1",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "6ee13234-74f4-4c20-a166-1f64fa09fc6f.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/fa50550c-aacc-4f7b-be11-d2c73457148e",
+      "profile_uuid": "fa50550c-aacc-4f7b-be11-d2c73457148e",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "731c7b2e-2042-4955-89a8-c14246e4a5df.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/97916932-85c9-4b64-896f-358ccf3f151b",
+      "profile_uuid": "97916932-85c9-4b64-896f-358ccf3f151b",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "7328269a-d038-4f56-83cb-2eace48575ee.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/060b2963-acca-41c7-8a4f-9b7931cbf21f",
+      "profile_uuid": "060b2963-acca-41c7-8a4f-9b7931cbf21f",
+      "badge_container_count": 1,
+      "badge_card_count": 10,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "74aae130-e3c6-437e-a640-1ab777cde73a.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/7b335424-b07d-49d5-bf3c-14951722ef0c",
+      "profile_uuid": "7b335424-b07d-49d5-bf3c-14951722ef0c",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "7729b317-5380-4d34-bd07-a539e965e9b8.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/14961155-a903-470b-917f-465f3395e13b",
+      "profile_uuid": "14961155-a903-470b-917f-465f3395e13b",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "7761f7a0-0d0e-4a88-99a2-0ec0382365a5.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/8cb8789e-c566-473d-a5a1-7a205c70207a",
+      "profile_uuid": "8cb8789e-c566-473d-a5a1-7a205c70207a",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "77648144-598b-4561-b7db-06a9169b7e8e.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/e978023f-a988-48f6-9cf3-ade04cc3629f",
+      "profile_uuid": "e978023f-a988-48f6-9cf3-ade04cc3629f",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "78372968-5254-4e23-b7df-bd0121775f92.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/c79dc99e-aec6-4d1a-926a-02d29d6e4bb0",
+      "profile_uuid": "c79dc99e-aec6-4d1a-926a-02d29d6e4bb0",
+      "badge_container_count": 1,
+      "badge_card_count": 12,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "78d9824c-5a97-4dcf-9707-c2735a42d7f8.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/cde203ee-47b2-4e77-ac71-773cf017b983",
+      "profile_uuid": "cde203ee-47b2-4e77-ac71-773cf017b983",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "7d20c389-07c5-4e2b-a6a5-96a8845d4804.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/b110ebda-930f-44e9-abf8-a346a9f467d9",
+      "profile_uuid": "b110ebda-930f-44e9-abf8-a346a9f467d9",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "7f28ae3d-e95b-4115-9b72-769cdea730f9.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/53f7deff-2033-440c-9888-ce70aedc8c60",
+      "profile_uuid": "53f7deff-2033-440c-9888-ce70aedc8c60",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "83297228-329d-42e4-9601-025c5d82482a.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/bbea67b7-f72f-4a65-b11e-8636b9340468",
+      "profile_uuid": "bbea67b7-f72f-4a65-b11e-8636b9340468",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "8c466922-02ff-4d0b-9859-e31466aa8077.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/8cca2507-a840-4eba-936d-5146c0eeba17",
+      "profile_uuid": "8cca2507-a840-4eba-936d-5146c0eeba17",
+      "badge_container_count": 1,
+      "badge_card_count": 10,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "8cca2507-a840-4eba-936d-5146c0eeba17.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a28e2326-7412-4575-820b-48695b8f4e1e",
+      "profile_uuid": "a28e2326-7412-4575-820b-48695b8f4e1e",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "8d8da881-c2a1-4612-b339-ba97198bfab7.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/34b07424-c7b8-4b47-8961-97215e462a57",
+      "profile_uuid": "34b07424-c7b8-4b47-8961-97215e462a57",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "917075a6-8274-42a9-a3d7-56351d47561f.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/551e78c8-37e3-43ef-9da1-ef7ee8bbb439",
+      "profile_uuid": "551e78c8-37e3-43ef-9da1-ef7ee8bbb439",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "937fc880-1097-483c-956a-41a71e1116c6.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/d32a9f22-d818-46fb-871e-40bb5b681aab",
+      "profile_uuid": "d32a9f22-d818-46fb-871e-40bb5b681aab",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "95f2af95-55b8-4f1a-969d-c019f8cc395f.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/41fb421d-307e-45cf-9f81-5c02b1f70833",
+      "profile_uuid": "41fb421d-307e-45cf-9f81-5c02b1f70833",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "9df4d2a0-dfae-4b7d-b197-41236c4e4a8c.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/70e251e1-26a3-4e58-9861-7009f8d10c90",
+      "profile_uuid": "70e251e1-26a3-4e58-9861-7009f8d10c90",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "a03ec0ff-c21c-4627-b646-533ec606c9e0.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/e41e4e52-4f62-474f-8623-74671074d290",
+      "profile_uuid": "e41e4e52-4f62-474f-8623-74671074d290",
+      "badge_container_count": 1,
+      "badge_card_count": 2,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "a7e77fb0-09d9-45f5-83da-ff40644fb30b.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/f48f0783-fffc-4281-a712-4bdc4c3c3880",
+      "profile_uuid": "f48f0783-fffc-4281-a712-4bdc4c3c3880",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "a85c93bb-f337-437c-80da-fc292e5420e0.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/c5d42404-232e-45d1-a2a4-fc999a5ec728",
+      "profile_uuid": "c5d42404-232e-45d1-a2a4-fc999a5ec728",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "a888cbc2-8ef6-477c-bec9-3f2fdfc50dad.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/3866bb38-16ef-42d8-9ea0-75411eb17c90",
+      "profile_uuid": "3866bb38-16ef-42d8-9ea0-75411eb17c90",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "b07e7907-b8e8-4ebd-a06f-2f0c0a69229c.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/f0b3a2d3-02c3-4e67-9e27-8977f23400c3",
+      "profile_uuid": "f0b3a2d3-02c3-4e67-9e27-8977f23400c3",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "b115d83c-480f-4d12-a061-5646e9f03978.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/ecc44d3e-132a-4ffa-929f-a37d59dd59a3",
+      "profile_uuid": "ecc44d3e-132a-4ffa-929f-a37d59dd59a3",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "b49d9d5a-cb49-4954-a882-eb4c55ec9687.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/81713d3c-0be7-4a11-920a-4c0da1a661da",
+      "profile_uuid": "81713d3c-0be7-4a11-920a-4c0da1a661da",
+      "badge_container_count": 1,
+      "badge_card_count": 1,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "b5bd3892-c65d-4b8b-bb3f-0653de63e9e5.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/98d2bd82-6c4b-4cb1-92dd-90318e05db90",
+      "profile_uuid": "98d2bd82-6c4b-4cb1-92dd-90318e05db90",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "bb49ba12-5fb1-4e96-8d7b-fb27d50bb4e1.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/c8f32095-a494-4115-95a8-c55606a0a8c0",
+      "profile_uuid": "c8f32095-a494-4115-95a8-c55606a0a8c0",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "bb8cd425-42b1-4104-9fca-3ee610c41b8b.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/63228549-a89a-4f65-9bb4-a795dc55625c",
+      "profile_uuid": "63228549-a89a-4f65-9bb4-a795dc55625c",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "be480d17-841b-4147-a010-a67098a6a866.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a6a5fcae-f131-4e78-a40e-6e6e4652c151",
+      "profile_uuid": "a6a5fcae-f131-4e78-a40e-6e6e4652c151",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "bf443aa9-d4f7-454f-b6fe-c39897349a77.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/a0416ad0-752b-4813-8812-99fc8975ace3",
+      "profile_uuid": "a0416ad0-752b-4813-8812-99fc8975ace3",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "bf6aa436-1796-4abd-a5ae-f3d2078954e3.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/088eff14-4415-4b9f-8bd6-2ab2c4425f82",
+      "profile_uuid": "088eff14-4415-4b9f-8bd6-2ab2c4425f82",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "c16faa4d-f00e-4341-a737-5b3aa45a7741.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/8d601374-07f0-47ee-8575-2c4ba302db31",
+      "profile_uuid": "8d601374-07f0-47ee-8575-2c4ba302db31",
+      "badge_container_count": 1,
+      "badge_card_count": 6,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "c3cdc46f-33ea-4274-88e3-b37d741d5d48.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/77f75b00-f45a-4be5-9049-bb0d47050407",
+      "profile_uuid": "77f75b00-f45a-4be5-9049-bb0d47050407",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "c57c7b01-1a78-4e10-8e57-f6f9426351d8.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/1b72f767-b717-4300-b723-9d13da52ec01",
+      "profile_uuid": "1b72f767-b717-4300-b723-9d13da52ec01",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "cd148546-624c-4f12-be50-39c2e04bd827.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/3894ab56-8d75-41d6-bd27-d19c9fde9daf",
+      "profile_uuid": "3894ab56-8d75-41d6-bd27-d19c9fde9daf",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "cd686d0d-6281-4639-a4a9-9a411d93198e.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/79247338-5df3-4ab4-a6df-422b90e410ee",
+      "profile_uuid": "79247338-5df3-4ab4-a6df-422b90e410ee",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "cdbc2af5-ae9b-4a56-9a3c-3c7d14314bb4.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/04b5af7d-f273-4475-9b4e-e8d08331c0d6",
+      "profile_uuid": "04b5af7d-f273-4475-9b4e-e8d08331c0d6",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "cefe85e2-62bb-4fa6-a200-6ce15294f535.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/0e9b65f1-876d-4b47-8968-ac676c768bf7",
+      "profile_uuid": "0e9b65f1-876d-4b47-8968-ac676c768bf7",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "d1337aaf-40c9-4708-bb55-4149c18d98ae.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/9d1e05dc-cfd0-4e01-bced-6e9c3dc0c09a",
+      "profile_uuid": "9d1e05dc-cfd0-4e01-bced-6e9c3dc0c09a",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "d225a059-b03f-4ac2-8986-2aadb079f93f.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/b4095205-015b-4ef8-88ba-b83378a7257d",
+      "profile_uuid": "b4095205-015b-4ef8-88ba-b83378a7257d",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "d36b7a71-23cc-49e7-97e7-4d66101040cc.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/595cb8c3-9298-4c65-9dc7-0180f9e391e4",
+      "profile_uuid": "595cb8c3-9298-4c65-9dc7-0180f9e391e4",
+      "badge_container_count": 1,
+      "badge_card_count": 2,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "d75515f5-2281-4a1c-82a1-13cb1275f8b5.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/2693fb4a-4a77-4ab4-8413-2b255d625857",
+      "profile_uuid": "2693fb4a-4a77-4ab4-8413-2b255d625857",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "d75bf887-e6d0-4bfc-b115-0e2752387ea1.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/b27e1145-8f13-466b-9973-dbca0b8c65e6",
+      "profile_uuid": "b27e1145-8f13-466b-9973-dbca0b8c65e6",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "d863780e-f1a8-4bde-99a3-139b724a667b.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/5af45acb-a95a-443b-a1a4-87838a1fc019",
+      "profile_uuid": "5af45acb-a95a-443b-a1a4-87838a1fc019",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "df2b8671-26a3-4a25-a826-6ebeecd517d5.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/93b52950-344d-4856-a7e1-565681c106a0",
+      "profile_uuid": "93b52950-344d-4856-a7e1-565681c106a0",
+      "badge_container_count": 1,
+      "badge_card_count": 10,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e165987a-18c1-490f-9705-f0a93802c39c.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/08f71bfe-cf37-4545-b879-11e7acf7b141",
+      "profile_uuid": "08f71bfe-cf37-4545-b879-11e7acf7b141",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e23a8b26-7b0e-43cb-bb06-7292cfff26bf.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/3a294d0c-a04c-4a29-b86a-12d3fae5fbc2",
+      "profile_uuid": "3a294d0c-a04c-4a29-b86a-12d3fae5fbc2",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e3a6db63-3951-4ba0-ac3e-9bed0c97d658.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/10f7e6b3-6c2d-4dcd-818e-00f359f9920a",
+      "profile_uuid": "10f7e6b3-6c2d-4dcd-818e-00f359f9920a",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e52fa735-13df-44aa-a299-4c19eb2cd764.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/4d0dfccb-29c8-4093-a04e-a8e0e25be5e5",
+      "profile_uuid": "4d0dfccb-29c8-4093-a04e-a8e0e25be5e5",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e53f1391-9296-46d8-ba5e-1107ee1ad2af.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/9f8d9edf-ccfa-41ca-a9dd-14d44c77616b",
+      "profile_uuid": "9f8d9edf-ccfa-41ca-a9dd-14d44c77616b",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e79e4c78-f3f7-4cb1-b5a2-d79197a1cb88.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/ad0751dc-2476-4f0e-ac94-1565a0409b9e",
+      "profile_uuid": "ad0751dc-2476-4f0e-ac94-1565a0409b9e",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e7e99c2e-3547-4fff-a00c-14516f758a9e.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/864b65b9-fc74-4b95-9a8c-0334d5c751e0",
+      "profile_uuid": "864b65b9-fc74-4b95-9a8c-0334d5c751e0",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e84635bd-7625-4194-b6c5-1c8ab87ca775.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/5d3e1fd7-e599-494b-b472-041a026d06a5",
+      "profile_uuid": "5d3e1fd7-e599-494b-b472-041a026d06a5",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "e883963b-d791-439c-a1db-f08b961c5dbb.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/cee0d0f4-a781-4018-a934-c2738403c5fb",
+      "profile_uuid": "cee0d0f4-a781-4018-a934-c2738403c5fb",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "ea6b4111-4d70-4b5d-ba7f-c6c6b4fe8c32.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/ef4182ec-2bda-4f65-a01e-251dbd65b42a",
+      "profile_uuid": "ef4182ec-2bda-4f65-a01e-251dbd65b42a",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "ead472d2-e728-4fad-9854-4c371423a154.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/30b49c4b-10d3-4150-b6a9-753349707516",
+      "profile_uuid": "30b49c4b-10d3-4150-b6a9-753349707516",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "eb861737-4227-4c7a-ad9a-69f666ad7209.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/3e6d1d14-1231-447c-8c44-3b2620fc7136",
+      "profile_uuid": "3e6d1d14-1231-447c-8c44-3b2620fc7136",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "ee5ce9b7-9696-41ba-a197-ca405ace4102.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/7eec4859-1e91-4b69-8139-bf32e9558c16",
+      "profile_uuid": "7eec4859-1e91-4b69-8139-bf32e9558c16",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "f39db619-1aee-4331-aac4-f7b8e90adcd4.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/d92bff85-82b7-46f4-81d5-614bbfd66dbe",
+      "profile_uuid": "d92bff85-82b7-46f4-81d5-614bbfd66dbe",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "f7ff97f1-e512-49fb-9f28-b92b87769265.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/5910ae66-3eb5-449c-8fe0-e374e4c8cf1e",
+      "profile_uuid": "5910ae66-3eb5-449c-8fe0-e374e4c8cf1e",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "fcc626da-3b66-4fda-8b38-7828ab7df02f.html"
+    },
+    {
+      "classification": "badge_container_missing",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/81bcfa1b-c2e4-42de-b623-4ddbeabbbc0d",
+      "profile_uuid": "81bcfa1b-c2e4-42de-b623-4ddbeabbbc0d",
+      "badge_container_count": 0,
+      "badge_card_count": 0,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "fd1a8004-625b-4860-b4d0-c4a5a0cf0436.html"
+    },
+    {
+      "classification": "badge_cards_detected",
+      "canonical_profile_url": "https://www.skills.google/public_profiles/fd34fb08-2edc-4037-bb60-810aef64c57d",
+      "profile_uuid": "fd34fb08-2edc-4037-bb60-810aef64c57d",
+      "badge_container_count": 1,
+      "badge_card_count": 10,
+      "loading_marker": false,
+      "challenge_marker": false,
+      "access_denied_marker": false,
+      "explicit_empty_marker": false,
+      "structure_warnings": {
+        "malformed_or_unclosed_badge_section": false,
+        "ambiguous_canonical_identity": false,
+        "multiple_badge_containers": false,
+        "badge_cards_outside_container": false,
+        "nested_badge_cards": false,
+        "duplicate_explicit_badge_ids": 0
+      },
+      "file": "ff74c55b-057b-4313-ad7b-b4f18d450647.html"
+    }
+  ]
+}
