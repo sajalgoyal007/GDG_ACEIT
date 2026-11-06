@@ -28,6 +28,9 @@ import type {
   ClassifiedBadgeImportState,
   ClassifiedBadgeImportResult,
 } from "./classified-badge-import-state";
+import { MAX_AUTHORITATIVE_ROSTER_BYTES, parseAuthoritativeRosterCsv } from "@/lib/participants/authoritative-roster";
+import { normalizeSkillsProfileUrl } from "@/lib/participants/profile-url";
+import type { RosterRemovalCandidate, RosterRemovalPreviewState } from "./roster-removal-state";
 
 async function requireAdminClient() {
   const authorization = await getAdminAuthorization();
@@ -60,10 +63,16 @@ export async function importParticipantsAction(_previous: AdminActionState, form
     });
     if (error || !data) return { status: "error", message: "The database rejected this import. No rows were accepted; check the migration and row constraints.", issues: parsed.issues };
 
-    const results = data as unknown as { csv_row_number: number; result: "imported" | "duplicate" }[];
+    const results = data as unknown as { csv_row_number: number; result: "imported" | "duplicate" | "removed" | "duplicate_profile" }[];
     const imported = results.filter((row) => row.result === "imported").length;
-    const duplicateIssues = results.filter((row) => row.result === "duplicate").map((row) => {
+    const duplicateIssues = results.filter((row) => row.result !== "imported").map((row) => {
       const csvRow = parsed.rows[row.csv_row_number - 1];
+      if (row.result === "removed") {
+        return { rowNumber: csvRow?.rowNumber ?? row.csv_row_number + 1, kind: "duplicate" as const, message: `Participant key “${csvRow?.participantKey ?? "unknown"}” belongs to a removed record. Removed registrations are terminal and were not revived.` };
+      }
+      if (row.result === "duplicate_profile") {
+        return { rowNumber: csvRow?.rowNumber ?? row.csv_row_number + 1, kind: "duplicate" as const, message: `Profile URL is already assigned to another participant. No duplicate profile was created.` };
+      }
       return { rowNumber: csvRow?.rowNumber ?? row.csv_row_number + 1, kind: "duplicate" as const, message: `Participant key “${csvRow?.participantKey ?? "unknown"}” already exists. Existing profile and badge progress were left unchanged.` };
     });
     const issues = [...parsed.issues, ...duplicateIssues];
@@ -77,6 +86,258 @@ export async function importParticipantsAction(_previous: AdminActionState, form
   } catch {
     return { status: "error", message: "Admin authorization or database access failed. Nothing was imported.", issues: parsed.issues };
   }
+}
+
+const PARTICIPANT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parseRosterRemovalRows(value: FormDataEntryValue | null): RosterRemovalCandidate[] | null {
+  try {
+    const raw = JSON.parse(String(value ?? "")) as unknown;
+    if (!Array.isArray(raw) || raw.length < 1 || raw.length > 100) return null;
+    const ids = new Set<string>();
+    return raw.map((item) => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) throw new Error("invalid");
+      const row = item as Record<string, unknown>;
+      if (
+        typeof row.id !== "string" ||
+        !PARTICIPANT_ID_PATTERN.test(row.id) ||
+        typeof row.displayName !== "string" ||
+        row.displayName.trim().length < 1 ||
+        typeof row.profileUrl !== "string" ||
+        row.profileUrl.length < 1 ||
+        row.profileUrl.length > 500 ||
+        (row.registrationStatus !== "registered" && row.registrationStatus !== "pending") ||
+        typeof row.verifiedBadgeCount !== "number" ||
+        !Number.isInteger(row.verifiedBadgeCount) ||
+        row.verifiedBadgeCount < 0 ||
+        row.verifiedBadgeCount > 10000 ||
+        !(row.lastVerifiedAt === null || (typeof row.lastVerifiedAt === "string" && !Number.isNaN(Date.parse(row.lastVerifiedAt))))
+      ) {
+        throw new Error("invalid");
+      }
+      const id = row.id.toLowerCase();
+      if (ids.has(id)) throw new Error("duplicate");
+      ids.add(id);
+      return {
+        id,
+        displayName: row.displayName,
+        profileUrl: row.profileUrl,
+        registrationStatus: row.registrationStatus,
+        verifiedBadgeCount: row.verifiedBadgeCount,
+        lastVerifiedAt: row.lastVerifiedAt,
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function parseAuthoritativeUrlList(value: FormDataEntryValue | null): string[] | null {
+  try {
+    const raw = JSON.parse(String(value ?? "")) as unknown;
+    if (!Array.isArray(raw) || raw.length < 1 || raw.length > 1000) return null;
+    const urls = new Set<string>();
+    for (const item of raw) {
+      if (typeof item !== "string" || item.length < 1 || item.length > 500) return null;
+      let normalized: string | null;
+      try {
+        normalized = normalizeSkillsProfileUrl(item);
+      } catch {
+        return null;
+      }
+      if (!normalized || normalized !== item) return null;
+      urls.add(normalized);
+    }
+    return [...urls];
+  } catch {
+    return null;
+  }
+}
+
+export async function previewRosterRemovalAction(
+  _previous: RosterRemovalPreviewState,
+  formData: FormData,
+): Promise<RosterRemovalPreviewState> {
+  const file = formData.get("authoritativeRosterCsv");
+  if (!(file instanceof File) || file.size < 1 || file.size > MAX_AUTHORITATIVE_ROSTER_BYTES) {
+    return { status: "error", message: "Choose an authoritative registration CSV between 1 byte and 1 MB." };
+  }
+
+  const roster = parseAuthoritativeRosterCsv(await file.text());
+  if (roster.urls.length === 0) {
+    return {
+      status: "error",
+      message: "No authoritative profile URLs were found. Nothing was changed.",
+      issues: roster.issues,
+    };
+  }
+
+  let supabase;
+  try {
+    supabase = await requireAdminClient();
+  } catch {
+    return { status: "error", message: "Admin access could not be verified. Nothing was changed." };
+  }
+
+  const { data, error } = await supabase
+    .from("participants")
+    .select("id,display_name,profile_url,registration_status,verified_badge_count,last_verified_at")
+    .in("registration_status", ["registered", "pending"])
+    .order("display_name", { ascending: true });
+  if (error || !data) {
+    return { status: "error", message: "The current participant roster could not be loaded. Nothing was changed." };
+  }
+
+  const authoritative = new Set(roster.urls);
+  const normalizedParticipants = data.flatMap((participant) => {
+    if (!participant.profile_url) return [];
+    let normalized: string | null;
+    try {
+      normalized = normalizeSkillsProfileUrl(participant.profile_url);
+    } catch {
+      return [];
+    }
+    return normalized ? [{ ...participant, normalized }] : [];
+  });
+
+  const candidates: RosterRemovalCandidate[] = normalizedParticipants
+    .filter((participant) => !authoritative.has(participant.normalized))
+    .map((participant) => ({
+      id: participant.id,
+      displayName: participant.display_name,
+      profileUrl: participant.profile_url as string,
+      registrationStatus: participant.registration_status as "registered" | "pending",
+      verifiedBadgeCount: participant.verified_badge_count,
+      lastVerifiedAt: participant.last_verified_at,
+    }));
+  const matchedCount = normalizedParticipants.filter((participant) => authoritative.has(participant.normalized)).length;
+  const matchedUrls = new Set(normalizedParticipants.map((participant) => participant.normalized));
+  const missingAuthoritativeCount = roster.urls.filter((url) => !matchedUrls.has(url)).length;
+
+  if (candidates.length === 0) {
+    return {
+      status: "error",
+      message: `No records need removal. All ${matchedCount} matched profiles appear in the authoritative roster. Nothing was changed.`,
+      issues: roster.issues,
+      authoritativeUrls: roster.urls,
+      authoritativeCount: roster.urls.length,
+      matchedCount,
+      missingAuthoritativeCount,
+    };
+  }
+
+  return {
+    status: "preview",
+    message: `Preview ready: ${candidates.length} production-only record${candidates.length === 1 ? "" : "s"} can be soft-removed; ${matchedCount} profiles match the authoritative roster. Review the list before confirming.`,
+    issues: roster.issues,
+    rows: candidates,
+    authoritativeUrls: roster.urls,
+    authoritativeCount: roster.urls.length,
+    matchedCount,
+    missingAuthoritativeCount,
+  };
+}
+
+export async function applyRosterRemovalAction(
+  _previous: RosterRemovalPreviewState,
+  formData: FormData,
+): Promise<RosterRemovalPreviewState> {
+  if (formData.get("confirmRosterRemoval") !== "confirmed") {
+    return { status: "error", message: "Confirm that you reviewed the preview before removing participants." };
+  }
+  const reason = String(formData.get("removalReason") ?? "").trim();
+  if (reason.length < 8 || reason.length > 1000) {
+    return { status: "error", message: "Add a removal reason between 8 and 1000 characters." };
+  }
+  const previewRows = parseRosterRemovalRows(formData.get("previewRows"));
+  const authoritativeUrls = parseAuthoritativeUrlList(formData.get("authoritativeUrls"));
+  if (!previewRows || !authoritativeUrls) {
+    return { status: "error", message: "The removal preview is invalid or expired. Preview the roster again; nothing was changed." };
+  }
+
+  let supabase;
+  try {
+    supabase = await requireAdminClient();
+  } catch {
+    return { status: "error", message: "Admin access could not be verified. Nothing was changed." };
+  }
+
+  const currentRows: { id: string; profile_url: string | null; registration_status: string }[] = [];
+  for (let offset = 0; offset < previewRows.length; offset += 100) {
+    const { data, error } = await supabase
+      .from("participants")
+      .select("id,profile_url,registration_status")
+      .in("id", previewRows.slice(offset, offset + 100).map((row) => row.id));
+    if (error || !data) {
+      return { status: "error", message: "The participant roster could not be rechecked. Nothing was changed." };
+    }
+    currentRows.push(...data);
+  }
+
+  const currentById = new Map(currentRows.map((row) => [row.id.toLowerCase(), row]));
+  const authoritative = new Set(authoritativeUrls);
+  for (const row of previewRows) {
+    const current = currentById.get(row.id);
+    if (!current || current.profile_url !== row.profileUrl || (current.registration_status !== "registered" && current.registration_status !== "pending")) {
+      return { status: "error", message: "A participant changed after preview. Preview the roster again; nothing was changed." };
+    }
+    const profileUrl = current.profile_url;
+    if (!profileUrl) {
+      return { status: "error", message: "A participant has no public profile URL. Preview the roster again; nothing was changed." };
+    }
+    let normalized: string | null;
+    try {
+      normalized = normalizeSkillsProfileUrl(profileUrl);
+    } catch {
+      return { status: "error", message: "A participant profile URL is invalid. Preview the roster again; nothing was changed." };
+    }
+    if (!normalized || authoritative.has(normalized)) {
+      return { status: "error", message: "A participant is now present in the authoritative roster. Preview the roster again; nothing was changed." };
+    }
+  }
+
+  // Include stored URL spellings for every authoritative participant so the
+  // database guard rejects a removal even when a URL has cosmetic variations.
+  const { data: allRows, error: allError } = await supabase
+    .from("participants")
+    .select("profile_url,registration_status")
+    .in("registration_status", ["registered", "pending"]);
+  if (allError || !allRows) {
+    return { status: "error", message: "The authoritative guard set could not be built. Nothing was changed." };
+  }
+  const guardUrls = new Set(authoritativeUrls);
+  for (const row of allRows) {
+    if (!row.profile_url) continue;
+    try {
+      const normalized = normalizeSkillsProfileUrl(row.profile_url);
+      if (normalized && authoritative.has(normalized)) guardUrls.add(row.profile_url);
+    } catch {
+      // A malformed stored URL is not authoritative and cannot match a roster URL.
+    }
+  }
+
+  const { data, error } = await supabase.rpc("admin_remove_participants", {
+    p_participant_ids: previewRows.map((row) => row.id),
+    p_reason: reason,
+    p_authoritative_profile_urls: [...guardUrls],
+  });
+  if (error || !data) {
+    return { status: "error", message: "The database rejected this removal request. Nothing was changed; preview the roster again." };
+  }
+
+  const results = data as unknown as { participant_id: string; result: "removed" | "already_removed"; previous_status: string }[];
+  const removed = results.filter((row) => row.result === "removed").length;
+  const alreadyRemoved = results.filter((row) => row.result === "already_removed").length;
+  if (removed + alreadyRemoved !== previewRows.length) {
+    return { status: "error", message: "The database returned an incomplete removal result. Review the audit history before retrying." };
+  }
+  revalidatePath("/");
+  revalidatePath("/progress");
+  revalidatePath("/admin");
+  return {
+    status: "success",
+    message: `${removed} participant${removed === 1 ? "" : "s"} soft-removed; ${alreadyRemoved} already removed. Rows, badge history, and audit history were preserved.`,
+  };
 }
 
 export async function previewUnverifiedProgressAction(

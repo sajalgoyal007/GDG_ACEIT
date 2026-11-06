@@ -15,7 +15,7 @@ export async function getAdminParticipants() {
   const [participantsResult, auditResult] = await Promise.all([
     supabase
       .from("participants")
-      .select("id,participant_key,display_name,profile_url,registration_status,verified_badge_count,last_verified_at,verification_source,created_at,updated_at")
+      .select("id,participant_key,display_name,profile_url,registration_status,verified_badge_count,skill_badge_count,arcade_game_badge_count,last_verified_at,verification_source,removed_at,removal_reason,created_at,updated_at")
       .order("display_name", { ascending: true }),
     Promise.resolve(
       supabase

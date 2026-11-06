@@ -3,10 +3,14 @@ export interface RawAdminParticipantRow {
   participant_key: string;
   display_name: string;
   profile_url: string | null;
-  registration_status: "registered" | "pending";
+  registration_status: "registered" | "pending" | "removed";
   verified_badge_count: number;
+  skill_badge_count?: number | null;
+  arcade_game_badge_count?: number | null;
   last_verified_at: string | null;
   verification_source: string | null;
+  removed_at?: string | null;
+  removal_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -27,7 +31,7 @@ export interface RawAuditEventRow {
 export interface AdminParticipantRow extends RawAdminParticipantRow {
   audit: {
     id: string;
-    eventType: "participant_imported" | "participant_synced" | "badge_count_updated";
+    eventType: "participant_imported" | "participant_synced" | "badge_count_updated" | "participant_removed";
     source: "csv_import" | "admin_manual" | "google_sheets_sync";
     previousBadgeCount: number | null;
     newBadgeCount: number | null;
@@ -47,7 +51,7 @@ export function buildAdminParticipantRows(
     const events = auditByParticipant.get(event.participant_id) ?? [];
     events.push({
       id: event.id,
-      eventType: event.event_type as "participant_imported" | "participant_synced" | "badge_count_updated",
+      eventType: event.event_type as "participant_imported" | "participant_synced" | "badge_count_updated" | "participant_removed",
       source: event.source as "csv_import" | "admin_manual" | "google_sheets_sync",
       previousBadgeCount: event.previous_badge_count,
       newBadgeCount: event.new_badge_count,

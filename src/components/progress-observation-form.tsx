@@ -5,7 +5,7 @@ import { FileSearch } from "lucide-react";
 import { fetchProgressObservationAction, recordProgressObservationAction } from "@/app/admin/actions";
 import { initialProgressObservationActionState } from "@/app/admin/observation-state";
 
-type ObservationParticipant = { participantKey: string; displayName: string; profileUrl: string | null; registrationStatus: "registered" | "pending" };
+type ObservationParticipant = { participantKey: string; displayName: string; profileUrl: string | null; registrationStatus: "registered" | "pending" | "removed" };
 
 export function ProgressObservationForm({ participants, fetchingEnabled }: { participants: ObservationParticipant[]; fetchingEnabled: boolean }) {
   const [state, action, pending] = useActionState(recordProgressObservationAction, initialProgressObservationActionState);

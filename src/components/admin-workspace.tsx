@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronDown, ChevronRight, ClipboardList, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, RefreshCw, Search, ShieldCheck, Users, Menu, X, Gamepad2, Layers } from "lucide-react";
+import { Activity, ArrowDownToLine, ArrowLeft, Award, BadgeCheck, ChevronDown, ChevronRight, ClipboardList, FileUp, Filter, LayoutDashboard, LoaderCircle, LogOut, RefreshCw, Search, ShieldAlert, ShieldCheck, Users, Menu, X, Gamepad2, Layers } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { importParticipantsAction, setVerifiedBadgeCountAction, signOutAdmin } from "@/app/admin/actions";
 import { initialAdminActionState } from "@/app/admin/action-state";
@@ -17,10 +17,11 @@ import { ClassifiedBadgeCsvImport } from "@/components/classified-badge-csv-impo
 import { ProgressObservationForm } from "@/components/progress-observation-form";
 import type { AdminAutoProgressJobStatus } from "@/lib/auto-progress/admin-job-status";
 import { ProgressObservationLeaderboard } from "@/components/progress-observation-leaderboard";
+import { RosterRemovalTool } from "@/components/roster-removal-tool";
 import type { ProgressObservationSummary } from "@/lib/supabase/auto-progress-provider";
 import { formatVerifiedBadgeCount, getReviewedBadgeCount } from "@/lib/leaderboard";
 
-type AuditEventType = "participant_imported" | "participant_synced" | "badge_count_updated";
+type AuditEventType = "participant_imported" | "participant_synced" | "badge_count_updated" | "participant_removed";
 type AuditSource = "csv_import" | "admin_manual" | "google_sheets_sync";
 
 export interface AdminParticipantOption {
@@ -28,9 +29,13 @@ export interface AdminParticipantOption {
   participantKey: string;
   displayName: string;
   profileUrl: string | null;
-  registrationStatus: "registered" | "pending";
+  registrationStatus: "registered" | "pending" | "removed";
   verifiedBadgeCount: number;
+  skillBadgeCount: number | null;
+  arcadeGameBadgeCount: number | null;
   lastVerifiedAt: string | null;
+  removedAt: string | null;
+  removalReason: string | null;
   audit: {
     id: string;
     eventType: AuditEventType;
@@ -44,7 +49,7 @@ export interface AdminParticipantOption {
   }[];
 }
 
-type ParticipantFilter = "all" | "registered" | "pending";
+type ParticipantFilter = "all" | "registered" | "pending" | "removed";
 type RefreshAllReply = {
   status?: string;
   message?: string;
@@ -71,6 +76,7 @@ const advancedSidebarItems = [
   { href: "#google-form-sync", label: "Google Form Sync", icon: Layers },
   { href: "#automatic-progress", label: "Automatic Progress", icon: RefreshCw },
   { href: "#badge-verification", label: "Badge Verification", icon: BadgeCheck },
+  { href: "#roster-removal", label: "Roster Removal", icon: ShieldAlert },
 ];
 
 function formatDate(value: string) {
@@ -82,6 +88,7 @@ function formatDate(value: string) {
 function eventTitle(type: AuditEventType) {
   if (type === "participant_imported") return "Participant registered";
   if (type === "participant_synced") return "Registration details updated";
+  if (type === "participant_removed") return "Participant removed";
   return "Badge count verified";
 }
 
@@ -165,10 +172,12 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
     return () => observer.disconnect();
   }, [allSidebarItems]);
 
-  const { registeredCount, totalSkillBadges, totalArcadeBadges, totalBadges, pendingRegistrations } = useMemo(() => {
+  const { registeredCount, totalSkillBadges, totalArcadeBadges, totalBadges, pendingRegistrations, removedCount } = useMemo(() => {
     let regCount = 0;
-    const skillTotal = 0;
-    const arcadeTotal = 0;
+    let pendingCount = 0;
+    let removed = 0;
+    let skillTotal = 0;
+    let arcadeTotal = 0;
     let badgeTotal = 0;
     for (const p of participants) {
       if (p.registrationStatus === "registered") {
@@ -176,7 +185,13 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         const reviewedCount = getReviewedBadgeCount(p.verifiedBadgeCount, p.lastVerifiedAt);
         if (reviewedCount !== null) {
           badgeTotal += reviewedCount;
+          skillTotal += p.skillBadgeCount ?? 0;
+          arcadeTotal += p.arcadeGameBadgeCount ?? 0;
         }
+      } else if (p.registrationStatus === "pending") {
+        pendingCount += 1;
+      } else {
+        removed += 1;
       }
     }
     return {
@@ -184,7 +199,8 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
       totalSkillBadges: skillTotal,
       totalArcadeBadges: arcadeTotal,
       totalBadges: badgeTotal,
-      pendingRegistrations: participants.length - regCount,
+      pendingRegistrations: pendingCount,
+      removedCount: removed,
     };
   }, [participants]);
 
@@ -201,10 +217,10 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)), [participants]);
 
   const overviewMetrics: { Icon: LucideIcon; tone: string; label: string; value: number; note: string }[] = [
-    { Icon: Users, tone: "blue", label: "REGISTERED", value: registeredCount, note: `${pendingRegistrations} pending` },
-    { Icon: Award, tone: "green", label: "SKILL BADGES", value: totalSkillBadges, note: "After migration applied" },
-    { Icon: Gamepad2, tone: "amber", label: "ARCADE BADGES", value: totalArcadeBadges, note: "After migration applied" },
-    { Icon: Layers, tone: "violet", label: "TOTAL BADGES", value: totalBadges, note: "Recorded progress" },
+    { Icon: Users, tone: "blue", label: "REGISTERED", value: registeredCount, note: removedCount > 0 ? `${pendingRegistrations} pending · ${removedCount} removed` : `${pendingRegistrations} pending` },
+    { Icon: Award, tone: "green", label: "SKILL BADGES", value: totalSkillBadges, note: "Verified public profiles" },
+    { Icon: Gamepad2, tone: "amber", label: "ARCADE BADGES", value: totalArcadeBadges, note: "Verified public profiles" },
+    { Icon: Layers, tone: "violet", label: "TOTAL BADGES", value: totalBadges, note: "Skill + Arcade" },
   ];
 
   return <div className="admin-app dark-community">
@@ -263,10 +279,10 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
               <p className="admin-panel-eyebrow">CLASSIFIED BADGE DATA IMPORT</p>
               <h2 id="classified-import-title">Import Skill &amp; Arcade Badge Counts</h2>
             </div>
-            <span className="admin-section-count">114 participants · 123 Skill + 11 Arcade</span>
+            <span className="admin-section-count">{registeredCount} participants · {totalSkillBadges} Skill + {totalArcadeBadges} Arcade</span>
           </div>
           <div className="admin-feedback success" role="note" style={{ marginBottom: "1rem" }}>
-            <p><strong>✅ Upload this file:</strong> <code>data/classified-badge-import.csv</code></p>
+            <p><strong>✅ Upload the validated classified badge CSV.</strong> Preview is mandatory before writing.</p>
             <p style={{ marginTop: ".35rem", fontSize: ".85em" }}>Required headers: <code>participant_id,skill_badge_count,arcade_game_badge_count,total_badge_count,review_note</code></p>
           </div>
           <ClassifiedBadgeCsvImport />
@@ -280,11 +296,11 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
               <div className="admin-panel-heading"><span className="admin-panel-icon"><Users size={16} aria-hidden="true" /></span><div><p className="admin-panel-eyebrow">DIRECTORY</p><h3>Participant records</h3></div></div>
               <div className="admin-directory-controls">
                 <label className="admin-directory-search"><Search size={15} aria-hidden="true" /><span className="sr-only">Search participants by display name</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by display name" /></label>
-                <label className="admin-directory-filter"><Filter size={14} aria-hidden="true" /><span className="sr-only">Filter by registration status</span><select value={filter} onChange={(event) => setFilter(event.target.value as ParticipantFilter)}><option value="all">All statuses</option><option value="registered">Registered</option><option value="pending">Pending</option></select></label>
+                <label className="admin-directory-filter"><Filter size={14} aria-hidden="true" /><span className="sr-only">Filter by registration status</span><select value={filter} onChange={(event) => setFilter(event.target.value as ParticipantFilter)}><option value="all">All statuses</option><option value="registered">Registered</option><option value="pending">Pending</option><option value="removed">Removed</option></select></label>
               </div>
               {participants.length === 0 ? <div className="admin-panel-empty"><span><Users size={17} aria-hidden="true" /></span><p>No participant records</p><small>Import an approved registration CSV or review Google Form responses.</small></div> : filteredParticipants.length === 0 ? <div className="admin-panel-empty" role="status"><span><Search size={17} aria-hidden="true" /></span><p>No matching participants</p><small>Change the name or status filter to see more records.</small><button type="button" onClick={() => { setSearch(""); setFilter("all"); }}>Clear filters</button></div> : <>
-                <div className="admin-directory-table-wrap"><table className="admin-directory-table"><thead><tr><th scope="col">PARTICIPANT</th><th scope="col">REGISTRATION</th><th scope="col">VERIFIED BADGES</th><th scope="col">VERIFICATION STATUS</th></tr></thead><tbody>{filteredParticipants.map((participant) => <tr key={participant.id}><td><strong>{participant.displayName}</strong></td><td><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></td><td className="admin-badge-count">{formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)}</td><td>{participant.lastVerifiedAt ? `Verified ${formatDate(participant.lastVerifiedAt)}` : "Not reviewed"}</td></tr>)}</tbody></table></div>
-                <ul className="admin-directory-mobile" aria-label="Participant records">{filteredParticipants.map((participant) => <li key={participant.id}><div><strong>{participant.displayName}</strong><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></div><p>{participant.lastVerifiedAt ? `${formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)} verified badges · Checked ${formatDate(participant.lastVerifiedAt)}` : "Badge count not reviewed"}</p></li>)}</ul>
+                <div className="admin-directory-table-wrap"><table className="admin-directory-table"><thead><tr><th scope="col">PARTICIPANT</th><th scope="col">REGISTRATION</th><th scope="col">SKILL</th><th scope="col">ARCADE</th><th scope="col">TOTAL</th><th scope="col">VERIFICATION STATUS</th></tr></thead><tbody>{filteredParticipants.map((participant) => <tr key={participant.id}><td><strong>{participant.displayName}</strong>{participant.registrationStatus === "removed" && participant.removalReason && <small className="admin-help">{participant.removalReason}</small>}</td><td><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></td><td className="admin-badge-count">{participant.lastVerifiedAt ? (participant.skillBadgeCount ?? "—") : "Not reviewed"}</td><td className="admin-badge-count">{participant.lastVerifiedAt ? (participant.arcadeGameBadgeCount ?? "—") : "—"}</td><td className="admin-badge-count"><strong>{formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)}</strong></td><td>{participant.registrationStatus === "removed" ? (participant.removedAt ? `Removed ${formatDate(participant.removedAt)}` : "Removed") : participant.lastVerifiedAt ? `Verified ${formatDate(participant.lastVerifiedAt)}` : "Not reviewed"}</td></tr>)}</tbody></table></div>
+                <ul className="admin-directory-mobile" aria-label="Participant records">{filteredParticipants.map((participant) => <li key={participant.id}><div><strong>{participant.displayName}</strong><span className={`admin-registration-pill ${participant.registrationStatus}`}>{participant.registrationStatus}</span></div><p>{participant.registrationStatus === "removed" ? (participant.removedAt ? `Removed ${formatDate(participant.removedAt)} · history preserved` : "Removed · history preserved") : participant.lastVerifiedAt ? `${participant.skillBadgeCount ?? 0} Skill · ${participant.arcadeGameBadgeCount ?? 0} Arcade · ${formatVerifiedBadgeCount(participant.verifiedBadgeCount, participant.lastVerifiedAt)} total · Checked ${formatDate(participant.lastVerifiedAt)}` : "Badge count not reviewed"}</p></li>)}</ul>
                 <p className="admin-directory-result-count">Showing {filteredParticipants.length} of {participants.length} records</p>
               </>}
               <p className="admin-help">Private contact data and internal matching identifiers are not displayed.</p>
@@ -296,7 +312,7 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         <section id="audit-history" className="admin-section" aria-labelledby="audit-section-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">RECORD OF CHANGES</p><h2 id="audit-section-title">Audit History</h2></div><span className="admin-section-count">{activities.length} events</span></div>
           <article className="admin-panel admin-audit-panel">
-            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, and badge verification updates will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Layers size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
+            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, badge verification updates, and roster removals will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "participant_removed" ? "red" : event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "participant_removed" ? <ShieldAlert size={15} aria-hidden="true" /> : event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Layers size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
           </article>
         </section>
 
@@ -323,7 +339,7 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
             {refreshAllReply?.results?.some((item) => !["refreshed", "unchanged"].includes(item.status)) && <ul className="admin-help">{refreshAllReply.results.filter((item) => !["refreshed", "unchanged"].includes(item.status)).map((item) => <li key={item.participantId}>{item.participantId}: {item.message}</li>)}</ul>}
           </article>
           <UnverifiedProgressImport />
-          <ProgressObservationForm participants={participants} fetchingEnabled={profileObservationFetchingEnabled} />
+          <ProgressObservationForm participants={participants.filter((participant) => participant.registrationStatus !== "removed")} fetchingEnabled={profileObservationFetchingEnabled} />
           <ProgressObservationLeaderboard entries={progressObservations} admin />
         </section>
 
@@ -372,6 +388,11 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
             <p className="admin-help">Updates preserve badge-earned dates, record the verification time and actor, and append an audit event.</p>
             <ActionFeedback state={countState} />
           </article>
+        </section>
+
+        <section id="roster-removal" className="admin-section" aria-labelledby="roster-removal-title">
+          <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">ADVANCED · AUTHORITATIVE ROSTER ONLY</p><h2 id="roster-removal-title">Roster Removal</h2></div><span className="admin-section-count">Soft removal only</span></div>
+          <RosterRemovalTool />
         </section>
 
         <footer className="admin-footer"><span>GDG On Campus ACEIT · Learn with Communities 2026</span><span>Admin actions are authenticated and audited.</span></footer>

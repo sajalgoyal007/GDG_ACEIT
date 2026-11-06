@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Activity, ChevronDown } from "lucide-react";
 import { Dashboard } from "@/components/dashboard";
 import { ProgressRefreshPanel } from "@/components/progress-refresh-panel";
 import { getLeaderboardProvider } from "@/lib/leaderboard-provider";
@@ -31,13 +32,28 @@ export default async function ProgressPage() {
       loadFailed = true;
     }
   }
-  return <>
-    <div className="site-main"><ProgressRefreshPanel
+  return <Dashboard
+    snapshot={snapshot}
+    view="progress"
+    personalProgress={<ProgressRefreshPanel
       identityState={identity.status}
       progress={progress}
       loadFailed={loadFailed}
       refreshAvailable={isAutoProgressEnabled() && googleSkillsAutoProgressProvider.availability === "available"}
-    /><UnverifiedProgressLeaderboard entries={importedProgress} /><ProgressObservationLeaderboard entries={observations} /></div>
-    <Dashboard snapshot={snapshot} view="progress" />
-  </>;
+    />}
+    diagnostics={<details className="diagnostics-disclosure">
+      <summary>
+        <span className="diagnostics-summary-icon"><Activity size={18} aria-hidden="true" /></span>
+        <span className="diagnostics-summary-copy">
+          <strong>Diagnostic &amp; unverified data</strong>
+          <small>Organizer CSV imports and source-reported observations, kept separate from verified badge counts.</small>
+        </span>
+        <ChevronDown className="diagnostics-chevron" size={18} aria-hidden="true" />
+      </summary>
+      <div className="diagnostics-body">
+        <UnverifiedProgressLeaderboard entries={importedProgress} />
+        <ProgressObservationLeaderboard entries={observations} />
+      </div>
+    </details>}
+  />;
 }

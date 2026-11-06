@@ -42,7 +42,11 @@ export default async function AdminPage() {
     profileUrl: row.profile_url,
     registrationStatus: row.registration_status,
     verifiedBadgeCount: row.verified_badge_count,
+    skillBadgeCount: row.skill_badge_count ?? null,
+    arcadeGameBadgeCount: row.arcade_game_badge_count ?? null,
     lastVerifiedAt: row.last_verified_at,
+    removedAt: row.removed_at ?? null,
+    removalReason: row.removal_reason ?? null,
     audit: row.audit ?? [],
   }));
   const observationEnabled = isAutoProgressEnabled();

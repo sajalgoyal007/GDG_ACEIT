@@ -5,13 +5,35 @@ import type { KeyboardEvent, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Award, BadgeCheck, Check, Clock3, ExternalLink, Gamepad2, Lock, Medal, RefreshCw, Search, ShieldCheck, Users, X } from "lucide-react";
+import { Award, BadgeCheck, Check, Clock3, ExternalLink, Gamepad2, Lock, Medal, RefreshCw, Search, ShieldCheck, Trophy, Users, X } from "lucide-react";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import type { LeaderboardSnapshot, PublicParticipant } from "@/lib/types";
 import { matchesRankFreezeFilter, qualifiesForRankFreeze, rankParticipants } from "@/lib/leaderboard";
 
 type FilterKey = "all" | "ten";
+
+type RankedParticipant = { participant: PublicParticipant; rank: number | null };
+
+const SKILL_BUCKETS = [
+  { key: "ten", label: "10+ Skill badges", min: 10, max: Number.POSITIVE_INFINITY, tone: "violet" },
+  { key: "seven", label: "7–9 Skill badges", min: 7, max: 9, tone: "blue" },
+  { key: "four", label: "4–6 Skill badges", min: 4, max: 6, tone: "green" },
+  { key: "one", label: "1–3 Skill badges", min: 1, max: 3, tone: "amber" },
+  { key: "zero", label: "0 Skill badges", min: 0, max: 0, tone: "slate" },
+] as const;
+
+function buildSkillDistribution(participants: PublicParticipant[]) {
+  const classified = participants.filter((participant) => participant.skillBadgeCount !== null);
+  const buckets = SKILL_BUCKETS.map((bucket) => ({
+    ...bucket,
+    count: classified.filter((participant) => {
+      const count = participant.skillBadgeCount as number;
+      return count >= bucket.min && count <= bucket.max;
+    }).length,
+  }));
+  return { classifiedCount: classified.length, buckets };
+}
 
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -21,7 +43,12 @@ function formatTimestamp(value: string) {
   }).format(new Date(value));
 }
 
-export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: LeaderboardSnapshot; view?: "dashboard" | "progress" }) {
+export function Dashboard({ snapshot, view = "dashboard", personalProgress, diagnostics }: {
+  snapshot: LeaderboardSnapshot;
+  view?: "dashboard" | "progress";
+  personalProgress?: ReactNode;
+  diagnostics?: ReactNode;
+}) {
   const { participants, registeredCount, lastSyncedAt } = snapshot;
   const isProgressPage = view === "progress";
   const router = useRouter();
@@ -32,9 +59,14 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
   const reduceMotion = useReducedMotion();
 
   const ranked = useMemo(() => rankParticipants(participants), [participants]);
-  const awaitingVerification = participants.filter((participant) => !participant.lastCheckedAt).length;
-  const reviewedParticipants = participants.filter((participant) => participant.lastCheckedAt);
+  const reviewedParticipants = useMemo(() => participants.filter((participant) => participant.lastCheckedAt), [participants]);
+  const awaitingVerification = participants.length - reviewedParticipants.length;
   const hasReviewedParticipants = reviewedParticipants.length > 0;
+  const topPerformers = useMemo<RankedParticipant[]>(
+    () => ranked.filter(({ participant }) => Boolean(participant.lastCheckedAt)).slice(0, 3),
+    [ranked],
+  );
+  const skillDistribution = useMemo(() => buildSkillDistribution(reviewedParticipants), [reviewedParticipants]);
   const visible = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return ranked.filter(({ participant }) => {
@@ -60,9 +92,9 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
             <p className="eyebrow"><span className="eyebrow-dot" />GDG ON CAMPUS ACEIT <span className="eyebrow-divider">/</span> JAIPUR, RAJASTHAN</p>
             <h1 id="page-title">{isProgressPage ? <>Progress,<br /><span>made visible.</span></> : <>Build beyond<br /><span>limits.</span></>}</h1>
             <p className="hero-subtitle">Learn with Communities 2026</p>
-            <p className="hero-description">{isProgressPage ? "See participant progress recorded through the community’s manual evidence review." : "Learn new skills. Build practical projects. Connect with developers shaping what comes next."}</p>
+            <p className="hero-description">{isProgressPage ? "Every reviewed record in one place: Skill Badge progress, Arcade achievements, and the community's climb toward the 10-badge mark." : "Learn new skills. Build practical projects. Connect with developers shaping what comes next."}</p>
             <div className="hero-actions">
-              <Link className="button-primary" href={isProgressPage ? "/" : "/progress"}>{isProgressPage ? "View leaderboard" : "Explore progress"}<span aria-hidden="true">↗</span></Link>
+              <Link className="button-primary" href={isProgressPage ? "/" : "/progress"}>{isProgressPage ? "Open leaderboard" : "Explore progress"}<span aria-hidden="true">↗</span></Link>
               <Link className="button-quiet" href="/about">Meet the community</Link>
             </div>
           </motion.div>
@@ -93,23 +125,64 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
 
         <section className="summary-grid" aria-label={isProgressPage ? "Live community progress" : "Live community overview"}>
           <SummaryCard index={0} reduceMotion={reduceMotion} icon={<Users size={18} />} label="Registered participants" value={registeredCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples" : "Current records"} tone="blue" />
-          <SummaryCard index={1} reduceMotion={reduceMotion} icon={<BadgeCheck size={18} />} label={snapshot.dataMode === "demo" ? "Example badge count" : "Verified badges recorded"} value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? (snapshot.totalSkillBadges > 0 || snapshot.totalArcadeBadges > 0 ? `${snapshot.totalSkillBadges} Skill · ${snapshot.totalArcadeBadges} Arcade` : "Manual evidence review only") : "Awaiting first review"} tone="green" />
-          <SummaryCard index={2} reduceMotion={reduceMotion} icon={<Lock size={18} />} label="Ranks locked" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.frozenRankCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "10 Skill Badge threshold" : "Awaiting first review"} tone="amber" />
-          <SummaryCard index={3} reduceMotion={reduceMotion} icon={<Award size={18} />} label="Reached 10+ Skill badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.tenBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Rank freeze threshold" : "Awaiting first review"} tone="violet" />
+          <SummaryCard index={1} reduceMotion={reduceMotion} icon={<BadgeCheck size={18} />} label={snapshot.dataMode === "demo" ? "Example badge count" : "Total badges recorded"} value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? (snapshot.totalSkillBadges > 0 || snapshot.totalArcadeBadges > 0 ? `${snapshot.totalSkillBadges} Skill · ${snapshot.totalArcadeBadges} Arcade` : "Manual evidence review only") : "Awaiting first review"} tone="green" />
+          <SummaryCard index={2} reduceMotion={reduceMotion} icon={<Award size={18} />} label={snapshot.dataMode === "demo" ? "Example Skill badges" : "Skill badges"} value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.totalSkillBadges} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : "Primary leaderboard metric"} tone="amber" />
+          <SummaryCard index={3} reduceMotion={reduceMotion} icon={<Trophy size={18} />} label="Reached 10+ Skill badges" value={snapshot.dataMode === "database" && !hasReviewedParticipants ? "—" : snapshot.tenBadgeCount} detail={snapshot.dataMode === "demo" ? "Synthetic examples only" : hasReviewedParticipants ? "Rank-freeze threshold" : "Awaiting first review"} tone="violet" />
         </section>
+
+        {isProgressPage && personalProgress && <div className="progress-personal">{personalProgress}</div>}
+
+        {hasReviewedParticipants && topPerformers.length > 0 && <motion.section
+          className="progress-spotlight"
+          aria-labelledby="spotlight-title"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.1 }}
+        >
+          <div className="section-heading">
+            <div><p className="section-kicker">TOP PERFORMERS</p><h2 id="spotlight-title">Leading the climb.</h2></div>
+            <p>{snapshot.dataMode === "demo" ? "Synthetic examples preview the top-performer layout; they are not participant data." : "Ranked by verified Skill Badges. Arcade badges are a separate achievement and never change rank."}</p>
+          </div>
+          <div className="podium-grid">
+            {topPerformers.map(({ participant, rank }, index) => <PodiumCard key={participant.id} participant={participant} rank={rank} place={index + 1} isDemo={snapshot.dataMode === "demo"} onSelect={setSelected} reduceMotion={reduceMotion} />)}
+          </div>
+        </motion.section>}
+
+        {hasReviewedParticipants && <motion.section
+          className="progress-distribution"
+          aria-labelledby="distribution-title"
+          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.14 }}
+        >
+          <div className="section-heading">
+            <div><p className="section-kicker">PROGRESS DISTRIBUTION</p><h2 id="distribution-title">Where the community stands.</h2></div>
+            <p>Skill Badge progress across reviewed records. The 10-badge mark is the rank-freeze threshold.</p>
+          </div>
+          <div className="distribution-card">
+            <ul className="distribution-chart">
+              {skillDistribution.buckets.map((bucket) => {
+                const percent = skillDistribution.classifiedCount > 0 ? Math.round((bucket.count / skillDistribution.classifiedCount) * 100) : 0;
+                return <li className="distribution-row" key={bucket.key}>
+                  <span className="distribution-label">{bucket.label}</span>
+                  <span className="distribution-track" aria-hidden="true"><span className={`distribution-fill tone-${bucket.tone}`} style={{ width: bucket.count === 0 ? "0%" : `${Math.max(3, percent)}%` }} /></span>
+                  <span className="distribution-count"><strong>{bucket.count}</strong><small>{percent}%</small></span>
+                </li>;
+              })}
+            </ul>
+            <div className="distribution-summary">
+              <div className="distribution-stats">
+                <div><strong>{snapshot.totalSkillBadges.toLocaleString("en-IN")}</strong><span>Skill badges recorded</span></div>
+                <div><strong>{snapshot.totalArcadeBadges.toLocaleString("en-IN")}</strong><span>Arcade game badges</span></div>
+              </div>
+              <p className="distribution-note">{skillDistribution.classifiedCount} of {reviewedParticipants.length} reviewed participants classified. {reviewedParticipants.length - skillDistribution.classifiedCount > 0 ? `${(reviewedParticipants.length - skillDistribution.classifiedCount).toLocaleString("en-IN")} still awaiting classification.` : "Every reviewed participant has a classification."}</p>
+            </div>
+          </div>
+        </motion.section>}
 
         {snapshot.dataMode === "database" && awaitingVerification > 0 && <section className="verification-notice" role="status" aria-live="polite">
           <span className="verification-notice-icon"><ShieldCheck size={19} aria-hidden="true" /></span>
           <div><strong>Badge counts are awaiting manual verification</strong><p>{awaitingVerification.toLocaleString("en-IN")} participant {awaitingVerification === 1 ? "record has" : "records have"} no verification timestamp. A registration default of 0 is not confirmation that someone has earned no badges. Counts appear as verified only after an administrator reviews evidence.</p></div>
-        </section>}
-
-        {isProgressPage && <section className="history-section" aria-labelledby="history-title">
-          <div className="section-heading"><div><p className="section-kicker">COMMUNITY HISTORY</p><h2 id="history-title">Ideas into impact.</h2></div><p>Past highlights, shown separately from live participant progress.</p></div>
-          <div className="history-grid">
-            <article className="history-card history-cloud"><span className="history-year">2025 · LEARNING</span><h3>Google Cloud Study Jams</h3><p>GDG ACEIT publicly reported 500+ registrations and 100+ learners earning perfect lab completion scores.</p><a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer">Community announcement <ExternalLink size={13} aria-hidden="true" /></a></article>
-            <article className="history-card history-sprint"><span className="history-year">2025–26 · BUILDING</span><h3>TechSprint</h3><p>An AI-focused hackathon initiative that brought student ideas into a collaborative build-and-pitch experience.</p><a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer">Community announcement <ExternalLink size={13} aria-hidden="true" /></a></article>
-            <article className="history-card history-medha"><span className="history-year">TECHSPRINT · COMMUNITY REPORTED</span><h3>Team Medha · 1st place</h3><p>A public community repost celebrated Team Medha’s first-place finish at GDG TechSprint.</p><a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer">Community repost <ExternalLink size={13} aria-hidden="true" /></a></article>
-          </div>
         </section>}
 
         <motion.section
@@ -122,7 +195,7 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
           <div className="leaderboard-heading">
             <div>
               <div className="leaderboard-title-line"><span className="leaderboard-icon"><Medal size={18} aria-hidden="true" /></span><h2 id="leaderboard-title">{isProgressPage ? "Participant progress" : "Community leaderboard"}</h2><span className="results-count">{visible.length}</span></div>
-              <p>{snapshot.dataMode === "demo" ? "Synthetic examples preview the ranking layout; they are not participant data." : "Verified records are ranked by manually recorded count. Unreviewed registrations stay unranked until evidence is reviewed."}</p>
+              <p>{snapshot.dataMode === "demo" ? "Synthetic examples preview the ranking layout; they are not participant data." : "Ranked by verified Skill Badges. Arcade badges are shown separately and never affect rank. Unreviewed registrations stay unranked until evidence is reviewed."}</p>
             </div>
             <div className="freshness-indicator"><span aria-hidden="true" />{snapshot.dataMode === "demo" ? "Demo mode" : "Leaderboard"}</div>
           </div>
@@ -210,11 +283,57 @@ export function Dashboard({ snapshot, view = "dashboard" }: { snapshot: Leaderbo
           <div className="leaderboard-footer"><span>Showing <strong>{visible.length}</strong> of <strong>{participants.length}</strong> {snapshot.dataMode === "demo" ? "synthetic records" : "participants"}</span><span><Clock3 size={13} aria-hidden="true" /> Updated: {formatTimestamp(lastSyncedAt)} IST</span></div>
         </motion.section>
 
+        {isProgressPage && <section className="history-section progress-history" aria-labelledby="history-title">
+          <div className="section-heading"><div><p className="section-kicker">COMMUNITY HISTORY</p><h2 id="history-title">Ideas into impact.</h2></div><p>Past highlights, shown separately from live participant progress.</p></div>
+          <div className="history-grid">
+            <article className="history-card history-cloud"><span className="history-year">2025 · LEARNING</span><h3>Google Cloud Study Jams</h3><p>GDG ACEIT publicly reported 500+ registrations and 100+ learners earning perfect lab completion scores.</p><a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer">Community announcement <ExternalLink size={13} aria-hidden="true" /></a></article>
+            <article className="history-card history-sprint"><span className="history-year">2025–26 · BUILDING</span><h3>TechSprint</h3><p>An AI-focused hackathon initiative that brought student ideas into a collaborative build-and-pitch experience.</p><a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer">Community announcement <ExternalLink size={13} aria-hidden="true" /></a></article>
+            <article className="history-card history-medha"><span className="history-year">TECHSPRINT · COMMUNITY REPORTED</span><h3>Team Medha · 1st place</h3><p>A public community repost celebrated Team Medha’s first-place finish at GDG TechSprint.</p><a href="https://in.linkedin.com/company/gdg-aceit" target="_blank" rel="noreferrer">Community repost <ExternalLink size={13} aria-hidden="true" /></a></article>
+          </div>
+        </section>}
+
+        {isProgressPage && diagnostics && <div className="progress-diagnostics">{diagnostics}</div>}
+
         <CommunityFooter />
       </main>
       <AnimatePresence>{selected && <ParticipantDialog key={selected.id} participant={selected} onClose={() => setSelected(null)} reduceMotion={reduceMotion} />}</AnimatePresence>
     </div>
   );
+}
+
+function PodiumCard({ participant, rank, place, isDemo, onSelect, reduceMotion }: {
+  participant: PublicParticipant;
+  rank: number | null;
+  place: number;
+  isDemo: boolean;
+  onSelect: (participant: PublicParticipant) => void;
+  reduceMotion: boolean | null;
+}) {
+  return <motion.button
+    type="button"
+    className={`podium-card podium-place-${place}`}
+    onClick={() => onSelect(participant)}
+    aria-label={`Open participant details for ${participant.displayName}, rank ${rank ?? "unranked"}`}
+    initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: reduceMotion ? 0 : .34, delay: reduceMotion ? 0 : .06 * (place - 1) }}
+    whileHover={reduceMotion ? undefined : { y: -3 }}
+  >
+    <span className="podium-topline">
+      <span className="podium-place"><Medal size={15} aria-hidden="true" />{rank != null ? `#${rank}` : "—"}</span>
+      <span className="podium-label">{place === 1 ? "Top contributor" : place === 2 ? "Runner-up" : "Third place"}</span>
+    </span>
+    <span className="podium-identity">
+      <Avatar participant={participant} />
+      <span className="podium-name"><strong>{participant.displayName}</strong><small>{isDemo ? "Synthetic example" : "Registered participant"}</small></span>
+    </span>
+    <span className="podium-pills">
+      <span className="podium-pill pill-skill"><Award size={12} aria-hidden="true" /><strong>{participant.skillBadgeCount ?? "—"}</strong>Skill</span>
+      <span className="podium-pill pill-arcade"><Gamepad2 size={12} aria-hidden="true" /><strong>{participant.arcadeGameBadgeCount ?? "—"}</strong>Arcade</span>
+      <span className="podium-pill pill-total"><strong>{participant.verifiedBadgeCount}</strong>Total</span>
+    </span>
+    <ProgressMeter count={participant.skillBadgeCount ?? 0} target={10} />
+  </motion.button>;
 }
 
 function SummaryCard({ icon, label, value, detail, tone, index, reduceMotion }: { icon: ReactNode; label: string; value: number | string; detail: string; tone: string; index: number; reduceMotion: boolean | null }) {

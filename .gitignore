@@ -27,6 +27,16 @@ out/
 /verified-badge-import.csv
 /build_badge_import.py
 
+# Local-only reconciliation workspace, production backups and generated imports
+/data/work/
+/data/production-backups/
+/data/badge-verification-latest/
+/data/reconciliation-06nov-2026/
+/data/reconciliation-05nov-2026/
+/data/classified-badge-import-latest.csv
+/data/pending-roster-entries.csv
+/data/pending-roster-entry-report.json
+
 # Raw participant HTML profiles and intermediate verification workspace data
 /data/raw_profiles/
 /data/assignments/

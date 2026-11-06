@@ -18,7 +18,7 @@ export interface ParticipantCsvResult {
   issues: CsvIssue[];
 }
 
-interface CsvRecord {
+export interface CsvRecord {
   rowNumber: number;
   values: string[];
 }
@@ -27,7 +27,7 @@ export const MAX_CSV_BYTES = 1_000_000;
 export const MAX_CSV_ROWS = 500;
 const REQUIRED_HEADERS = ["participant_key", "display_name", "profile_url"] as const;
 
-function readCsvRecords(source: string): CsvRecord[] {
+export function readCsvRecords(source: string): CsvRecord[] {
   const text = source.replace(/^\uFEFF/, "");
   const records: CsvRecord[] = [];
   let values: string[] = [];
