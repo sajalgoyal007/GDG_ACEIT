@@ -17,3 +17,20 @@ export function resolveTheme(preference: ThemePreference, systemPrefersDark: boo
   if (preference === "system") return systemPrefersDark ? "dark" : "light";
   return preference;
 }
+
+/**
+ * The document state that drives the stylesheet. `data-theme` selects the
+ * light/dark appearance while `data-theme-preference` keeps manual Dark and
+ * System-on-a-dark-OS visually distinct even though both resolve to dark.
+ */
+export type ThemeAttributes = {
+  theme: ResolvedTheme;
+  themePreference: ThemePreference;
+};
+
+export function resolveThemeAttributes(
+  preference: ThemePreference,
+  systemPrefersDark: boolean,
+): ThemeAttributes {
+  return { theme: resolveTheme(preference, systemPrefersDark), themePreference: preference };
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { normalizeThemePreference, resolveTheme, type ThemePreference } from "@/lib/theme-preference";
+import { normalizeThemePreference, resolveThemeAttributes, type ThemePreference } from "@/lib/theme-preference";
 
 export type { ThemePreference };
 type ThemeContextValue = { preference: ThemePreference; setPreference: (value: ThemePreference) => void };
@@ -13,8 +13,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   const apply = useCallback((value: ThemePreference) => {
-    const resolved = resolveTheme(value, window.matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.dataset.theme = resolved;
+    const { theme, themePreference } = resolveThemeAttributes(
+      value,
+      window.matchMedia("(prefers-color-scheme: dark)").matches,
+    );
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.dataset.themePreference = themePreference;
   }, []);
 
   useEffect(() => {
