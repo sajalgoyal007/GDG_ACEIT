@@ -215,6 +215,25 @@ test("specification example: skill primary, arcade secondary tiebreaker, stable 
   ]);
 });
 
+test("dynamic ranks start after the highest frozen rank and never reuse a retired position", () => {
+  // A soft-removed participant can leave a permanent gap (for example rank 3).
+  const records = [
+    makeParticipant({ id: "frozen-1", skillBadgeCount: 10, verifiedBadgeCount: 10, frozenRank: 1, rankFrozenAt: CHECKED_AT }),
+    makeParticipant({ id: "frozen-2", skillBadgeCount: 10, verifiedBadgeCount: 10, frozenRank: 2, rankFrozenAt: CHECKED_AT }),
+    makeParticipant({ id: "frozen-11", skillBadgeCount: 10, verifiedBadgeCount: 10, frozenRank: 11, rankFrozenAt: CHECKED_AT }),
+    makeParticipant({ id: "dynamic-9", skillBadgeCount: 9, verifiedBadgeCount: 9 }),
+  ];
+
+  const ranked = rankParticipants(records);
+  assert.deepEqual(ranked.map(({ participant, rank }) => [participant.id, rank]), [
+    ["frozen-1", 1],
+    ["frozen-2", 2],
+    ["frozen-11", 11],
+    ["dynamic-9", 12],
+  ]);
+  assert.equal(new Set(ranked.map(({ rank }) => rank)).size, ranked.length);
+});
+
 test("frozen ranks and dynamic ranks never collide", () => {
   const records = [
     makeParticipant({ id: "frozen-2", skillBadgeCount: 10, verifiedBadgeCount: 10, frozenRank: 2, rankFrozenAt: CHECKED_AT }),

@@ -13,28 +13,6 @@ import { matchesRankFreezeFilter, qualifiesForRankFreeze, rankParticipants } fro
 
 type FilterKey = "all" | "ten";
 
-type RankedParticipant = { participant: PublicParticipant; rank: number | null };
-
-const SKILL_BUCKETS = [
-  { key: "ten", label: "10+ Skill badges", min: 10, max: Number.POSITIVE_INFINITY, tone: "violet" },
-  { key: "seven", label: "7–9 Skill badges", min: 7, max: 9, tone: "blue" },
-  { key: "four", label: "4–6 Skill badges", min: 4, max: 6, tone: "green" },
-  { key: "one", label: "1–3 Skill badges", min: 1, max: 3, tone: "amber" },
-  { key: "zero", label: "0 Skill badges", min: 0, max: 0, tone: "slate" },
-] as const;
-
-function buildSkillDistribution(participants: PublicParticipant[]) {
-  const classified = participants.filter((participant) => participant.skillBadgeCount !== null);
-  const buckets = SKILL_BUCKETS.map((bucket) => ({
-    ...bucket,
-    count: classified.filter((participant) => {
-      const count = participant.skillBadgeCount as number;
-      return count >= bucket.min && count <= bucket.max;
-    }).length,
-  }));
-  return { classifiedCount: classified.length, buckets };
-}
-
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
@@ -62,11 +40,6 @@ export function Dashboard({ snapshot, view = "dashboard", personalProgress, diag
   const reviewedParticipants = useMemo(() => participants.filter((participant) => participant.lastCheckedAt), [participants]);
   const awaitingVerification = participants.length - reviewedParticipants.length;
   const hasReviewedParticipants = reviewedParticipants.length > 0;
-  const topPerformers = useMemo<RankedParticipant[]>(
-    () => ranked.filter(({ participant }) => Boolean(participant.lastCheckedAt)).slice(0, 3),
-    [ranked],
-  );
-  const skillDistribution = useMemo(() => buildSkillDistribution(reviewedParticipants), [reviewedParticipants]);
   const visible = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return ranked.filter(({ participant }) => {
@@ -131,54 +104,6 @@ export function Dashboard({ snapshot, view = "dashboard", personalProgress, diag
         </section>
 
         {isProgressPage && personalProgress && <div className="progress-personal">{personalProgress}</div>}
-
-        {hasReviewedParticipants && topPerformers.length > 0 && <motion.section
-          className="progress-spotlight"
-          aria-labelledby="spotlight-title"
-          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.1 }}
-        >
-          <div className="section-heading">
-            <div><p className="section-kicker">TOP PERFORMERS</p><h2 id="spotlight-title">Leading the climb.</h2></div>
-            <p>{snapshot.dataMode === "demo" ? "Synthetic examples preview the top-performer layout; they are not participant data." : "Ranked by verified Skill Badges. Arcade badges are a separate achievement and never change rank."}</p>
-          </div>
-          <div className="podium-grid">
-            {topPerformers.map(({ participant, rank }, index) => <PodiumCard key={participant.id} participant={participant} rank={rank} place={index + 1} isDemo={snapshot.dataMode === "demo"} onSelect={setSelected} reduceMotion={reduceMotion} />)}
-          </div>
-        </motion.section>}
-
-        {hasReviewedParticipants && <motion.section
-          className="progress-distribution"
-          aria-labelledby="distribution-title"
-          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.14 }}
-        >
-          <div className="section-heading">
-            <div><p className="section-kicker">PROGRESS DISTRIBUTION</p><h2 id="distribution-title">Where the community stands.</h2></div>
-            <p>Skill Badge progress across reviewed records. The 10-badge mark is the rank-freeze threshold.</p>
-          </div>
-          <div className="distribution-card">
-            <ul className="distribution-chart">
-              {skillDistribution.buckets.map((bucket) => {
-                const percent = skillDistribution.classifiedCount > 0 ? Math.round((bucket.count / skillDistribution.classifiedCount) * 100) : 0;
-                return <li className="distribution-row" key={bucket.key}>
-                  <span className="distribution-label">{bucket.label}</span>
-                  <span className="distribution-track" aria-hidden="true"><span className={`distribution-fill tone-${bucket.tone}`} style={{ width: bucket.count === 0 ? "0%" : `${Math.max(3, percent)}%` }} /></span>
-                  <span className="distribution-count"><strong>{bucket.count}</strong><small>{percent}%</small></span>
-                </li>;
-              })}
-            </ul>
-            <div className="distribution-summary">
-              <div className="distribution-stats">
-                <div><strong>{snapshot.totalSkillBadges.toLocaleString("en-IN")}</strong><span>Skill badges recorded</span></div>
-                <div><strong>{snapshot.totalArcadeBadges.toLocaleString("en-IN")}</strong><span>Arcade game badges</span></div>
-              </div>
-              <p className="distribution-note">{skillDistribution.classifiedCount} of {reviewedParticipants.length} reviewed participants classified. {reviewedParticipants.length - skillDistribution.classifiedCount > 0 ? `${(reviewedParticipants.length - skillDistribution.classifiedCount).toLocaleString("en-IN")} still awaiting classification.` : "Every reviewed participant has a classification."}</p>
-            </div>
-          </div>
-        </motion.section>}
 
         {snapshot.dataMode === "database" && awaitingVerification > 0 && <section className="verification-notice" role="status" aria-live="polite">
           <span className="verification-notice-icon"><ShieldCheck size={19} aria-hidden="true" /></span>
@@ -301,41 +226,6 @@ export function Dashboard({ snapshot, view = "dashboard", personalProgress, diag
   );
 }
 
-function PodiumCard({ participant, rank, place, isDemo, onSelect, reduceMotion }: {
-  participant: PublicParticipant;
-  rank: number | null;
-  place: number;
-  isDemo: boolean;
-  onSelect: (participant: PublicParticipant) => void;
-  reduceMotion: boolean | null;
-}) {
-  return <motion.button
-    type="button"
-    className={`podium-card podium-place-${place}`}
-    onClick={() => onSelect(participant)}
-    aria-label={`Open participant details for ${participant.displayName}, rank ${rank ?? "unranked"}`}
-    initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: reduceMotion ? 0 : .34, delay: reduceMotion ? 0 : .06 * (place - 1) }}
-    whileHover={reduceMotion ? undefined : { y: -3 }}
-  >
-    <span className="podium-topline">
-      <span className="podium-place"><Medal size={15} aria-hidden="true" />{rank != null ? `#${rank}` : "—"}</span>
-      <span className="podium-label">{place === 1 ? "Top contributor" : place === 2 ? "Runner-up" : "Third place"}</span>
-    </span>
-    <span className="podium-identity">
-      <Avatar participant={participant} />
-      <span className="podium-name"><strong>{participant.displayName}</strong><small>{isDemo ? "Synthetic example" : "Registered participant"}</small></span>
-    </span>
-    <span className="podium-pills">
-      <span className="podium-pill pill-skill"><Award size={12} aria-hidden="true" /><strong>{participant.skillBadgeCount ?? "—"}</strong>Skill</span>
-      <span className="podium-pill pill-arcade"><Gamepad2 size={12} aria-hidden="true" /><strong>{participant.arcadeGameBadgeCount ?? "—"}</strong>Arcade</span>
-      <span className="podium-pill pill-total"><strong>{participant.verifiedBadgeCount}</strong>Total</span>
-    </span>
-    <ProgressMeter count={participant.skillBadgeCount ?? 0} target={10} />
-  </motion.button>;
-}
-
 function SummaryCard({ icon, label, value, detail, tone, index, reduceMotion }: { icon: ReactNode; label: string; value: number | string; detail: string; tone: string; index: number; reduceMotion: boolean | null }) {
   const formattedValue = typeof value === "number" ? value.toLocaleString("en-IN") : value;
   return <motion.article className="summary-card" initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .34, delay: reduceMotion ? 0 : index * .06 }} whileHover={reduceMotion ? undefined : { y: -2 }}><span className={`summary-icon ${tone}`} aria-hidden="true">{icon}</span><p>{label}</p><strong className="summary-value">{formattedValue}</strong><small>{detail}</small></motion.article>;
@@ -353,10 +243,10 @@ function RankBadge({ rank, frozen }: { rank: number | null; frozen?: boolean }) 
   if (rank === null) return <span className="rank-badge rank-unreviewed" aria-label="Unranked until badge verification">—</span>;
   return (
     <span
-      className={`${rank <= 3 ? `rank-badge rank-${rank}` : "rank-badge"}${frozen ? " rank-frozen" : ""}`}
-      title={frozen ? `Rank #${rank} (Locked at 10 skill badges)` : undefined}
+      className={`rank-badge${frozen ? " rank-frozen" : ""}`}
+      title={frozen ? `Rank #${rank} (Locked at 10 skill badges)` : `Rank #${rank}`}
     >
-      {rank <= 3 ? <Medal size={15} aria-label={`Rank ${rank}`} /> : `#${rank}`}
+      {`#${rank}`}
       {frozen && <Lock size={10} className="rank-lock-icon" aria-label="Frozen rank" />}
     </span>
   );

@@ -1,5 +1,5 @@
 begin;
-select plan(27);
+select plan(33);
 
 -- Schema and public projection.
 select has_column('public', 'participants', 'frozen_rank', 'frozen_rank column exists');
@@ -109,6 +109,51 @@ select is((select frozen_rank from public.participants where participant_key = '
 select is((select frozen_rank_count from public.get_public_summary()), 8, 'summary RPC reports the number of frozen ranks');
 select is((select ten_badge_count from public.get_public_summary()), 7, 'summary RPC counts current 10+ Skill Badge holders');
 select ok(not (public.get_public_summary() ? 'five_badge_count'), 'obsolete five_badge_count is removed from the public summary');
+
+-- Soft-removed participants are excluded from rank allocation entirely.
+insert into public.participants (
+  id, participant_key, display_name, registration_status,
+  verified_badge_count, skill_badge_count, arcade_game_badge_count
+) values
+  ('00000000-0000-4000-8000-0000000000ab', 'freeze-removed', 'Freeze Removed', 'removed', 14, 14, 0);
+
+select ok((select frozen_rank is null from public.participants where participant_key = 'freeze-removed'), 'a soft-removed 10+ Skill participant is not allocated a frozen rank on insert');
+
+update public.participants
+set skill_badge_count = 20, verified_badge_count = 20
+where participant_key = 'freeze-removed';
+
+select ok((select frozen_rank is null from public.participants where participant_key = 'freeze-removed'), 'the allocator keeps skipping a soft-removed participant after a badge update');
+
+update public.participants
+set registration_status = 'registered'
+where participant_key = 'freeze-removed';
+
+update public.participants
+set skill_badge_count = 20, verified_badge_count = 20
+where participant_key = 'freeze-removed';
+
+select is((select frozen_rank from public.participants where participant_key = 'freeze-removed'), 9, 'a reactivated participant is allocated the next rank after retained participants');
+
+-- Bulk import/sync updates cannot rewrite already-frozen ranks.
+select set_config(
+  'test.freeze_b_time',
+  (select rank_frozen_at::text from public.participants where participant_key = 'freeze-b'),
+  true
+);
+
+update public.participants
+set skill_badge_count = 40, arcade_game_badge_count = 11, verified_badge_count = 51
+where participant_key in ('freeze-a', 'freeze-b');
+
+select is((select frozen_rank from public.participants where participant_key = 'freeze-b'), 1, 'a bulk import update cannot change an existing frozen rank');
+select is((select rank_frozen_at::text from public.participants where participant_key = 'freeze-b'), current_setting('test.freeze_b_time'), 'a bulk import update cannot change the frozen timestamp');
+
+update public.participants
+set arcade_game_badge_count = 14, verified_badge_count = 34
+where participant_key = 'freeze-b';
+
+select is((select frozen_rank from public.participants where participant_key = 'freeze-b'), 1, 'a later Arcade Game Badge gain cannot change a frozen rank');
 
 select throws_ok(
   $$update public.participants set frozen_rank = 99 where participant_key = 'freeze-a'$$,

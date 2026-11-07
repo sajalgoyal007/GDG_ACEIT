@@ -12,10 +12,15 @@
 --      ordered by Skill Badges DESC, Arcade Game Badges DESC, Total Badges DESC,
 --      then stable participant UUID ASC. Each allocation receives the next
 --      distinct sequential rank above the current maximum frozen rank.
---   5. Existing participants who already have 10+ Skill Badges are backfilled
---      with the same deterministic ordering.
+--   5. Existing participants who already have 10+ Skill Badges receive their
+--      verified historical crossing position, reconstructed from the immutable
+--      participant_audit_events trail. The backfill below is explicit because a
+--      current-count ordering would assign the wrong historical rank to anyone
+--      who gained badges after crossing.
 --   6. Unfrozen participants remain dynamically ordered and receive the
---      distinct sequential ranks after all frozen ranks.
+--      distinct sequential ranks after all frozen ranks. Soft-removed
+--      participants are never allocated a rank, so retained participants keep
+--      a contiguous public leaderboard.
 --
 -- This migration is additive except for replacing get_public_summary(), which
 -- drops the obsolete five_badge_count field and exposes frozen_rank_count.
@@ -97,6 +102,7 @@ begin
       ) as position
     from public.participants
     where participants.skill_badge_count >= 10
+      and participants.registration_status = 'registered'
       and participants.frozen_rank is null
   ),
   base as (
@@ -177,7 +183,49 @@ execute function private.protect_frozen_rank();
 
 -- ----------------------------------------------------------------
 -- 5. Backfill existing 10+ Skill Badge participants
+--
+-- Positions are the verified first-threshold-crossing order taken from
+-- participant_audit_events, not the current badge totals:
+--   2026-11-04 17:58:16.995195+00  (11 Skill then 10 Skill, UUID order)
+--   2026-11-05 08:45:29.446274+00  (Navya shah)
+--   2026-11-06 11:21:55.345770+00  (Riteek 19, Lokendra 14, Nikhil Tank 11,
+--                                   Twinkle 10)
+--
+-- Chirag Bhavnani (64a6be93-7070-4b03-a491-10eef8c907ac) crossed first on
+-- 2026-11-04 with 13 Skill Badges but is soft-removed, so he is deliberately
+-- excluded from the public backfill. He remains unranked rather than being
+-- given a fabricated position. Because he is removed, retained participants
+-- hold contiguous public ranks 1-11.
 -- ----------------------------------------------------------------
+with historical (id, frozen_rank, rank_frozen_at) as (
+  values
+    ('41341f2f-68b2-4236-9473-3a583a570297'::uuid,  1, '2026-11-04 17:58:16.995195+00'::timestamptz),
+    ('41dba7fd-af59-45d9-b53e-ccd9289cbb13'::uuid,  2, '2026-11-04 17:58:16.995195+00'::timestamptz),
+    ('97bb1688-0d63-40de-b99c-928c345c3fc1'::uuid,  3, '2026-11-04 17:58:16.995195+00'::timestamptz),
+    ('b387b164-f10e-473f-8a81-dff3ea824757'::uuid,  4, '2026-11-04 17:58:16.995195+00'::timestamptz),
+    ('cb2a8c7d-bb9e-4a71-ba47-a560ef9f3b6d'::uuid,  5, '2026-11-04 17:58:16.995195+00'::timestamptz),
+    ('f0fc08fc-8975-420b-84c3-0101a759688e'::uuid,  6, '2026-11-04 17:58:16.995195+00'::timestamptz),
+    ('e38a50d0-3232-461e-924f-df2ccc997d53'::uuid,  7, '2026-11-05 08:45:29.446274+00'::timestamptz),
+    ('99bcac48-d643-49d3-8eed-3d7adae6dc0e'::uuid,  8, '2026-11-06 11:21:55.345770+00'::timestamptz),
+    ('69409dd8-f933-454f-b1e7-b519d3c29156'::uuid,  9, '2026-11-06 11:21:55.345770+00'::timestamptz),
+    ('f9b8c9b7-04fa-41ec-864e-155c75cc78c3'::uuid, 10, '2026-11-06 11:21:55.345770+00'::timestamptz),
+    ('b9aa17e1-0bff-4987-b2b5-cef9a037fc27'::uuid, 11, '2026-11-06 11:21:55.345770+00'::timestamptz)
+)
+update public.participants as p
+set frozen_rank = historical.frozen_rank,
+    rank_frozen_at = historical.rank_frozen_at
+from historical
+where p.id = historical.id
+  and p.registration_status = 'registered'
+  and p.skill_badge_count >= 10
+  and p.frozen_rank is null
+  and not exists (
+    select 1 from public.participants as existing
+    where existing.frozen_rank = historical.frozen_rank
+  );
+
+-- Allocate any remaining registered 10+ participant (for example a fresh
+-- environment with no audit history) after the verified positions above.
 select private.allocate_frozen_ranks();
 
 -- ----------------------------------------------------------------

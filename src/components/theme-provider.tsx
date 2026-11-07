@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { normalizeThemePreference, resolveTheme, type ThemePreference } from "@/lib/theme-preference";
 
-export type ThemePreference = "light" | "dark" | "system";
+export type { ThemePreference };
 type ThemeContextValue = { preference: ThemePreference; setPreference: (value: ThemePreference) => void };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -12,15 +13,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   const apply = useCallback((value: ThemePreference) => {
-    const resolved = value === "system"
-      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-      : value;
+    const resolved = resolveTheme(value, window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.dataset.theme = resolved;
   }, []);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    const initial: ThemePreference = saved === "light" || saved === "dark" ? saved : "system";
+    const initial = normalizeThemePreference(window.localStorage.getItem(STORAGE_KEY));
     setPreferenceState(initial);
     apply(initial);
   }, [apply]);
@@ -31,6 +29,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     media.addEventListener("change", followSystem);
     return () => media.removeEventListener("change", followSystem);
   }, [apply, preference]);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY) return;
+      const next = normalizeThemePreference(event.newValue);
+      setPreferenceState(next);
+      apply(next);
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [apply]);
 
   const setPreference = useCallback((value: ThemePreference) => {
     setPreferenceState(value);

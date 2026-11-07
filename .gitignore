@@ -29,6 +29,7 @@ out/
 
 # Local-only reconciliation workspace, production backups and generated imports
 /data/work/
+/data/imports/
 /data/production-backups/
 /data/badge-verification-latest/
 /data/reconciliation-06nov-2026/
@@ -39,6 +40,7 @@ out/
 
 # Raw participant HTML profiles and intermediate verification workspace data
 /data/raw_profiles/
+/data/raw_profiles-*/
 /data/assignments/
 /data/participant-verification-workspace.csv
 /data/verified-badge-counts-source.csv

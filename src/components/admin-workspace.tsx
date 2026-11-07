@@ -20,6 +20,7 @@ import { ProgressObservationLeaderboard } from "@/components/progress-observatio
 import { RosterRemovalTool } from "@/components/roster-removal-tool";
 import type { ProgressObservationSummary } from "@/lib/supabase/auto-progress-provider";
 import { formatVerifiedBadgeCount, getReviewedBadgeCount } from "@/lib/leaderboard";
+import { filterAuditActivities, paginateAuditActivities, type AuditFilter } from "@/lib/admin-audit";
 
 type AuditEventType = "participant_imported" | "participant_synced" | "badge_count_updated" | "participant_removed";
 type AuditSource = "csv_import" | "admin_manual" | "google_sheets_sync";
@@ -50,6 +51,8 @@ export interface AdminParticipantOption {
 }
 
 type ParticipantFilter = "all" | "registered" | "pending" | "removed";
+const AUDIT_PAGE_SIZE = 15;
+type AdminActivity = AdminParticipantOption["audit"][number] & { participantName: string };
 type RefreshAllReply = {
   status?: string;
   message?: string;
@@ -98,6 +101,22 @@ function sourceTitle(source: AuditSource) {
   return "Manual admin update";
 }
 
+function auditTone(event: { eventType: AuditEventType; source: AuditSource }) {
+  if (event.eventType === "participant_removed") return "red";
+  if (event.eventType === "badge_count_updated") return "green";
+  return event.source === "google_sheets_sync" ? "blue" : "amber";
+}
+
+function auditIcon(event: { eventType: AuditEventType; source: AuditSource }) {
+  if (event.eventType === "participant_removed") return <ShieldAlert size={15} aria-hidden="true" />;
+  if (event.eventType === "badge_count_updated") return <BadgeCheck size={15} aria-hidden="true" />;
+  return event.source === "google_sheets_sync" ? <Layers size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />;
+}
+
+function auditActor(event: { actorUserId: string | null }) {
+  return event.actorUserId ? "Administrator" : "System / actor unavailable";
+}
+
 function ActionFeedback({ state }: { state: typeof initialAdminActionState }) {
   if (state.status === "idle") return null;
   return <div className={`admin-feedback ${state.status}`} role={state.status === "error" ? "alert" : "status"}>
@@ -111,6 +130,9 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
   const [countState, countAction, countPending] = useActionState(setVerifiedBadgeCountAction, initialAdminActionState);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ParticipantFilter>("all");
+  const [auditSearch, setAuditSearch] = useState("");
+  const [auditFilter, setAuditFilter] = useState<AuditFilter>("all");
+  const [auditLimit, setAuditLimit] = useState(AUDIT_PAGE_SIZE);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("overview");
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -213,8 +235,30 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
     });
   }, [participants, search, filter]);
 
-  const activities = useMemo(() => participants.flatMap((participant) => participant.audit.map((event) => ({ ...event, participantName: participant.displayName })))
-    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)), [participants]);
+  const activities = useMemo<AdminActivity[]>(() => participants.flatMap((participant) => participant.audit.map((event) => ({ ...event, participantName: participant.displayName })))
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id.localeCompare(a.id)), [participants]);
+
+  const auditActivities = useMemo(() => activities.map((event) => ({
+    ...event,
+    actionLabel: eventTitle(event.eventType),
+    sourceLabel: sourceTitle(event.source),
+  })), [activities]);
+
+  const filteredActivities = useMemo(
+    () => filterAuditActivities(auditActivities, { query: auditSearch, filter: auditFilter }),
+    [auditActivities, auditFilter, auditSearch],
+  );
+
+  const auditPage = useMemo(
+    () => paginateAuditActivities(filteredActivities, auditLimit),
+    [filteredActivities, auditLimit],
+  );
+
+  const visibleActivities = auditPage.visible;
+
+  useEffect(() => {
+    setAuditLimit(AUDIT_PAGE_SIZE);
+  }, [auditSearch, auditFilter]);
 
   const overviewMetrics: { Icon: LucideIcon; tone: string; label: string; value: number; note: string }[] = [
     { Icon: Users, tone: "blue", label: "REGISTERED", value: registeredCount, note: removedCount > 0 ? `${pendingRegistrations} pending · ${removedCount} removed` : `${pendingRegistrations} pending` },
@@ -312,7 +356,67 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
         <section id="audit-history" className="admin-section" aria-labelledby="audit-section-title">
           <div className="admin-section-heading"><div><p className="admin-panel-eyebrow">RECORD OF CHANGES</p><h2 id="audit-section-title">Audit History</h2></div><span className="admin-section-count">{activities.length} events</span></div>
           <article className="admin-panel admin-audit-panel">
-            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, badge verification updates, and roster removals will be listed here.</small></div> : <ol className="admin-audit-list">{activities.map((event) => <li key={event.id}><span className={`admin-audit-icon ${event.eventType === "participant_removed" ? "red" : event.eventType === "badge_count_updated" ? "green" : event.source === "google_sheets_sync" ? "blue" : "amber"}`}>{event.eventType === "participant_removed" ? <ShieldAlert size={15} aria-hidden="true" /> : event.eventType === "badge_count_updated" ? <BadgeCheck size={15} aria-hidden="true" /> : event.source === "google_sheets_sync" ? <Layers size={15} aria-hidden="true" /> : <Users size={15} aria-hidden="true" />}</span><div className="admin-audit-event"><div><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></div>{event.eventType === "badge_count_updated" && <p>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"} verified badges</p>}{event.note && <p className="admin-audit-note">{event.note}</p>}<small>{sourceTitle(event.source)} · {event.actorUserId ? "Admin actor recorded" : "Actor unavailable"}{event.verifiedAt ? ` · verified ${formatDate(event.verifiedAt)}` : ""}</small></div><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></li>)}</ol>}
+            {activities.length === 0 ? <div className="admin-panel-empty"><span><ClipboardList size={17} aria-hidden="true" /></span><p>No audit events recorded.</p><small>Participant imports, sync changes, badge verification updates, and roster removals will be listed here.</small></div> : <>
+              <div className="admin-audit-toolbar">
+                <label className="admin-directory-search admin-audit-search">
+                  <Search size={15} aria-hidden="true" />
+                  <span className="sr-only">Search audit history</span>
+                  <input value={auditSearch} onChange={(event) => setAuditSearch(event.target.value)} placeholder="Search action, participant, actor, or note" />
+                </label>
+                <label className="admin-directory-filter">
+                  <Filter size={14} aria-hidden="true" />
+                  <span className="sr-only">Filter audit history by action</span>
+                  <select value={auditFilter} onChange={(event) => setAuditFilter(event.target.value as AuditFilter)}>
+                    <option value="all">All actions</option>
+                    <option value="participant_imported">Registrations</option>
+                    <option value="participant_synced">Profile syncs</option>
+                    <option value="badge_count_updated">Badge verifications</option>
+                    <option value="participant_removed">Removals</option>
+                  </select>
+                </label>
+              </div>
+              <div className="admin-audit-result-line" role="status">
+                <span>{filteredActivities.length.toLocaleString("en-IN")} matching {filteredActivities.length === 1 ? "event" : "events"} · newest first</span>
+                {(auditSearch || auditFilter !== "all") && <button type="button" onClick={() => { setAuditSearch(""); setAuditFilter("all"); }}>Clear filters</button>}
+              </div>
+              {filteredActivities.length === 0 ? <div className="admin-panel-empty" role="status"><span><Search size={17} aria-hidden="true" /></span><p>No audit events match these filters</p><small>Try another participant, action, actor, or note.</small><button type="button" onClick={() => { setAuditSearch(""); setAuditFilter("all"); }}>Clear filters</button></div> : <>
+                <div className="admin-audit-scroll" tabIndex={0} aria-label="Audit events, newest first">
+                  <ol className="admin-audit-list">
+                    {visibleActivities.map((event) => <li key={event.id}>
+                      <details className="admin-audit-row">
+                        <summary>
+                          <span className={`admin-audit-icon ${auditTone(event)}`}>{auditIcon(event)}</span>
+                          <span className="admin-audit-primary">
+                            <span className="admin-audit-title"><strong>{eventTitle(event.eventType)}</strong><span>{event.participantName}</span></span>
+                            <small>{sourceTitle(event.source)} · {auditActor(event)}</small>
+                          </span>
+                          <time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time>
+                          <ChevronDown className="admin-audit-chevron" size={16} aria-hidden="true" />
+                        </summary>
+                        <div className="admin-audit-detail">
+                          {event.eventType === "badge_count_updated" && <p className="admin-audit-change"><span>Count change</span><strong>{event.previousBadgeCount ?? "—"} → {event.newBadgeCount ?? "—"}</strong><small>verified badges</small></p>}
+                          {event.note && <p className="admin-audit-note">{event.note}</p>}
+                          <dl className="admin-audit-meta">
+                            <div><dt>Action</dt><dd>{eventTitle(event.eventType)}</dd></div>
+                            <div><dt>Source</dt><dd>{sourceTitle(event.source)}</dd></div>
+                            <div><dt>Actor</dt><dd>{event.actorUserId ? `Administrator (${event.actorUserId.slice(0, 8)})` : "Unavailable"}</dd></div>
+                            <div><dt>Recorded</dt><dd><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time></dd></div>
+                            {event.verifiedAt && <div><dt>Verified</dt><dd><time dateTime={event.verifiedAt}>{formatDate(event.verifiedAt)}</time></dd></div>}
+                            <div><dt>Event ID</dt><dd className="admin-audit-event-id">{event.id}</dd></div>
+                          </dl>
+                        </div>
+                      </details>
+                    </li>)}
+                  </ol>
+                </div>
+                <div className="admin-audit-footer">
+                  <span>Showing {visibleActivities.length.toLocaleString("en-IN")} of {filteredActivities.length.toLocaleString("en-IN")} matching events</span>
+                  {auditPage.hasMore
+                    ? <button type="button" onClick={() => setAuditLimit((current) => current + AUDIT_PAGE_SIZE)}>Load more</button>
+                    : <small>All matching events shown</small>}
+                </div>
+              </>}
+            </>}
           </article>
         </section>
 
