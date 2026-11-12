@@ -71,10 +71,9 @@ export function ClassifiedBadgeCsvImport() {
         <strong>Required columns (data/classified-badge-import.csv)</strong>
         <code>participant_id,skill_badge_count,arcade_game_badge_count,total_badge_count,review_note</code>
         <p>
-          Upload <code>data/classified-badge-import.csv</code> here. Enforces the sum invariant: <code>skill_badge_count + arcade_game_badge_count = total_badge_count</code>.
-          Zeroes are permitted when genuinely verified. Unknown badges must be resolved prior to import.
-          Skill badge count determines official leaderboard ranking.
-          Preview creates a server-side run; apply revalidates the stored fingerprint, so a repeated or concurrent apply never writes a duplicate audit event.
+          Skill + Arcade must equal the total. Zero is valid only when genuinely verified, and every badge identity
+          must be classified before import. Apply revalidates the stored fingerprint, so a repeated or concurrent
+          apply never duplicates an audit event.
         </p>
       </div>
       <form action={previewAction} className="admin-form">
