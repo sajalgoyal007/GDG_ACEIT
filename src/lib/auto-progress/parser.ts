@@ -1,3 +1,4 @@
+import { normalizeBadgeSignal } from "../badges/identity.ts";
 import { validateGoogleSkillsProfileUrl } from "./profile-url.ts";
 
 /**
@@ -526,4 +527,185 @@ export function inspectObservedGoogleProfileHtml(html: string): ObservedProfileI
   if (badgeCandidates === 0 && badgeImageMarkers === 0) return { ...base, reason: "empty_unconfirmed" };
   if (badgeCandidates !== badgeImageMarkers) return { ...base, reason: "badge_marker_mismatch" };
   return { ...base, reason: "completeness_unverified" };
+}
+
+/**
+ * Structural badge identity extraction.
+ *
+ * Mirrors the proven Python classifier: each `div.profile-badge` card names a
+ * detail modal, and that modal's structural link is the only category signal.
+ *
+ *   /course_templates/<id> -> course_template:<id> (Skill)
+ *   /games/<id>            -> game:<id>            (Arcade)
+ *
+ * The award-scoped `/badges/<id>` URL is metadata only and never becomes an
+ * identity. Titles are never inspected for keywords. A card with no structural
+ * target is reported unresolved, never guessed.
+ */
+export type StructuralBadgeSignal = {
+  title: string | null;
+  structuralTarget: string | null;
+  badgeKey: string | null;
+  awardBadgeId: string | null;
+  earnedOn: string | null;
+  unresolvedReason:
+    | "missing_modal"
+    | "unknown_dialog"
+    | "unrecognized_target"
+    | "missing_title"
+    | null;
+};
+
+export type StructuralBadgeIncompleteReason =
+  | "unexpected_html"
+  | "identity_unverified"
+  | "identity_mismatch"
+  | "badge_container_missing"
+  | "badge_container_ambiguous"
+  | "empty_unconfirmed"
+  | "incomplete_relevant_markup"
+  | "loading_indicator"
+  | "challenge_indicator"
+  | "access_denied_indicator";
+
+export type StructuralBadgeParseResult =
+  | {
+      status: "ok";
+      signals: StructuralBadgeSignal[];
+      duplicateBadgeKeys: string[];
+      dialogCount: number;
+    }
+  | {
+      status: "incomplete";
+      reason: StructuralBadgeIncompleteReason;
+      signals: StructuralBadgeSignal[];
+      duplicateBadgeKeys: string[];
+      dialogCount: number;
+    };
+
+const STRUCTURAL_TARGET = /^\/(course_templates|games)\/([1-9][0-9]*)\/?$/;
+
+/** Normalize a modal link to its structural path, rejecting query/hash/port. */
+function structuralTarget(value: string | undefined): string | null {
+  const text = String(value ?? "").trim();
+  if (!text || text.startsWith("//")) return null;
+  if (text.includes("?") || text.includes("#") || /[?#]/.test(text)) return null;
+  const match = STRUCTURAL_TARGET.exec(text);
+  if (!match) return null;
+  return `/${match[1]}/${match[2]}`;
+}
+
+function structuralDialogTargets(nodes: readonly HtmlNode[]): Map<string, string | null> {
+  const targets = new Map<string, string | null>();
+  for (const node of nodes) {
+    if (node.tag !== "ql-dialog") continue;
+    const id = (node.attrs.get("id") ?? "").trim();
+    if (!id || targets.has(id)) continue;
+    let target: string | null = null;
+    for (const descendant of descendants(node)) {
+      if (descendant.tag !== "ql-button" && descendant.tag !== "a") continue;
+      const candidate = structuralTarget(descendant.attrs.get("href"));
+      if (candidate) {
+        target = candidate;
+        break;
+      }
+    }
+    targets.set(id, target);
+  }
+  return targets;
+}
+
+export function parseStructuralBadgeSignals(
+  html: string,
+  expectedProfileUrl: string,
+): StructuralBadgeParseResult {
+  const incomplete = (
+    reason: StructuralBadgeIncompleteReason,
+    signals: StructuralBadgeSignal[] = [],
+    duplicateBadgeKeys: string[] = [],
+    dialogCount = 0,
+  ): StructuralBadgeParseResult => ({ status: "incomplete", reason, signals, duplicateBadgeKeys, dialogCount });
+
+  if (typeof html !== "string" || html.length === 0 || html.length > 1_000_000
+    || !/<(?:!doctype\s+html|html|body|div)\b/i.test(html)) {
+    return incomplete("unexpected_html");
+  }
+  const expected = validateGoogleSkillsProfileUrl(expectedProfileUrl);
+  if (!expected.ok) return incomplete("identity_unverified");
+
+  const tree = htmlTree(html);
+  const nodes = descendants(tree.root);
+  const canonicalLinks = nodes.filter((node) => node.tag === "link"
+    && (node.attrs.get("rel") ?? "").toLowerCase().split(/\s+/).includes("canonical"));
+  if (canonicalLinks.length !== 1) return incomplete("identity_unverified");
+  const canonical = validateGoogleSkillsProfileUrl(canonicalLinks[0]?.attrs.get("href") ?? "");
+  if (!canonical.ok) return incomplete("identity_unverified");
+  if (canonical.value.normalizedUrl !== expected.value.normalizedUrl) {
+    return incomplete("identity_mismatch");
+  }
+
+  const pageWarnings = pageQualityWarnings(nodes);
+  const blockingPageWarning = pageWarnings.find((warning) =>
+    warning === "challenge_indicator"
+    || warning === "access_denied_indicator"
+    || warning === "loading_indicator");
+  if (blockingPageWarning) {
+    return incomplete(blockingPageWarning as StructuralBadgeIncompleteReason);
+  }
+  if (tree.incompleteRelevantMarkup) return incomplete("incomplete_relevant_markup");
+
+  const containers = nodes.filter((node) => node.tag === "div" && nodeClasses(node).has("profile-badges"));
+  if (containers.length === 0) return incomplete("badge_container_missing");
+  if (containers.length !== 1) return incomplete("badge_container_ambiguous");
+
+  const dialogTargets = structuralDialogTargets(nodes);
+  const cards = descendants(containers[0]).filter((node) =>
+    node.tag === "div" && nodeClasses(node).has("profile-badge"));
+  if (cards.length === 0) return incomplete("empty_unconfirmed", [], [], dialogTargets.size);
+
+  const signals: StructuralBadgeSignal[] = cards.map((card) => {
+    const cardNodes = descendants(card);
+    const titleNodes = cardNodes.filter((node) => node.tag === "span" && nodeClasses(node).has("ql-title-medium"));
+    const earnedNodes = cardNodes.filter((node) => node.tag === "span" && nodeClasses(node).has("ql-body-medium"));
+    const modalButtons = cardNodes.filter((node) => node.tag === "ql-button" && node.attrs.has("modal"));
+    const modalId = (modalButtons[0]?.attrs.get("modal") ?? "").trim();
+
+    const imageAnchor = cardNodes.find((node) => node.tag === "a" && nodeClasses(node).has("badge-image"));
+    const badgeIdentity = safeObservedBadgeIdentity(imageAnchor?.attrs.get("href"), expected.value.profileId);
+    const earned = earnedNodes.length === 1 ? earnedDate(nodeText(earnedNodes[0])) : { date: null, timezone: null };
+    const title = titleNodes.length === 1 ? nodeText(titleNodes[0]) || null : null;
+
+    let unresolvedReason: StructuralBadgeSignal["unresolvedReason"] = null;
+    let target: string | null = null;
+    if (!modalId) {
+      unresolvedReason = "missing_modal";
+    } else if (!dialogTargets.has(modalId)) {
+      unresolvedReason = "unknown_dialog";
+    } else {
+      target = dialogTargets.get(modalId) ?? null;
+      if (!target) unresolvedReason = "unrecognized_target";
+    }
+    if (!title) unresolvedReason = "missing_title";
+
+    const normalized = normalizeBadgeSignal(target);
+    return {
+      title,
+      structuralTarget: target,
+      badgeKey: normalized?.badgeKey ?? null,
+      awardBadgeId: badgeIdentity.stableId,
+      earnedOn: earned.date,
+      unresolvedReason: normalized?.badgeKey && title ? null : unresolvedReason ?? "unrecognized_target",
+    };
+  });
+
+  const keyCounts = new Map<string, number>();
+  for (const signal of signals) {
+    if (signal.badgeKey) keyCounts.set(signal.badgeKey, (keyCounts.get(signal.badgeKey) ?? 0) + 1);
+  }
+  const duplicateBadgeKeys = [...keyCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([key]) => key)
+    .sort();
+
+  return { status: "ok", signals, duplicateBadgeKeys, dialogCount: dialogTargets.size };
 }

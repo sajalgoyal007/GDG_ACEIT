@@ -1113,3 +1113,122 @@ A reported 10 November baseline (195 registered, 7 soft-removed, 304 Skill, 20 A
 - No production participant/audit/admin data dump or secret exposure.
 
 **Phase 1.6 stops at a locally verified, documented, and blocked 10 November import gate. It waits for the missing CSV and explicit approval before any further action.**
+
+## 17. Phase 2 - One-click "Sync All Badges" bridge (local only)
+
+### 17.1 Verdict summary
+
+| Task | Result | Evidence |
+| :--- | :--- | :--- |
+| Run-scoped fetch queue migration | **PASS (local)** | `20261110000400_badge_sync_fetch_queue.sql` applied by `supabase db reset --local`. |
+| Strict structural identity extraction | **PASS** | Modal hrefs only; `/badges/<id>` and titles never decide category or completeness. |
+| Batched route and pause/resume semantics | **PASS** | Admin/origin/2-gate checks, 8 items, concurrency 4, ~15 s timeout, 1500 ms pacing default, `maxDuration = 60`. |
+| One-click admin UI | **PASS** | `#badge-sync` nav item, progress bar, pause/resume, classifier, preview, apply, rollback, disabled state. |
+| Node tests | **PASS** | 298/298. |
+| SQL tests | **PASS (local)** | 18 files / 484 assertions, including 69 in the new queue suite. |
+| TypeScript / ESLint | **PASS** | `npm run typecheck` clean; no ESLint findings on changed files. |
+| Production database / deployment | **NOT TOUCHED** | No migration applied remotely, no push, no deploy, no secret change. |
+
+Phase 2 is complete as a **local, reviewable implementation**. It is not deployed and both live-fetch gates remain `false`.
+
+### 17.2 What the bridge does
+
+The one-click flow connects two previously separate systems without reusing the undelivered legacy auto-progress tables:
+
+1. `POST /api/admin/badge-sync/batch` with `action: "start"` calls `admin_create_badge_sync_fetch_run`, producing a `badge_observations` run with `source = 'profile_evidence'`.
+2. The first claim seeds `badge_sync_fetch_queue` with one row per **active, non-removed** participant.
+3. Each invocation claims up to 8 rows with `FOR UPDATE SKIP LOCKED`, fetches up to 4 profiles concurrently with a ~15 s timeout, parses structural identities, stages observations, and finishes every claimed item.
+4. The client repeats `action: "continue"` until the queue is complete; the route then prepares staging, auto-approves catalog-classified `skill`/`arcade` badges, and returns a deterministic preview.
+5. Apply and rollback continue to use the existing audited Badge Sync server actions and fingerprint/ledger writers. Phase 2 adds no new count writer.
+
+The queue is deliberately independent of `automatic_badge_*` durable-job tables. Only the shared `runDurableBatch`/safe-fetch primitives are reused for bounded concurrency and timeouts.
+
+### 17.3 Structural identity rules
+
+Identity comes exclusively from the badge modal target:
+
+| Rendered target | Canonical key |
+| :--- | :--- |
+| `/course_templates/<id>` | `course_template:<id>` |
+| `/games/<id>` | `game:<id>` |
+
+`/badges/<id>` (award-scoped) and badge titles are ignored for classification and completeness. The parser returns an explicit reason, which maps to an observation status:
+
+| Situation | Observation | Counts |
+| :--- | :--- | :--- |
+| Unique, resolved cards | `complete` | Catalog classification decides Skill/Arcade |
+| Zero cards / empty container / ambiguous container | `incomplete` | `[]`; previous counts preserved |
+| Unresolved or duplicate card identity | `incomplete` | `[]`; previous counts preserved |
+| Identity mismatch, challenge, access denied, malformed HTML, error, timeout | `failed` | `[]`; previous counts preserved |
+
+A single untrustworthy profile can only block itself. It can never turn into a zero write for that participant.
+
+### 17.4 Migration `20261110000400_badge_sync_fetch_queue.sql`
+
+- Adds `fetch_paused_at` and `fetch_pause_reason` to `badge_sync_runs` with a trimmed-length check.
+- Creates `public.badge_sync_fetch_queue` with `(run_id, participant_id)` uniqueness, `pending | claimed | staged | failed | skipped` statuses, lease token/expiry, attempt count, retry backoff, and outcome metadata.
+- `admin_create_badge_sync_fetch_run(text)` creates a `profile_evidence` observation run.
+- `admin_claim_badge_sync_fetch_batch(uuid, integer, integer)` seeds missing active participants, retires mid-run removed participants as `skipped`, recovers expired leases, and claims with `FOR UPDATE SKIP LOCKED`.
+- `admin_finish_badge_sync_fetch_item(...)` fences every write by `lease_token`, supports `staged | failed | skipped | pending`, and clears leases on terminal states.
+- `admin_set_badge_sync_fetch_pause(uuid, boolean, text)` pauses/resumes and clears pending `retry_after` on resume.
+- `admin_badge_sync_progress(uuid)` returns total/claimed/staged/failed/skipped/processed/remaining/completeness/pause state.
+- `admin_prepare_badge_sync_staging(uuid)` clears an unapplied preview, recomputes from the current catalog, and returns the run to `staged`.
+- `admin_preview_badge_sync_run(uuid)` is replaced with a queue-aware completeness guard: a run that owns queue rows cannot preview while any item is `pending`/`claimed` or while any active participant lacks a staging row. Manually staged runs and classified-count runs keep the original behavior.
+
+All queue RPCs are `SECURITY DEFINER`, use a fixed empty `search_path`, check `private.is_admin()`, and are revoked from `public`/`anon`. `authenticated` has no direct INSERT/UPDATE/DELETE on the queue table.
+
+### 17.5 Route contract
+
+`src/app/api/admin/badge-sync/batch/route.ts`:
+
+- `dynamic = "force-dynamic"`, `maxDuration = 60`.
+- Rejects missing/mismatched `Origin`, non-admin sessions, and disabled fetch gates.
+- Constants live in `fetch-batch.ts`: batch 8, concurrency 4, ~15 s timeout, pacing from `BADGE_SYNC_FETCH_PACING_MS` (default 1500 ms, clamped 0-10 000).
+- `POST` actions: `start`, `continue`, `pause`, `resume`, `preview`, `repreview`.
+- On HTTP 403/429 the route halts the current batch, leaves unattempted items `pending`, pauses the run, and returns `status: "paused"`. It does not burn through the roster.
+- A batch with `claimed === 0` while incomplete returns `paused` so the client backs off instead of hot-looping.
+- `GET ?runId=` returns queue progress for reloads.
+- Unexpected RPC/network failures return `temporarily_unavailable`; no counts are written.
+
+### 17.6 UI
+
+`src/components/badge-sync-sync-all.tsx` and the `#badge-sync` section in `src/components/admin-workspace.tsx` provide:
+
+- **Sync All Badges** with an explicit disabled state and message when either gate is off.
+- Progress bar and staged/failed/skipped/remaining statistics.
+- Pause/resume, with rate-limit halt messaging.
+- Unclassified identity list scoped to `course_template`/`game` choices, an audited reason field, and catalog classification.
+- Deterministic preview summary and participant table with explicit `—` for NULL counts (never a fake zero).
+- **Confirm and apply** only when a fingerprint exists; **Roll back this run** only after apply.
+- Re-preview after classification.
+
+Apply/rollback are the existing `applyBadgeSyncRunAction`/`rollbackBadgeSyncRunAction` server actions, so audit, fingerprint validation, idempotency, frozen-rank preservation, and rollback semantics are unchanged.
+
+### 17.7 Tests and verification
+
+| Command | Result |
+| :--- | :--- |
+| `npm test` | 298/298 pass |
+| `npm run typecheck` | clean |
+| `npx eslint <changed files>` | clean |
+| `npx supabase db reset --local` | all 23 migrations apply |
+| `npx supabase test db` | 18 files / 484 assertions pass |
+
+New Node coverage:
+
+- `src/lib/badges/structural-identities.test.ts` - strict mapping, NULL preservation, reason-to-status behavior.
+- `src/lib/badges/fetch-batch.test.ts` - claim/fetch/stage/finish, 403/429 halt, untouched pending work.
+- `src/lib/badges/batch-state.test.ts` - reducer, progress percentage, unclassified aggregation, loop termination.
+- `src/lib/auto-progress/parser.test.ts` - structural modal extraction, including a real `game:` sample and an empty-container sample.
+
+New SQL coverage (`supabase/tests/badge_sync_fetch_queue.test.sql`, 69 assertions): privileges, admin/non-admin, seeding, active-only roster, claims, lease fencing, retry backoff, pause/resume, expired-lease recovery, mid-run removal, finish transitions, progress, completeness guard, prepare/re-preview, apply, non-observation rejection, and RLS.
+
+### 17.8 Local-only status and remaining gates
+
+- No migration was applied to production `fyuuvdsfxnytaumoehkx`.
+- No `git push`, `vercel deploy`, cron change, or secret change was made.
+- `AUTO_PROGRESS_ENABLED` and `GOOGLE_SKILLS_PROFILE_FETCH_AUTHORIZED` remain `false` by default; `BADGE_SYNC_FETCH_PACING_MS` was added to `.env.example`.
+- Production deployment is still blocked by the Phase 1.6 items: no verified PITR/recovery point (B1), migration-history drift (B2), production rollback acceptance (B3), frozen-rank policy acceptance (B4), the missing 10 November CSV/preview (B5), legacy migration mismatch (B6), and an uncommitted/unpushed revision (B7).
+- Live fetching additionally requires written Google Skills authorization for the intended retrieval.
+
+**Phase 2 stops at a locally tested, committed-only bridge. Enabling either gate, applying the migration remotely, or deploying the route remains a separate production approval.**

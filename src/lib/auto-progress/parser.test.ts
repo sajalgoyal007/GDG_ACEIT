@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { inspectObservedGoogleProfileHtml, parseObservedGoogleSkillsProfileHtml, parseProfileFixture } from "./parser.ts";
+import { inspectObservedGoogleProfileHtml, parseObservedGoogleSkillsProfileHtml, parseProfileFixture, parseStructuralBadgeSignals } from "./parser.ts";
 
 const fixtureDirectory = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const fixture = (name: string) => readFile(join(fixtureDirectory, name), "utf8");
@@ -358,4 +358,123 @@ test("negative: invalid or missing badge href fails safe with null stableId and 
     assert.equal(entry.stableId, null, `stableId should be null for ${entry.title}`);
     assert.equal(entry.canonicalBadgeUrl, null, `canonicalBadgeUrl should be null for ${entry.title}`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Structural badge identities
+// ---------------------------------------------------------------------------
+
+const structuralProfileUrl = "https://www.skills.google/public_profiles/structural-001";
+const structuralCard = (title: string, modal: string, awardId = "29297988", earned = "Earned Oct 31, 2026 EDT") =>
+  `<div class="profile-badge"><a class="badge-image" href="${structuralProfileUrl}/badges/${awardId}"></a><span class="ql-title-medium">${title}</span><span class="ql-body-medium">${earned}</span><ql-button label="More" modal="${modal}"></ql-button></div>`;
+const structuralPage = (cards: string, dialogs: string, canonical = structuralProfileUrl) =>
+  `<!doctype html><html><head><link rel="canonical" href="${canonical}" /></head><body><div class="profile-badges">${cards}</div>${dialogs}</body></html>`;
+
+test("structural parser maps modal targets to catalog keys and ignores award-scoped hrefs", () => {
+  const html = structuralPage(
+    structuralCard("Explore Generative AI", "m0") + structuralCard("Arcade Adventure", "m1", "29272127", "Earned Oct 30, 2026 EDT"),
+    `<ql-dialog id="m0"><ql-button href="/course_templates/959"></ql-button></ql-dialog>
+     <ql-dialog id="m1"><ql-button href="/games/102804"></ql-button></ql-dialog>`,
+  );
+  const result = parseStructuralBadgeSignals(html, structuralProfileUrl);
+
+  assert.equal(result.status, "ok");
+  const signals = result.signals;
+  assert.equal(signals.length, 2);
+  assert.deepEqual(signals.map((signal) => signal.badgeKey), ["course_template:959", "game:102804"]);
+  assert.deepEqual(signals.map((signal) => signal.structuralTarget), ["/course_templates/959", "/games/102804"]);
+  assert.deepEqual(signals.map((signal) => signal.awardBadgeId), ["29297988", "29272127"]);
+  assert.deepEqual(signals.map((signal) => signal.earnedOn), ["2026-10-31", "2026-10-30"]);
+  assert.ok(signals.every((signal) => signal.unresolvedReason === null));
+  assert.deepEqual(result.duplicateBadgeKeys, []);
+});
+
+test("structural classification never uses title keywords", () => {
+  const html = structuralPage(
+    structuralCard("Arcade Looking Skill Title", "m0") + structuralCard("Skill Looking Arcade Title", "m1"),
+    `<ql-dialog id="m0"><ql-button href="/course_templates/1"></ql-button></ql-dialog>
+     <ql-dialog id="m1"><ql-button href="/games/2"></ql-button></ql-dialog>`,
+  );
+  const result = parseStructuralBadgeSignals(html, structuralProfileUrl);
+  assert.equal(result.status, "ok");
+  assert.deepEqual(result.signals.map((signal) => signal.badgeKey), ["course_template:1", "game:2"]);
+});
+
+test("a modal with only an award-scoped link is unresolved, never guessed", () => {
+  const html = structuralPage(
+    structuralCard("Mystery Award", "m0"),
+    `<ql-dialog id="m0"><ql-button href="/badges/29297988"></ql-button></ql-dialog>`,
+  );
+  const result = parseStructuralBadgeSignals(html, structuralProfileUrl);
+  assert.equal(result.status, "ok");
+  assert.equal(result.signals[0].badgeKey, null);
+  assert.equal(result.signals[0].structuralTarget, null);
+  assert.equal(result.signals[0].unresolvedReason, "unrecognized_target");
+});
+
+test("a card without a modal is unresolved", () => {
+  const html = structuralPage(
+    `<div class="profile-badge"><span class="ql-title-medium">No Modal</span></div>`,
+    "",
+  );
+  const result = parseStructuralBadgeSignals(html, structuralProfileUrl);
+  assert.equal(result.status, "ok");
+  assert.equal(result.signals[0].unresolvedReason, "missing_modal");
+  assert.equal(result.signals[0].badgeKey, null);
+});
+
+test("duplicate structural identities are reported", () => {
+  const html = structuralPage(
+    structuralCard("First", "m0") + structuralCard("Second", "m1"),
+    `<ql-dialog id="m0"><ql-button href="/course_templates/959"></ql-button></ql-dialog>
+     <ql-dialog id="m1"><ql-button href="/course_templates/959"></ql-button></ql-dialog>`,
+  );
+  const result = parseStructuralBadgeSignals(html, structuralProfileUrl);
+  assert.deepEqual(result.duplicateBadgeKeys, ["course_template:959"]);
+});
+
+test("an empty badge container is empty_unconfirmed, not zero badges", () => {
+  const result = parseStructuralBadgeSignals(structuralPage("", ""), structuralProfileUrl);
+  assert.equal(result.status, "incomplete");
+  if (result.status === "incomplete") assert.equal(result.reason, "empty_unconfirmed");
+});
+
+test("ambiguous and missing containers are rejected", () => {
+  const missing = parseStructuralBadgeSignals(
+    `<!doctype html><html><head><link rel="canonical" href="${structuralProfileUrl}" /></head><body></body></html>`,
+    structuralProfileUrl,
+  );
+  assert.equal(missing.status, "incomplete");
+  if (missing.status === "incomplete") assert.equal(missing.reason, "badge_container_missing");
+
+  const ambiguous = parseStructuralBadgeSignals(
+    `<!doctype html><html><head><link rel="canonical" href="${structuralProfileUrl}" /></head><body>
+      <div class="profile-badges"></div><div class="profile-badges"></div></body></html>`,
+    structuralProfileUrl,
+  );
+  assert.equal(ambiguous.status, "incomplete");
+  if (ambiguous.status === "incomplete") assert.equal(ambiguous.reason, "badge_container_ambiguous");
+});
+
+test("identity mismatch, challenge, and access markers block structural extraction", () => {
+  const mismatch = parseStructuralBadgeSignals(
+    structuralPage(structuralCard("Mismatch", "m0"), "", "https://www.skills.google/public_profiles/other-002"),
+    structuralProfileUrl,
+  );
+  assert.equal(mismatch.status, "incomplete");
+  if (mismatch.status === "incomplete") assert.equal(mismatch.reason, "identity_mismatch");
+
+  const challenge = parseStructuralBadgeSignals(
+    structuralPage(structuralCard("Challenge", "m0"), "").replace("</body>", `<div id="challenge-page"></div></body>`),
+    structuralProfileUrl,
+  );
+  assert.equal(challenge.status, "incomplete");
+  if (challenge.status === "incomplete") assert.equal(challenge.reason, "challenge_indicator");
+
+  const denied = parseStructuralBadgeSignals(
+    structuralPage(structuralCard("Denied", "m0"), "").replace("</body>", `<div id="access-denied"></div></body>`),
+    structuralProfileUrl,
+  );
+  assert.equal(denied.status, "incomplete");
+  if (denied.status === "incomplete") assert.equal(denied.reason, "access_denied_indicator");
 });

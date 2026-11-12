@@ -14,6 +14,7 @@ import { ThemeControl } from "@/components/theme-control";
 import { UnverifiedProgressImport } from "@/components/unverified-progress-import";
 import { VerifiedBadgeCsvImport } from "@/components/verified-badge-csv-import";
 import { ClassifiedBadgeCsvImport } from "@/components/classified-badge-csv-import";
+import { BadgeSyncSyncAll } from "@/components/badge-sync-sync-all";
 import { ProgressObservationForm } from "@/components/progress-observation-form";
 import type { AdminAutoProgressJobStatus } from "@/lib/auto-progress/admin-job-status";
 import { ProgressObservationLeaderboard } from "@/components/progress-observation-leaderboard";
@@ -70,6 +71,7 @@ type RefreshAllReply = {
 const primarySidebarItems = [
   { href: "#overview", label: "Overview", icon: LayoutDashboard },
   { href: "#classified-badge-import", label: "Badge Import", icon: Award },
+  { href: "#badge-sync", label: "Badge Sync", icon: RefreshCw },
   { href: "#participants", label: "Participants", icon: Users },
   { href: "#audit-history", label: "Audit History", icon: ClipboardList },
 ];
@@ -125,7 +127,7 @@ function ActionFeedback({ state }: { state: typeof initialAdminActionState }) {
   </div>;
 }
 
-export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAllAvailable, refreshAllUnavailableMessage, progressObservations, profileObservationFetchingEnabled }: { participants: AdminParticipantOption[]; latestAutoProgressJob: AdminAutoProgressJobStatus | null; refreshAllAvailable: boolean; refreshAllUnavailableMessage: string | null; progressObservations: ProgressObservationSummary[]; profileObservationFetchingEnabled: boolean }) {
+export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAllAvailable, refreshAllUnavailableMessage, progressObservations, profileObservationFetchingEnabled, badgeSyncFetchingEnabled, badgeSyncUnavailableMessage }: { participants: AdminParticipantOption[]; latestAutoProgressJob: AdminAutoProgressJobStatus | null; refreshAllAvailable: boolean; refreshAllUnavailableMessage: string | null; progressObservations: ProgressObservationSummary[]; profileObservationFetchingEnabled: boolean; badgeSyncFetchingEnabled: boolean; badgeSyncUnavailableMessage: string | null }) {
   const [importState, importAction, importPending] = useActionState(importParticipantsAction, initialAdminActionState);
   const [countState, countAction, countPending] = useActionState(setVerifiedBadgeCountAction, initialAdminActionState);
   const [search, setSearch] = useState("");
@@ -330,6 +332,23 @@ export function AdminWorkspace({ participants, latestAutoProgressJob, refreshAll
             <p style={{ marginTop: ".35rem", fontSize: ".85em" }}>Required headers: <code>participant_id,skill_badge_count,arcade_game_badge_count,total_badge_count,review_note</code></p>
           </div>
           <ClassifiedBadgeCsvImport />
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════════
+            ONE-CLICK BADGE SYNC — staged profile evidence
+            ═══════════════════════════════════════════════════════════════ */}
+        <section id="badge-sync" className="admin-section" aria-labelledby="badge-sync-title">
+          <div className="admin-section-heading">
+            <div>
+              <p className="admin-panel-eyebrow">PUBLIC PROFILE EVIDENCE</p>
+              <h2 id="badge-sync-title">Sync All Badges</h2>
+            </div>
+            <span className="admin-section-count">Preview before apply</span>
+          </div>
+          <BadgeSyncSyncAll
+            fetchingEnabled={badgeSyncFetchingEnabled}
+            unavailableMessage={badgeSyncUnavailableMessage}
+          />
         </section>
 
         {/* Participants */}

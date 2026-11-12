@@ -64,5 +64,7 @@ export default async function AdminPage() {
     profileObservationFetchingEnabled={observationEnabled}
     refreshAllAvailable={isRefreshAllAvailable(observationEnabled, process.env.SUPABASE_SERVICE_ROLE_KEY)}
     refreshAllUnavailableMessage={refreshAllUnavailableMessage}
+    badgeSyncFetchingEnabled={observationEnabled}
+    badgeSyncUnavailableMessage={refreshAllUnavailableMessage}
   />;
 }
