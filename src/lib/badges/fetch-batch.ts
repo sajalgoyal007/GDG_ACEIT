@@ -34,9 +34,13 @@ import {
 } from "./structural-identities.ts";
 import type { ObservationParticipantInput } from "./observations.ts";
 
-const DEFAULT_BATCH_SIZE = 8;
-const DEFAULT_CONCURRENCY = 4;
-const DEFAULT_PACING_MS = 1_500;
+// The queue RPC clamps p_batch_size to 1..32 (`least(32, ...)`), so 20 is safe
+// without a migration. Keep the TS bound aligned with that SQL cap.
+const MAX_BATCH_SIZE = 32;
+const DEFAULT_BATCH_SIZE = 20;
+const DEFAULT_CONCURRENCY = 6;
+const MAX_CONCURRENCY = 8;
+const DEFAULT_PACING_MS = 400;
 const DEFAULT_RETRY_AFTER_SECONDS = 900;
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -74,7 +78,7 @@ function bounded(value: number | undefined, fallback: number, min: number, max: 
   return Math.min(max, Math.max(min, Math.trunc(value)));
 }
 
-/** Default pacing is 1.5 s between fetch starts unless explicitly configured. */
+/** Default pacing is 400 ms between fetch starts unless explicitly configured. */
 export function readBadgeSyncFetchPacingMs(env: Record<string, string | undefined> = process.env): number {
   const parsed = Number(env.BADGE_SYNC_FETCH_PACING_MS);
   if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_PACING_MS;
@@ -103,8 +107,8 @@ export async function executeBadgeSyncFetchBatch(
     sleep = (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
     now = () => Date.now(),
   } = options;
-  const batchSize = bounded(options.batchSize, DEFAULT_BATCH_SIZE, 1, 16);
-  const concurrency = bounded(options.concurrency, DEFAULT_CONCURRENCY, 1, 8);
+  const batchSize = bounded(options.batchSize, DEFAULT_BATCH_SIZE, 1, MAX_BATCH_SIZE);
+  const concurrency = bounded(options.concurrency, DEFAULT_CONCURRENCY, 1, MAX_CONCURRENCY);
   const pacingMs = bounded(options.pacingMs, readBadgeSyncFetchPacingMs(), 0, 10_000);
   const retryAfterSeconds = bounded(options.retryAfterSeconds, DEFAULT_RETRY_AFTER_SECONDS, 1, 86_400);
   const timeoutMs = bounded(options.timeoutMs, DEFAULT_TIMEOUT_MS, 1, 15_000);

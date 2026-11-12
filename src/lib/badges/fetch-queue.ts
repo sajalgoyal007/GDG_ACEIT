@@ -97,7 +97,7 @@ export async function claimBadgeSyncFetchBatch(
 ): Promise<BadgeSyncFetchItem[]> {
   const { data, error } = await writer.rpc("admin_claim_badge_sync_fetch_batch", {
     p_run_id: runId,
-    p_batch_size: options.batchSize ?? 8,
+    p_batch_size: options.batchSize ?? 20,
     p_lease_seconds: options.leaseSeconds ?? 120,
   });
   if (error) throw rpcError(error);

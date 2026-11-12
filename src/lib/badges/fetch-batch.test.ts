@@ -42,6 +42,7 @@ function harness(options: HarnessOptions) {
   const pauseCalls: { paused: boolean; reason: string | null }[] = [];
   const stagePayloads: Record<string, unknown>[] = [];
   const sleeps: number[] = [];
+  const claimCalls: { batchSize: unknown; leaseSeconds: unknown }[] = [];
   let paused = false;
   let pauseReason: string | null = null;
 
@@ -73,6 +74,7 @@ function harness(options: HarnessOptions) {
   const writer: BadgeSyncRpcWriter = {
     async rpc(name, args) {
       if (name === "admin_claim_badge_sync_fetch_batch") {
+        claimCalls.push({ batchSize: args.p_batch_size, leaseSeconds: args.p_lease_seconds });
         return {
           error: null,
           data: options.items.map((entry) => ({
@@ -111,7 +113,7 @@ function harness(options: HarnessOptions) {
     },
   };
 
-  return { writer, finishes, pauseCalls, stagePayloads, sleeps };
+  return { writer, finishes, pauseCalls, stagePayloads, sleeps, claimCalls };
 }
 
 test("stages complete evidence and preserves NULL for a missing profile URL", async () => {
@@ -250,9 +252,57 @@ test("fetch starts are spaced by the configured pacing even with concurrency", a
   assert.deepEqual(h.sleeps, [1_500]);
 });
 
-test("pacing defaults to 1500 ms and is bounded", () => {
-  assert.equal(readBadgeSyncFetchPacingMs({}), 1_500);
+test("pacing defaults to 400 ms and is bounded", () => {
+  assert.equal(readBadgeSyncFetchPacingMs({}), 400);
   assert.equal(readBadgeSyncFetchPacingMs({ BADGE_SYNC_FETCH_PACING_MS: "2500" }), 2_500);
-  assert.equal(readBadgeSyncFetchPacingMs({ BADGE_SYNC_FETCH_PACING_MS: "-4" }), 1_500);
+  assert.equal(readBadgeSyncFetchPacingMs({ BADGE_SYNC_FETCH_PACING_MS: "-4" }), 400);
   assert.equal(readBadgeSyncFetchPacingMs({ BADGE_SYNC_FETCH_PACING_MS: "999999" }), 10_000);
+});
+
+function manyItems(count: number): BadgeSyncFetchItem[] {
+  return Array.from({ length: count }, (_, index) => item(
+    String(index + 1).padStart(4, "0"),
+    `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+    profileUrl,
+  ));
+}
+
+test("defaults claim 20 items and run 6 fetches concurrently", async () => {
+  const items = manyItems(20);
+  const h = harness({ items });
+  let inFlight = 0;
+  let maxInFlight = 0;
+
+  await executeBadgeSyncFetchBatch({
+    writer: h.writer,
+    runId,
+    pacingMs: 0,
+    sleep: async () => {},
+    fetchHtml: async (): Promise<ProfileFetchResult> => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      inFlight -= 1;
+      return { status: "upstream_error" };
+    },
+  });
+
+  assert.equal(h.claimCalls[0]?.batchSize, 20);
+  assert.equal(maxInFlight, 6);
+});
+
+test("an oversized batch request is clamped to the queue RPC's 32-item cap", async () => {
+  const h = harness({ items: manyItems(1) });
+
+  await executeBadgeSyncFetchBatch({
+    writer: h.writer,
+    runId,
+    batchSize: 999,
+    concurrency: 999,
+    pacingMs: 0,
+    sleep: async () => {},
+    fetchHtml: async (): Promise<ProfileFetchResult> => ({ status: "upstream_error" }),
+  });
+
+  assert.equal(h.claimCalls[0]?.batchSize, 32);
 });

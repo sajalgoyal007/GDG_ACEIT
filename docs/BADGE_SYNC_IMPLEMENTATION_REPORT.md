@@ -1122,7 +1122,7 @@ A reported 10 November baseline (195 registered, 7 soft-removed, 304 Skill, 20 A
 | :--- | :--- | :--- |
 | Run-scoped fetch queue migration | **PASS (local)** | `20261110000400_badge_sync_fetch_queue.sql` applied by `supabase db reset --local`. |
 | Strict structural identity extraction | **PASS** | Modal hrefs only; `/badges/<id>` and titles never decide category or completeness. |
-| Batched route and pause/resume semantics | **PASS** | Admin/origin/2-gate checks, 8 items, concurrency 4, ~15 s timeout, 1500 ms pacing default, `maxDuration = 60`. |
+| Batched route and pause/resume semantics | **PASS** | Admin/origin/2-gate checks, 20 items, concurrency 6, ~15 s timeout, 400 ms pacing default, `maxDuration = 60`. |
 | One-click admin UI | **PASS** | `#badge-sync` nav item, progress bar, pause/resume, classifier, preview, apply, rollback, disabled state. |
 | Node tests | **PASS** | 298/298. |
 | SQL tests | **PASS (local)** | 18 files / 484 assertions, including 69 in the new queue suite. |
@@ -1183,7 +1183,7 @@ All queue RPCs are `SECURITY DEFINER`, use a fixed empty `search_path`, check `p
 
 - `dynamic = "force-dynamic"`, `maxDuration = 60`.
 - Rejects missing/mismatched `Origin`, non-admin sessions, and disabled fetch gates.
-- Constants live in `fetch-batch.ts`: batch 8, concurrency 4, ~15 s timeout, pacing from `BADGE_SYNC_FETCH_PACING_MS` (default 1500 ms, clamped 0-10 000).
+- Constants live in `fetch-batch.ts`: batch 20 (clamped 1-32, matching the queue RPC's `least(32, ...)`), concurrency 6 (clamped 1-8), ~15 s timeout, pacing from `BADGE_SYNC_FETCH_PACING_MS` (default 400 ms, clamped 0-10 000).
 - `POST` actions: `start`, `continue`, `pause`, `resume`, `preview`, `repreview`.
 - On HTTP 403/429 the route halts the current batch, leaves unattempted items `pending`, pauses the run, and returns `status: "paused"`. It does not burn through the roster.
 - A batch with `claimed === 0` while incomplete returns `paused` so the client backs off instead of hot-looping.
