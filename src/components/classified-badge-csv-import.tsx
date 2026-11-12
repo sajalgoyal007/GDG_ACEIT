@@ -1,16 +1,17 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { Award } from "lucide-react";
 import { applyClassifiedBadgeCsvAction, previewClassifiedBadgeCsvAction } from "@/app/admin/actions";
 import { initialClassifiedBadgeImportState, type ClassifiedBadgeImportResult } from "@/app/admin/classified-badge-import-state";
 
-function csvCell(value: string | number) {
-  const text = String(value);
+function csvCell(value: string | number | null | undefined) {
+  // NULL means the row was not applied. Never serialize it as zero.
+  const text = value === null || value === undefined ? "Not applied" : String(value);
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 
-function downloadCsv(name: string, rows: readonly (string | number)[][]) {
+function downloadCsv(name: string, rows: readonly (string | number | null)[][]) {
   const content = `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}\r\n`;
   const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));
   const anchor = document.createElement("a");
@@ -43,11 +44,14 @@ export function ClassifiedBadgeCsvImport() {
     applyClassifiedBadgeCsvAction,
     initialClassifiedBadgeImportState,
   );
-  const [appliedForPreview, setAppliedForPreview] = useState(false);
   const rows = preview.rows ?? [];
+  const approvedRows = rows.filter((row) => row.previewStatus === "approved");
+  const hasRun = Boolean(preview.runId && preview.previewFingerprint);
+  const alreadyApplied = applied.runStatus === "applied" || preview.runStatus === "applied";
   const skippedRows = [
     ...(preview.issues ?? []).map(
-      (issue) => [issue.rowNumber, "", "", "", "", issue.kind, issue.message] as (string | number)[],
+      (issue) =>
+        [issue.rowNumber, "", null, null, null, issue.kind, issue.message] as (string | number | null)[],
     ),
     ...reportRows(applied.results ?? [], "skipped"),
   ];
@@ -70,9 +74,10 @@ export function ClassifiedBadgeCsvImport() {
           Upload <code>data/classified-badge-import.csv</code> here. Enforces the sum invariant: <code>skill_badge_count + arcade_game_badge_count = total_badge_count</code>.
           Zeroes are permitted when genuinely verified. Unknown badges must be resolved prior to import.
           Skill badge count determines official leaderboard ranking.
+          Preview creates a server-side run; apply revalidates the stored fingerprint, so a repeated or concurrent apply never writes a duplicate audit event.
         </p>
       </div>
-      <form action={previewAction} className="admin-form" onSubmit={() => setAppliedForPreview(false)}>
+      <form action={previewAction} className="admin-form">
         <label htmlFor="classified-badge-csv">Select classified badge CSV (data/classified-badge-import.csv)</label>
         <input
           id="classified-badge-csv"
@@ -92,6 +97,14 @@ export function ClassifiedBadgeCsvImport() {
           role={preview.status === "error" ? "alert" : "status"}
         >
           <p>{preview.message}</p>
+          {preview.totals ? (
+            <p>
+              <strong>Skill {preview.totals.skill}</strong> + <strong>Arcade {preview.totals.arcade}</strong> ={" "}
+              <strong>{preview.totals.total}</strong> across {preview.totals.participants} participant
+              {preview.totals.participants === 1 ? "" : "s"} · {preview.totals.blocked} blocked ·{" "}
+              {preview.totals.unclassified} unclassified · {preview.totals.pending} pending
+            </p>
+          ) : null}
           {preview.issues?.length ? (
             <ul>
               {preview.issues.map((issue, index) => (
@@ -103,7 +116,7 @@ export function ClassifiedBadgeCsvImport() {
           ) : null}
         </div>
       )}
-      {preview.status === "preview" && !appliedForPreview && rows.length > 0 && (
+      {preview.status === "preview" && rows.length > 0 && (
         <>
           <div className="admin-directory-table-wrap">
             <table className="admin-directory-table">
@@ -115,6 +128,8 @@ export function ClassifiedBadgeCsvImport() {
                   <th scope="col">SKILL BADGES</th>
                   <th scope="col">ARCADE BADGES</th>
                   <th scope="col">NEW TOTAL</th>
+                  <th scope="col">DELTA</th>
+                  <th scope="col">STATUS</th>
                   <th scope="col">REVIEW NOTE</th>
                 </tr>
               </thead>
@@ -132,52 +147,64 @@ export function ClassifiedBadgeCsvImport() {
                         ? ` (${row.currentSkillBadgeCount} skill, ${row.currentArcadeGameBadgeCount} arcade)`
                         : " (unclassified)"}
                     </td>
-                    <td><strong>{row.skillBadgeCount}</strong></td>
-                    <td>{row.arcadeGameBadgeCount}</td>
-                    <td><strong>{row.totalBadgeCount}</strong></td>
-                    <td>{row.reviewNote}</td>
+                    <td><strong>{row.skillBadgeCount ?? "—"}</strong></td>
+                    <td>{row.arcadeGameBadgeCount ?? "—"}</td>
+                    <td><strong>{row.totalBadgeCount ?? "—"}</strong></td>
+                    <td>{row.delta ?? "—"}</td>
+                    <td>
+                      {row.previewStatus === "approved"
+                        ? "approved"
+                        : `Not applied (${row.previewStatus ?? "pending"})`}
+                    </td>
+                    <td>{row.blockingReason ?? row.reviewNote}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <form
-            action={applyAction}
-            className="admin-form"
-            onSubmit={(event) => {
-              if (
-                !window.confirm(
-                  `Apply ${rows.length} classified badge count updates? This will set Skill Badge and Arcade Game Badge counts with audited history.`,
-                )
-              ) {
-                event.preventDefault();
-              } else {
-                setAppliedForPreview(true);
-              }
-            }}
-          >
-            <input type="hidden" name="previewRows" value={JSON.stringify(rows)} />
-            <input type="hidden" name="previewIssues" value={JSON.stringify(preview.issues ?? [])} />
-            <label className="admin-confirm">
-              <input
-                type="checkbox"
-                name="confirmClassifiedBadgeImport"
-                value="confirmed"
-                required
-                disabled={applyPending}
-              />
-              I reviewed every eligible classification and confirm this bulk update.
-            </label>
-            <button type="submit" disabled={applyPending}>
-              {applyPending ? "Applying classifications…" : `Apply ${rows.length} classified update${rows.length === 1 ? "" : "s"}`}
-            </button>
-          </form>
-          <p className="admin-help">
-            Updates total verified counts and category breakdowns in a single transaction and records audit trail events.
-          </p>
+          {hasRun && !alreadyApplied && approvedRows.length > 0 && (
+            <form
+              action={applyAction}
+              className="admin-form"
+              onSubmit={(event) => {
+                if (
+                  !window.confirm(
+                    `Apply ${approvedRows.length} approved classified badge count updates? The server will revalidate the preview fingerprint before writing.`,
+                  )
+                ) {
+                  event.preventDefault();
+                }
+              }}
+            >
+              <input type="hidden" name="runId" value={preview.runId} />
+              <input type="hidden" name="previewFingerprint" value={preview.previewFingerprint} />
+              <label className="admin-confirm">
+                <input
+                  type="checkbox"
+                  name="confirmClassifiedBadgeImport"
+                  value="confirmed"
+                  required
+                  disabled={applyPending}
+                />
+                I reviewed every eligible classification and confirm this bulk update.
+              </label>
+              <button type="submit" disabled={applyPending}>
+                {applyPending ? "Applying classifications…" : `Apply ${approvedRows.length} approved update${approvedRows.length === 1 ? "" : "s"}`}
+              </button>
+            </form>
+          )}
+          {alreadyApplied ? (
+            <p className="admin-help">
+              This run is already applied. Re-submitting returns the stored result without writing counts or audit events again.
+            </p>
+          ) : (
+            <p className="admin-help">
+              Updates total verified counts and category breakdowns in a single server-side run and records audit trail events.
+            </p>
+          )}
         </>
       )}
-      {appliedForPreview && applied.status !== "idle" && (
+      {applied.status !== "idle" && (
         <div className={`admin-feedback ${applied.status}`} role={applied.status === "error" ? "alert" : "status"}>
           <p>{applied.message}</p>
           {applied.issues?.length ? (
@@ -231,4 +258,3 @@ export function ClassifiedBadgeCsvImport() {
     </article>
   );
 }
-

@@ -27,6 +27,20 @@ insert into public.participants (
     'registered', 3, 3, 0
   );
 
+-- Google Form sync only accepts hashed form identities, so re-entry through
+-- that path must be tested with a valid form:<sha256> key.
+insert into public.participants (
+  id, participant_key, display_name, profile_url,
+  registration_status, verified_badge_count, skill_badge_count, arcade_game_badge_count,
+  removed_at, removal_reason
+) values (
+  '00000000-0000-4000-8000-0000000002a3',
+  'form:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  'Removed Form Learner',
+  'https://www.skills.google/public_profiles/removal-form-only',
+  'removed', 0, null, null, now(), 'Test fixture soft removal'
+);
+
 select set_config(
   'test.removal_registered_before',
   (select count(*)::text from public.participants where registration_status = 'registered'),
@@ -142,8 +156,8 @@ select is(
 reset role;
 set local role anon;
 select is(
-  (select count(*)::integer from public.participants
-   where participant_key = 'removal-test-production-only'),
+  (select count(id)::integer from public.participants
+   where id = '00000000-0000-4000-8000-0000000002a2'::uuid),
   0,
   'anonymous readers cannot see removed participants'
 );
@@ -153,8 +167,8 @@ select is(
   'public summary excludes removed participants'
 );
 select is(
-  (select count(*)::integer from public.participants
-   where participant_key = 'removal-test-authoritative'),
+  (select count(id)::integer from public.participants
+   where id = '00000000-0000-4000-8000-0000000002a1'::uuid),
   1,
   'authoritative participants remain publicly registered'
 );
@@ -199,9 +213,9 @@ select is(
   (select result from public.admin_sync_google_form_participants(
     jsonb_build_array(jsonb_build_object(
       'rowNumber', 2,
-      'participantKey', 'removal-test-production-only',
-      'displayName', 'Production Only Learner Updated',
-      'profileUrl', 'https://www.skills.google/public_profiles/removal-test-production-only'
+      'participantKey', 'form:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      'displayName', 'Removed Form Learner Updated',
+      'profileUrl', 'https://www.skills.google/public_profiles/removal-form-only'
     ))
   )),
   'removed',
@@ -213,7 +227,7 @@ select throws_ok(
         'rowNumber', 3,
         'participantKey', 'form:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
         'displayName', 'Removed Profile Learner',
-        'profileUrl', 'https://www.skills.google/public_profiles/removal-test-production-only'
+        'profileUrl', 'https://www.skills.google/public_profiles/removal-form-only'
       ))
     )$$,
   '22023', null,

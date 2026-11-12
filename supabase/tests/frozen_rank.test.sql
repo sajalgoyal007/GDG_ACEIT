@@ -106,16 +106,18 @@ where participant_key = 'freeze-c';
 
 select is((select frozen_rank from public.participants where participant_key = 'freeze-c'), 8, 'a frozen rank is never cleared by a later count decrease');
 
-select is((select frozen_rank_count from public.get_public_summary()), 8, 'summary RPC reports the number of frozen ranks');
-select is((select ten_badge_count from public.get_public_summary()), 7, 'summary RPC counts current 10+ Skill Badge holders');
+select is((public.get_public_summary() ->> 'frozen_rank_count')::integer, 8, 'summary RPC reports the number of frozen ranks');
+select is((public.get_public_summary() ->> 'ten_badge_count')::integer, 7, 'summary RPC counts current 10+ Skill Badge holders');
 select ok(not (public.get_public_summary() ? 'five_badge_count'), 'obsolete five_badge_count is removed from the public summary');
 
 -- Soft-removed participants are excluded from rank allocation entirely.
 insert into public.participants (
   id, participant_key, display_name, registration_status,
-  verified_badge_count, skill_badge_count, arcade_game_badge_count
+  verified_badge_count, skill_badge_count, arcade_game_badge_count,
+  removed_at, removal_reason
 ) values
-  ('00000000-0000-4000-8000-0000000000ab', 'freeze-removed', 'Freeze Removed', 'removed', 14, 14, 0);
+  ('00000000-0000-4000-8000-0000000000ab', 'freeze-removed', 'Freeze Removed', 'removed', 14, 14, 0,
+   now(), 'Test fixture soft removal');
 
 select ok((select frozen_rank is null from public.participants where participant_key = 'freeze-removed'), 'a soft-removed 10+ Skill participant is not allocated a frozen rank on insert');
 
@@ -126,7 +128,10 @@ where participant_key = 'freeze-removed';
 select ok((select frozen_rank is null from public.participants where participant_key = 'freeze-removed'), 'the allocator keeps skipping a soft-removed participant after a badge update');
 
 update public.participants
-set registration_status = 'registered'
+set registration_status = 'registered',
+    removed_at = null,
+    removed_by = null,
+    removal_reason = null
 where participant_key = 'freeze-removed';
 
 update public.participants

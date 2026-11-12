@@ -109,6 +109,15 @@ test("CSV parser handles quoted notes and rejects broken quotes", () => {
   assert.equal(parseClassifiedBadgeCsv(`${header}${idOne},2,1,3,"unfinished`).rows.length, 0);
 });
 
+test("review notes reject every control character, including tab and newline", () => {
+  for (const note of ["Reviewed\tnote", "Reviewed\nnote", "Reviewed\rnote", "Reviewed\u0000note"]) {
+    const parsed = parseClassifiedBadgeCsv(`${header}${idOne},2,1,3,"${note}"\n`);
+    assert.equal(parsed.rows.length, 0, `control character should be rejected: ${JSON.stringify(note)}`);
+    assert.equal(parsed.issues[0]?.kind, "invalid");
+    assert.match(parsed.issues[0]!.message, /printable characters/);
+  }
+});
+
 test("CSV parser bounds row issue creation at 500 data rows", () => {
   const body = Array.from(
     { length: 501 },

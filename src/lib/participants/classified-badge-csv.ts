@@ -34,13 +34,14 @@ export interface ClassifiedBadgeCsvParticipant {
   currentArcadeGameBadgeCount: number | null;
   lastVerifiedAt: string | null;
   verificationSource: string | null;
+  registrationStatus?: "registered" | "pending" | "removed";
 }
 
 export interface ResolvedClassifiedBadgeCsvRow
   extends ClassifiedBadgeCsvRow,
     ClassifiedBadgeCsvParticipant {}
 
-export type ClassifiedBadgeCsvIssueKind = CsvIssue["kind"] | "conflict" | "unknown" | "sum_mismatch";
+export type ClassifiedBadgeCsvIssueKind = CsvIssue["kind"] | "conflict" | "unknown" | "sum_mismatch" | "removed";
 export interface ClassifiedBadgeCsvIssue {
   rowNumber: number;
   kind: ClassifiedBadgeCsvIssueKind;
@@ -53,6 +54,7 @@ export const CLASSIFIED_BADGE_ISSUE_MESSAGES: Record<ClassifiedBadgeCsvIssueKind
   conflict: "This participant has conflicting counts in the file; all matching rows were excluded.",
   unknown: "Participant UUID is not present in the current roster; this row was excluded.",
   sum_mismatch: "Skill badge count + arcade game badge count must equal total badge count. Unknown badges must be resolved before import.",
+  removed: "Participant is removed from the roster; removed participants cannot receive badge counts.",
 };
 
 export const MAX_CLASSIFIED_BADGE_CSV_BYTES = 1_000_000;
@@ -204,7 +206,7 @@ export function parseClassifiedBadgeCsv(source: string): {
       issues.push({ rowNumber, kind: "sum_mismatch", message: `skill_badge_count (${skillCount}) + arcade_game_badge_count (${arcadeCount}) must equal total_badge_count (${totalCount}). Unknown badges must be resolved before import.` });
       continue;
     }
-    if (reviewNote.length < 1 || reviewNote.length > 1000 || /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(reviewNote)) {
+    if (reviewNote.length < 1 || reviewNote.length > 1000 || /[\u0000-\u001F\u007F]/.test(reviewNote)) {
       issues.push({ rowNumber, kind: "invalid", message: "Review note must contain 1 to 1000 printable characters." });
       continue;
     }
@@ -242,6 +244,10 @@ export function resolveClassifiedBadgeCsvRows(
     const participant = byId.get(row.participantId);
     if (!participant) {
       issues.push({ rowNumber: row.rowNumber, kind: "unknown", message: "Participant UUID is not present in the current roster; this row was excluded." });
+      continue;
+    }
+    if (participant.registrationStatus === "removed") {
+      issues.push({ rowNumber: row.rowNumber, kind: "removed", message: CLASSIFIED_BADGE_ISSUE_MESSAGES.removed });
       continue;
     }
     resolved.push({ ...row, ...participant });

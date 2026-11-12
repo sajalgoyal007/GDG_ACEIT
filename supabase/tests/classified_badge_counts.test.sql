@@ -1,5 +1,5 @@
 begin;
-select plan(22);
+select plan(34);
 
 insert into auth.users (
   id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -113,10 +113,10 @@ select is((
 ), 1, 'participant audit trail records classified update with embedded rollback metadata');
 
 -- Test 5: Summary RPC incorporates classified badge totals
-select is((select total_skill_badges from public.get_public_summary()), 5, 'summary RPC calculates total_skill_badges');
-select is((select total_arcade_badges from public.get_public_summary()), 2, 'summary RPC calculates total_arcade_badges');
-select is((select ten_badge_count from public.get_public_summary()), 0, 'summary RPC counts only 10+ skill badge holders');
-select is((select frozen_rank_count from public.get_public_summary()), 0, 'no participant is frozen below 10 skill badges');
+select is((public.get_public_summary() ->> 'total_skill_badges')::integer, 5, 'summary RPC calculates total_skill_badges');
+select is((public.get_public_summary() ->> 'total_arcade_badges')::integer, 2, 'summary RPC calculates total_arcade_badges');
+select is((public.get_public_summary() ->> 'ten_badge_count')::integer, 0, 'summary RPC counts only 10+ skill badge holders');
+select is((public.get_public_summary() ->> 'frozen_rank_count')::integer, 0, 'no participant is frozen below 10 skill badges');
 
 -- Test 6: Dedicated rollback RPC restores prior state completely
 select is((
@@ -140,4 +140,101 @@ select ok((select last_verified_at is null from public.participants where id = c
 
 reset role;
 select is((select count(*)::integer from public.participant_auto_progress where participant_id in (current_setting('test.classified_p1_id')::uuid, current_setting('test.classified_p2_id')::uuid)), 0, 'classified CSV workflow does not write unverified automatic progress snapshots');
+
+-- Test 7: A same-total but different Skill/Arcade split is stale and writes
+-- nothing when the apply path supplies the expected split.
+reset role;
+update public.participants
+set verified_badge_count = 7, skill_badge_count = 5, arcade_game_badge_count = 2
+where id = current_setting('test.classified_p1_id')::uuid;
+-- The total is still 7, but the live split no longer matches the approved one.
+update public.participants
+set skill_badge_count = 4, arcade_game_badge_count = 3
+where id = current_setting('test.classified_p1_id')::uuid;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000701';
+
+select throws_ok($$select * from public.admin_bulk_set_classified_badge_counts(jsonb_build_array(
+  jsonb_build_object(
+    'row_number', 2,
+    'participant_id', current_setting('test.classified_p1_id'),
+    'skill_count', 4,
+    'arcade_count', 3,
+    'total_count', 7,
+    'review_note', 'Same-total split race',
+    'expected_total_count', 7,
+    'expected_last_verified_at', null,
+    'expected_verification_source', null,
+    'expected_skill_count', 5,
+    'expected_arcade_count', 2
+  )
+))$$, '40001', 'Participant verification changed after preview; preview the CSV again', 'a same-total but different Skill/Arcade split is rejected as stale');
+
+select is((select skill_badge_count from public.participants where id = current_setting('test.classified_p1_id')::uuid), 4, 'a stale split change writes no Skill count');
+select is((select arcade_game_badge_count from public.participants where id = current_setting('test.classified_p1_id')::uuid), 3, 'a stale split change writes no Arcade count');
+select is((select count(*)::integer from public.participant_audit_events where participant_id = current_setting('test.classified_p1_id')::uuid), 2, 'a stale split change appends no audit event');
+
+-- Test 8: The legacy nine-key manual CSV payload (no expected split keys) is
+-- still accepted and writes the classification.
+select is((
+  select count(*)::integer from public.admin_bulk_set_classified_badge_counts(jsonb_build_array(
+    jsonb_build_object(
+      'row_number', 2,
+      'participant_id', current_setting('test.classified_p1_id'),
+      'skill_count', 2,
+      'arcade_count', 1,
+      'total_count', 3,
+      'review_note', 'Legacy manual payload',
+      'expected_total_count', 7,
+      'expected_last_verified_at', null,
+      'expected_verification_source', null
+    )
+  ))
+), 1, 'the legacy nine-key manual CSV payload still writes');
+select is((select verified_badge_count from public.participants where id = current_setting('test.classified_p1_id')::uuid), 3, 'the legacy payload writes the new total');
+select is((select skill_badge_count from public.participants where id = current_setting('test.classified_p1_id')::uuid), 2, 'the legacy payload writes the new Skill count');
+select is((select arcade_game_badge_count from public.participants where id = current_setting('test.classified_p1_id')::uuid), 1, 'the legacy payload writes the new Arcade count');
+
+-- Test 9: Repeating a legacy rollback is idempotent and never duplicates audit
+-- history.
+select is((
+  select count(*)::integer from public.admin_bulk_rollback_classified_badge_counts(jsonb_build_array(
+    jsonb_build_object(
+      'participant_id', current_setting('test.classified_p1_id'),
+      'target_total', 7,
+      'target_skill', 4,
+      'target_arcade', 3,
+      'target_verified_at', null,
+      'target_source', null,
+      'rollback_note', 'Legacy first rollback'
+    )
+  ))
+), 1, 'the legacy rollback restores the target row');
+select is((select verified_badge_count from public.participants where id = current_setting('test.classified_p1_id')::uuid), 7, 'the legacy rollback restores the previous total');
+
+select set_config('test.classified_audit_after_rollback', (
+  select count(*)::text from public.participant_audit_events
+  where participant_id = current_setting('test.classified_p1_id')::uuid
+), true);
+
+select is((
+  select count(*)::integer from public.admin_bulk_rollback_classified_badge_counts(jsonb_build_array(
+    jsonb_build_object(
+      'participant_id', current_setting('test.classified_p1_id'),
+      'target_total', 7,
+      'target_skill', 4,
+      'target_arcade', 3,
+      'target_verified_at', null,
+      'target_source', null,
+      'rollback_note', 'Legacy repeated rollback'
+    )
+  ))
+), 1, 'a repeated legacy rollback still returns the target row');
+select is((
+  select count(*)::integer from public.participant_audit_events
+  where participant_id = current_setting('test.classified_p1_id')::uuid
+), current_setting('test.classified_audit_after_rollback')::integer, 'a repeated legacy rollback appends no duplicate audit event');
+
+select * from finish();
+rollback;
 
