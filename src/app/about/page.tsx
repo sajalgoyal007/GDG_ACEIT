@@ -23,6 +23,7 @@ import {
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import { GdgEmblem } from "@/components/gdg-emblem";
+import { JaipurChapterBadge, JaipurHeritageBackdrop, JharokhaHalo } from "@/components/jaipur-heritage-backdrop";
 import { Motion3DCard } from "@/components/motion-3d-card";
 
 export const metadata: Metadata = {
@@ -185,8 +186,10 @@ export default function AboutPage() {
       <CommunityNavigation />
       <main className="g-main g-about-main">
         <section className="g-about-hero" aria-labelledby="about-title">
+          <JaipurHeritageBackdrop variant="about" />
           <div className="g-about-copy">
             <p className="g-eyebrow"><span className="g-eyebrow-dot" />GDG ON CAMPUS <span>/</span> ARYA COLLEGE OF ENGINEERING &amp; IT</p>
+            <JaipurChapterBadge className="g-about-badge" />
             <h1 id="about-title">
               GDG On Campus{" "}
               <span className="g-wordmark" aria-hidden="true">
@@ -215,6 +218,7 @@ export default function AboutPage() {
           </div>
 
           <div className="g-about-visual">
+            <JharokhaHalo />
             <GdgEmblem variant="compact" />
           </div>
         </section>

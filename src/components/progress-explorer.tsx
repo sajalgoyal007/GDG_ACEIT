@@ -5,6 +5,7 @@ import { Award, BadgeCheck, Lock, ShieldCheck, Users } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
+import { JaipurHeritageBackdrop } from "@/components/jaipur-heritage-backdrop";
 import { LeaderboardBoard } from "@/components/leaderboard-board";
 import type { LeaderboardSnapshot } from "@/lib/types";
 
@@ -24,6 +25,7 @@ export function ProgressExplorer({ snapshot, diagnostics }: {
 
       <main className="g-main g-progress-main">
         <section className="g-progress-head" aria-labelledby="page-title">
+          <JaipurHeritageBackdrop variant="strip" />
           <div className="g-progress-title">
             <p className="g-eyebrow"><span className="g-eyebrow-dot" />COMMUNITY PROGRESS <span>/</span> CAMPAIGN 2026</p>
             <h1 id="page-title">Leaderboard</h1>

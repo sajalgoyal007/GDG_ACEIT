@@ -19,6 +19,11 @@ import { AnimatedCounter } from "@/components/animated-counter";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import { GdgEmblem } from "@/components/gdg-emblem";
+import {
+  JaipurChapterBadge,
+  JaipurHeritageBackdrop,
+  JharokhaHalo,
+} from "@/components/jaipur-heritage-backdrop";
 import { LeaderboardBoard } from "@/components/leaderboard-board";
 import { Motion3DCard } from "@/components/motion-3d-card";
 import type { LeaderboardSnapshot } from "@/lib/types";
@@ -83,16 +88,20 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
 
       <main className="g-main">
         <section className="g-hero" aria-labelledby="home-title">
+          <JaipurHeritageBackdrop variant="hero" />
           <motion.div
             className="g-hero-copy"
             initial={reduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="g-live-pill">
-              <span className="g-live-pill-dot" aria-hidden="true" />
-              GDGoC ACEIT · Jaipur
-            </span>
+            <div className="g-hero-badges">
+              <span className="g-live-pill">
+                <span className="g-live-pill-dot" aria-hidden="true" />
+                GDGoC ACEIT · Jaipur
+              </span>
+              <JaipurChapterBadge />
+            </div>
 
             <h1 id="home-title" className="g-hero-title">
               <span className="g-hero-title-line">GDG On Campus</span>
@@ -136,6 +145,7 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.65, delay: reduceMotion ? 0 : 0.1, ease: [0.22, 1, 0.36, 1] }}
           >
+            <JharokhaHalo />
             <span className="g-hero-glow" aria-hidden="true" />
             <GdgEmblem />
           </motion.div>
