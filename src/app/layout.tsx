@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthLinkNotice } from "@/components/auth-link-notice";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+
+/** Optional GA4 measurement ID. Vercel Web Analytics needs no configuration. */
+const gaId = process.env.NEXT_PUBLIC_GA_ID?.trim();
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://gdg-aceit.vercel.app"),
@@ -37,6 +42,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <AuthLinkNotice />
           {children}
         </ThemeProvider>
+        <Analytics />
+        {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
       </body>
     </html>
   );
