@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { Award, Gamepad2, Lock, RefreshCw, Search, X } from "lucide-react";
 import {
   Avatar,
@@ -121,29 +121,33 @@ export function LeaderboardBoard({
             )}
           </label>
 
-          <div className="g-filter-pills" role="group" aria-label="Filter leaderboard">
-            {filters.map(({ key, label }) => {
-              const active = filter === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className={active ? "g-filter is-active" : "g-filter"}
-                  aria-pressed={active}
-                  onClick={() => setFilter(key)}
-                >
-                  {active && (
-                    <motion.span
-                      className="g-filter-bg"
-                      layoutId={`${filterLayoutId}-active-filter`}
-                      transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                    />
-                  )}
-                  <span className="g-filter-label">{label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <LayoutGroup>
+            <div className="g-filter-pills" role="group" aria-label="Filter leaderboard">
+              {filters.map(({ key, label }) => {
+                const active = filter === key;
+                return (
+                  <motion.button
+                    key={key}
+                    type="button"
+                    className={active ? "g-filter is-active" : "g-filter"}
+                    aria-pressed={active}
+                    onClick={() => setFilter(key)}
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 34 }}
+                  >
+                    {active && (
+                      <motion.span
+                        className="g-filter-bg"
+                        layoutId={`${filterLayoutId}-active-filter`}
+                        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                      />
+                    )}
+                    <span className="g-filter-label">{label}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </LayoutGroup>
         </div>
 
         <div className="g-board-meta">

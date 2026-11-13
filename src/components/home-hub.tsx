@@ -15,10 +15,12 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { AnimatedCounter } from "@/components/animated-counter";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import { GdgEmblem } from "@/components/gdg-emblem";
 import { LeaderboardBoard } from "@/components/leaderboard-board";
+import { Motion3DCard } from "@/components/motion-3d-card";
 import type { LeaderboardSnapshot } from "@/lib/types";
 
 const roadmap = [
@@ -68,14 +70,11 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
   const showVerifiedCounts = isDemo || hasReviewedParticipants;
   const builderCount = registeredCount || participants.length;
 
-  const formatCount = (value: number) => (showVerifiedCounts ? value.toLocaleString("en-IN") : "—");
-  const verifiedDisplay = showVerifiedCounts ? `${snapshot.totalVerifiedBadges.toLocaleString("en-IN")}+` : "—";
-
   const metrics = [
-    { label: "Active Builders", detail: "Registered in the campaign", value: builderCount.toLocaleString("en-IN"), icon: Users, tone: "blue" },
-    { label: "Verified Badges", detail: "Skill + Arcade combined", value: verifiedDisplay, icon: BadgeCheck, tone: "red" },
-    { label: "Skill Badges", detail: "Counted toward rank", value: formatCount(snapshot.totalSkillBadges), icon: Award, tone: "yellow" },
-    { label: "Frozen Ranks", detail: "Locked at 10+ Skill", value: formatCount(snapshot.frozenRankCount), icon: Lock, tone: "green" },
+    { label: "Active Builders", detail: "Registered in the campaign", value: builderCount, suffix: "", icon: Users, tone: "blue" },
+    { label: "Verified Badges", detail: "Skill + Arcade combined", value: showVerifiedCounts ? snapshot.totalVerifiedBadges : null, suffix: "+", icon: BadgeCheck, tone: "red" },
+    { label: "Skill Badges", detail: "Counted toward rank", value: showVerifiedCounts ? snapshot.totalSkillBadges : null, suffix: "", icon: Award, tone: "yellow" },
+    { label: "Frozen Ranks", detail: "Locked at 10+ Skill", value: showVerifiedCounts ? snapshot.frozenRankCount : null, suffix: "", icon: Lock, tone: "green" },
   ] as const;
 
   return (
@@ -139,19 +138,15 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
           >
             <span className="g-hero-glow" aria-hidden="true" />
             <GdgEmblem />
-            <span className="g-hero-chip g-hero-chip-blue" aria-hidden="true">Cloud</span>
-            <span className="g-hero-chip g-hero-chip-red" aria-hidden="true">AI</span>
-            <span className="g-hero-chip g-hero-chip-yellow" aria-hidden="true">Arcade</span>
-            <span className="g-hero-chip g-hero-chip-green" aria-hidden="true">Community</span>
           </motion.div>
         </section>
 
         <section className="g-kpi-strip" aria-label="Live campaign metrics">
-          {metrics.map(({ label, detail, value, icon: Icon, tone }) => (
+          {metrics.map(({ label, detail, value, suffix, icon: Icon, tone }) => (
             <article className={`g-kpi-pill g-kpi-${tone}`} key={label}>
               <span className="g-kpi-icon" aria-hidden="true"><Icon size={17} /></span>
               <span className="g-kpi-copy">
-                <strong>{value}</strong>
+                <AnimatedCounter as="strong" value={value} suffix={suffix} />
                 <span>{label}</span>
                 <small>{detail}</small>
               </span>
@@ -186,7 +181,7 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
           </div>
 
           <div className="g-bento">
-            <article className="g-bento-card g-bento-steps">
+            <Motion3DCard as="article" className="g-bento-card g-bento-steps" max={5} lift={10}>
               <div className="g-bento-head">
                 <h3 className="g-bento-title">How the campaign works</h3>
                 <p className="g-bento-copy">Every builder follows the same transparent track. Skill Badges decide rank; Arcade is its own scoreboard.</p>
@@ -204,9 +199,9 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
                   </div>
                 ))}
               </div>
-            </article>
+            </Motion3DCard>
 
-            <article className="g-bento-card g-bento-domains">
+            <Motion3DCard as="article" className="g-bento-card g-bento-domains" max={5} lift={10}>
               <div className="g-bento-head">
                 <h3 className="g-bento-title">Domains we build in</h3>
                 <p className="g-bento-copy">Five tracks, one builder community.</p>
@@ -220,9 +215,9 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
                   </div>
                 ))}
               </div>
-            </article>
+            </Motion3DCard>
 
-            <article className="g-bento-card g-bento-note">
+            <Motion3DCard as="article" className="g-bento-card g-bento-note" max={5} lift={10}>
               <div>
                 <span className="g-bento-badge"><BadgeCheck size={12} aria-hidden="true" />Chapter milestone</span>
                 <h3>Google Cloud Study Jams — Tier 1 &amp; Top 5</h3>
@@ -231,7 +226,7 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
               <Link className="g-bento-link" href="/about">
                 Read the chapter story <ArrowUpRight size={14} aria-hidden="true" />
               </Link>
-            </article>
+            </Motion3DCard>
           </div>
         </section>
 

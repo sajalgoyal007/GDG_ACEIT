@@ -2707,8 +2707,8 @@ html[data-theme="light"] .g-cta-band {
 }
 
 @keyframes g-emblem-float {
-  0%, 100% { transform: translate3d(0, 0, 0) rotateZ(0deg); }
-  50% { transform: translate3d(0, -10px, 0) rotateZ(1.2deg); }
+  0%, 100% { transform: translate3d(0, 0, 0) rotateY(0deg) rotateZ(0deg); }
+  50% { transform: translate3d(0, -10px, 0) rotateY(3.5deg) rotateZ(1.2deg); }
 }
 
 @keyframes g-bracket-left {
@@ -4243,6 +4243,98 @@ html[data-theme="light"] .g-progress-kpi {
   .g-cta-band h2 {
     font-size: 28px;
   }
+}
+
+/* ==========================================================================
+   3D MOTION SURFACES — scroll-linked emblem, tilt cards, specular sheen
+   ========================================================================== */
+
+/* Scroll-linked emblem transform layers ------------------------------------ */
+
+.g-emblem-tilt {
+  position: absolute;
+  inset: 0;
+}
+
+.g-emblem-scroll {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.g-emblem .g-hero-chip {
+  z-index: 6;
+  animation: none;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.g-emblem-compact .g-hero-chip {
+  padding: 4px 9px;
+  font-size: 10px;
+}
+
+/* Pointer-tilt cards + cursor-tracked specular sheen ----------------------- */
+
+.g-3d-card {
+  position: relative;
+  overflow: visible;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: border-color 0.24s ease, box-shadow 0.24s ease;
+}
+
+.g-3d-card::before,
+.g-3d-card::after {
+  border-radius: inherit;
+}
+
+.g-3d-card:hover {
+  border-color: color-mix(in srgb, var(--tone, var(--google-blue)) 24%, var(--border-subtle));
+  box-shadow: 0 24px 54px -32px rgba(32, 33, 36, 0.38);
+}
+
+.g-3d-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.g-domain-card.g-3d-card::after {
+  right: 0;
+  bottom: 0;
+  width: 160px;
+  height: 160px;
+}
+
+.g-3d-card .g-team-band {
+  border-radius: inherit;
+}
+
+/* Floating inner depth layers ---------------------------------------------- */
+
+.g-3d-card .g-depth-2 {
+  transform: translateZ(18px);
+}
+
+.g-3d-card .g-depth-3 {
+  transform: translateZ(30px);
+}
+
+.g-3d-card .g-team-head {
+  transform: translateZ(10px);
+}
+
+.g-3d-card .g-domain-tags {
+  transform: translateZ(8px);
+}
+
+.g-impact.g-3d-card > strong {
+  transform: translateZ(10px);
 }
 
 /* Google tone tokens -------------------------------------------------------- */

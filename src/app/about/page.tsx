@@ -23,7 +23,7 @@ import {
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import { GdgEmblem } from "@/components/gdg-emblem";
-import { Tilt } from "@/components/tilt";
+import { Motion3DCard } from "@/components/motion-3d-card";
 
 export const metadata: Metadata = {
   title: "About",
@@ -229,12 +229,12 @@ export default function AboutPage() {
           </div>
           <div className="g-impact-grid">
             {impactStats.map(({ value, label, detail, icon: Icon, tone }) => (
-              <Tilt as="article" key={label} max={6} scale={1.015} className={`g-impact g-kpi-${tone}`}>
-                <span className="g-impact-icon" aria-hidden="true"><Icon size={18} /></span>
+              <Motion3DCard as="article" key={label} max={6} lift={10} className={`g-impact g-kpi-${tone}`}>
+                <span className="g-impact-icon g-depth-2" aria-hidden="true"><Icon size={18} /></span>
                 <strong>{value}</strong>
                 <span className="g-impact-label">{label}</span>
                 <p>{detail}</p>
-              </Tilt>
+              </Motion3DCard>
             ))}
           </div>
         </section>
@@ -249,10 +249,10 @@ export default function AboutPage() {
           </div>
           <div className="g-team-grid">
             {team.map(({ name, initials, role, focus, tone }, index) => (
-              <Tilt as="article" key={name} max={9} scale={1.02} className={`g-team-card g-team-${tone}`}>
+              <Motion3DCard as="article" key={name} max={9} lift={16} className={`g-team-card g-team-${tone}`}>
                 <span className="g-team-band" aria-hidden="true" />
                 <div className="g-team-head">
-                  <span className="g-team-ring" aria-hidden="true">
+                  <span className="g-team-ring g-depth-3" aria-hidden="true">
                     <span className="g-team-initials">{initials}</span>
                   </span>
                   <span className="g-team-heading">
@@ -266,7 +266,7 @@ export default function AboutPage() {
                   <span className="g-team-chip">2026–27 Organizing Team</span>
                   <Code2 size={13} aria-hidden="true" />
                 </span>
-              </Tilt>
+              </Motion3DCard>
             ))}
           </div>
         </section>
@@ -281,9 +281,9 @@ export default function AboutPage() {
           </div>
           <div className="g-domain-grid">
             {domains.map(({ title, detail, icon: Icon, tone, tags }, index) => (
-              <Tilt as="article" key={title} max={7} scale={1.015} className={`g-domain-card g-domain-${tone}`}>
+              <Motion3DCard as="article" key={title} max={7} lift={12} className={`g-domain-card g-domain-${tone}`}>
                 <div className="g-domain-top">
-                  <span className="g-domain-icon" aria-hidden="true"><Icon size={19} /></span>
+                  <span className="g-domain-icon g-depth-2" aria-hidden="true"><Icon size={19} /></span>
                   <span className="g-domain-index">{String(index + 1).padStart(2, "0")}</span>
                 </div>
                 <h3>{title}</h3>
@@ -291,7 +291,7 @@ export default function AboutPage() {
                 <span className="g-domain-tags">
                   {tags.map((tag) => <span key={tag}>{tag}</span>)}
                 </span>
-              </Tilt>
+              </Motion3DCard>
             ))}
           </div>
         </section>
@@ -306,9 +306,9 @@ export default function AboutPage() {
           </div>
           <div className="g-highlight-grid">
             {highlights.map(({ kicker, title, detail, icon: Icon, tone, href, link, internal }) => (
-              <article key={title} className={`g-highlight g-highlight-${tone}`}>
+              <Motion3DCard as="article" key={title} max={6} lift={12} className={`g-highlight g-highlight-${tone}`}>
                 <div className="g-highlight-top">
-                  <span className="g-highlight-icon" aria-hidden="true"><Icon size={18} /></span>
+                  <span className="g-highlight-icon g-depth-2" aria-hidden="true"><Icon size={18} /></span>
                   <span className="g-highlight-kicker">{kicker}</span>
                 </div>
                 <h3>{title}</h3>
@@ -316,7 +316,7 @@ export default function AboutPage() {
                 {internal
                   ? <Link href={href}>{link} <ArrowRight size={14} aria-hidden="true" /></Link>
                   : <a href={href} target="_blank" rel="noreferrer">{link} <ArrowUpRight size={14} aria-hidden="true" /></a>}
-              </article>
+              </Motion3DCard>
             ))}
           </div>
         </section>

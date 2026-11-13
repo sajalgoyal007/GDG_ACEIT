@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Award, BadgeCheck, Lock, ShieldCheck, Users } from "lucide-react";
+import { AnimatedCounter } from "@/components/animated-counter";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import { LeaderboardBoard } from "@/components/leaderboard-board";
@@ -31,10 +32,10 @@ export function ProgressExplorer({ snapshot, diagnostics }: {
         </section>
 
         <section className="g-progress-kpis" aria-label="Live leaderboard summary">
-          <div className="g-progress-kpi g-kpi-blue"><Users size={16} aria-hidden="true" /><span>Active Builders</span><strong>{registeredCount.toLocaleString("en-IN")}</strong></div>
-          <div className="g-progress-kpi g-kpi-red"><BadgeCheck size={16} aria-hidden="true" /><span>Total Badges</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges.toLocaleString("en-IN")}</strong></div>
-          <div className="g-progress-kpi g-kpi-yellow"><Award size={16} aria-hidden="true" /><span>Skill Badges</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.totalSkillBadges.toLocaleString("en-IN")}</strong></div>
-          <div className="g-progress-kpi g-kpi-green"><Lock size={16} aria-hidden="true" /><span>Frozen Ranks</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.frozenRankCount.toLocaleString("en-IN")}</strong></div>
+          <div className="g-progress-kpi g-kpi-blue"><Users size={16} aria-hidden="true" /><span>Active Builders</span><AnimatedCounter as="strong" value={registeredCount} /></div>
+          <div className="g-progress-kpi g-kpi-red"><BadgeCheck size={16} aria-hidden="true" /><span>Total Badges</span><AnimatedCounter as="strong" value={!isDemo && !hasReviewedParticipants ? null : snapshot.totalVerifiedBadges} /></div>
+          <div className="g-progress-kpi g-kpi-yellow"><Award size={16} aria-hidden="true" /><span>Skill Badges</span><AnimatedCounter as="strong" value={!isDemo && !hasReviewedParticipants ? null : snapshot.totalSkillBadges} /></div>
+          <div className="g-progress-kpi g-kpi-green"><Lock size={16} aria-hidden="true" /><span>Frozen Ranks</span><AnimatedCounter as="strong" value={!isDemo && !hasReviewedParticipants ? null : snapshot.frozenRankCount} /></div>
         </section>
 
         <LeaderboardBoard
