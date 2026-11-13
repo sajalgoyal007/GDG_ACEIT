@@ -96,11 +96,7 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="g-hero-badges">
-              <span className="g-live-pill">
-                <span className="g-live-pill-dot" aria-hidden="true" />
-                GDGoC ACEIT · Jaipur
-              </span>
-              <JaipurChapterBadge />
+              <JaipurChapterBadge label="GDG On Campus ACEIT · Pink City Chapter" />
             </div>
 
             <h1 id="home-title" className="g-hero-title">

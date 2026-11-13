@@ -1,9 +1,29 @@
 import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthLinkNotice } from "@/components/auth-link-notice";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
+
+/**
+ * Public-facing geometric type system: Plus Jakarta Sans carries display and UI
+ * copy, JetBrains Mono handles eyebrow pills, rank figures and telemetry.
+ * Both are exposed as CSS variables so admin surfaces keep their existing stack.
+ */
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 
 /** Optional GA4 measurement ID. Vercel Web Analytics needs no configuration. */
 const gaId = process.env.NEXT_PUBLIC_GA_ID?.trim();
@@ -29,7 +49,7 @@ export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{

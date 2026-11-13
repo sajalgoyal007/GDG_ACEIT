@@ -127,7 +127,13 @@ export function JaipurHeritageBackdrop({ variant = "hero" }: { variant?: JaipurV
 }
 
 /** Monochrome-to-Google-color chapter mark used in the home and about heroes. */
-export function JaipurChapterBadge({ className = "" }: { className?: string }) {
+export function JaipurChapterBadge({
+  className = "",
+  label = "Jaipur · Pink City Chapter",
+}: {
+  className?: string;
+  label?: string;
+}) {
   return (
     <span className={`g-jaipur-badge ${className}`.trim()}>
       <span className="g-jaipur-badge-dots" aria-hidden="true">
@@ -136,10 +142,7 @@ export function JaipurChapterBadge({ className = "" }: { className?: string }) {
         <i className="g-jaipur-dot-yellow" />
         <i className="g-jaipur-dot-green" />
       </span>
-      <span className="g-jaipur-badge-label">
-        Jaipur <span aria-hidden="true">·</span> Pink City Chapter
-      </span>
-      <span className="g-jaipur-badge-rule" aria-hidden="true" />
+      <span className="g-jaipur-badge-label">{label}</span>
     </span>
   );
 }
@@ -226,6 +229,15 @@ function FarArt({ uid }: { uid: string }) {
           <stop offset="0" stopColor="currentColor" stopOpacity="0.62" />
           <stop offset="1" stopColor="currentColor" stopOpacity="0.05" />
         </linearGradient>
+        <linearGradient id={`${uid}-fort`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.52" />
+          <stop offset="0.52" stopColor="currentColor" stopOpacity="0.26" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.1" />
+        </linearGradient>
+        <linearGradient id={`${uid}-fort-hill`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.42" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.16" />
+        </linearGradient>
       </defs>
 
       {/* Aravalli ridge */}
@@ -242,8 +254,8 @@ function FarArt({ uid }: { uid: string }) {
       {/* Amer Fort hill */}
       <path
         d="M836 372Q922 294 1032 310Q1140 292 1274 372Z"
-        fill="currentColor"
-        opacity="0.3"
+        fill={`url(#${uid}-fort-hill)`}
+        opacity="0.85"
       />
 
       {/* Amer Fort ramparts */}
@@ -260,7 +272,7 @@ function FarArt({ uid }: { uid: string }) {
 
       {/* Amer palace block */}
       <g stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
-        <path d="M958 300V240H1108V300Z" fill="currentColor" fillOpacity="0.16" opacity="0.9" />
+        <path d="M958 300V240H1108V300Z" fill={`url(#${uid}-fort)`} opacity="0.95" />
         <path
           d="M956 240V229H966V221H974V229H986V221H994V229H1008V219H1016V229H1028V221H1036V229H1048V219H1056V229H1068V221H1076V229H1090V219H1098V229H1110V240"
           fill="currentColor"
@@ -326,13 +338,22 @@ function MidArt({ uid }: { uid: string }) {
           <stop offset="0" stopColor="currentColor" stopOpacity="0.34" />
           <stop offset="1" stopColor="currentColor" stopOpacity="0.08" />
         </linearGradient>
+        <linearGradient id={`${uid}-museum`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.3" />
+          <stop offset="0.55" stopColor="currentColor" stopOpacity="0.16" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.07" />
+        </linearGradient>
+        <linearGradient id={`${uid}-palace`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.32" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.09" />
+        </linearGradient>
       </defs>
 
       {/* Albert Hall Museum */}
       <g stroke="currentColor" fill="none" strokeWidth="1.2" strokeLinejoin="round">
         <rect x="244" y="304" width="384" height="14" opacity="0.7" />
-        <rect x="260" y="232" width="352" height="72" fill="currentColor" fillOpacity="0.06" />
-        <rect x="336" y="198" width="200" height="106" fill="currentColor" fillOpacity="0.08" />
+        <rect x="260" y="232" width="352" height="72" fill={`url(#${uid}-museum)`} />
+        <rect x="336" y="198" width="200" height="106" fill={`url(#${uid}-museum)`} />
         <path d="M252 232H620M270 246H602M330 212H542" opacity="0.5" />
         <path d="M252 304H620" opacity="0.5" />
         <rect x="266" y="250" width="340" height="54" fill={`url(#${uid}-mid-arch)`} stroke="none" opacity="0.85" />
@@ -375,7 +396,7 @@ function MidArt({ uid }: { uid: string }) {
 
       {/* Jal Mahal */}
       <g stroke="currentColor" strokeWidth="1.1" fill="none" opacity="0.9">
-        <path d="M1004 300V262H1324V300" fill="currentColor" fillOpacity="0.06" />
+        <path d="M1004 300V262H1324V300" fill={`url(#${uid}-palace)`} />
         <path d="M1016 300V268H1312V300" fill={`url(#${uid}-mid-arch)`} stroke="none" opacity="0.8" />
         <path d="M1000 300H1328" opacity="0.6" />
         <path d="M1004 262V252H1324V262" fill="currentColor" fillOpacity="0.24" />
@@ -395,7 +416,7 @@ function MidArt({ uid }: { uid: string }) {
       </g>
 
       {/* Water reflection + ripples */}
-      <g transform="translate(0,600) scale(1,-1)" opacity="0.14" fill="currentColor" stroke="none">
+      <g transform="translate(0,600) scale(1,-1)" opacity="0.19" fill="currentColor" stroke="none">
         <path d="M1004 300V262H1324V300Z" />
         <path d="M1012 238C1012 222 1023 214 1034 200C1045 214 1056 222 1056 238Z" />
         <path d="M1142 238C1142 222 1153 214 1164 200C1175 214 1186 222 1186 238Z" />
@@ -447,11 +468,20 @@ function NearArt({ uid }: { uid: string }) {
           <path d="M9 1L17 9L9 17L1 9Z" fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.5" />
           <circle cx="9" cy="9" r="1" fill="currentColor" opacity="0.5" />
         </pattern>
+        <linearGradient id={`${uid}-hawa`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.34" />
+          <stop offset="0.48" stopColor="currentColor" stopOpacity="0.19" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.08" />
+        </linearGradient>
+        <linearGradient id={`${uid}-hawa-tower`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.4" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.12" />
+        </linearGradient>
       </defs>
 
       {/* Hawa Mahal side towers */}
       <g stroke="currentColor" strokeWidth="1.1" fill="none" opacity="0.9">
-        <path d="M104 320V124H152V320Z" fill="currentColor" fillOpacity="0.07" />
+        <path d="M104 320V124H152V320Z" fill={`url(#${uid}-hawa-tower)`} />
         <path d="M100 124V114H110V106H118V114H138V106H146V114H156V124" fill="currentColor" fillOpacity="0.24" />
         <path d="M106 105C106 88 115 80 128 62C141 80 150 88 150 105Z" fill="currentColor" fillOpacity="0.14" />
         <path d="M128 62V48" />
@@ -459,7 +489,7 @@ function NearArt({ uid }: { uid: string }) {
         <path d="M104 148H152M104 178H152M104 208H152M104 238H152M104 268H152M104 296H152" opacity="0.32" />
         <rect x="112" y="152" width="32" height="140" fill={`url(#${uid}-lattice)`} stroke="none" opacity="0.6" />
 
-        <path d="M686 320V124H734V320Z" fill="currentColor" fillOpacity="0.07" />
+        <path d="M686 320V124H734V320Z" fill={`url(#${uid}-hawa-tower)`} />
         <path d="M682 124V114H692V106H700V114H720V106H728V114H738V124" fill="currentColor" fillOpacity="0.24" />
         <path d="M690 105C690 88 699 80 712 62C725 80 734 88 734 105Z" fill="currentColor" fillOpacity="0.14" />
         <path d="M712 62V48" />
@@ -470,7 +500,7 @@ function NearArt({ uid }: { uid: string }) {
 
       {/* Hawa Mahal main facade */}
       <g stroke="currentColor" strokeWidth="1.1" fill="none">
-        <path d="M152 320V140H686V320Z" fill="currentColor" fillOpacity="0.05" />
+        <path d="M152 320V140H686V320Z" fill={`url(#${uid}-hawa)`} />
         <rect x="152" y="130" width="534" height="16" fill={`url(#${uid}-merlon)`} stroke="none" opacity="0.9" />
         <path d="M146 146H692" opacity="0.55" />
 
@@ -480,7 +510,7 @@ function NearArt({ uid }: { uid: string }) {
         <path d="M152 312H686" opacity="0.65" />
 
         {/* Central grand jharokha */}
-        <path d="M372 320V206Q372 170 419 170Q466 170 466 206V320Z" fill="currentColor" fillOpacity="0.08" />
+        <path d="M372 320V206Q372 170 419 170Q466 170 466 206V320Z" fill={`url(#${uid}-hawa)`} />
         <path d="M366 320V204Q366 160 419 160Q472 160 472 204V320" strokeWidth="1.6" />
         <path d="M378 320V208Q378 176 419 176Q460 176 460 208V320" opacity="0.7" />
         <path d="M390 320V214Q390 190 419 190Q448 190 448 214V320" opacity="0.55" />
