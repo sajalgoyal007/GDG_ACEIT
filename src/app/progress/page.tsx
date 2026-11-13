@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
 import { Activity, ChevronDown } from "lucide-react";
 import { ProgressExplorer } from "@/components/progress-explorer";
-import { ProgressRefreshPanel } from "@/components/progress-refresh-panel";
 import { getLeaderboardProvider } from "@/lib/leaderboard-provider";
-import { isAutoProgressEnabled } from "@/lib/auto-progress/config";
-import { googleSkillsAutoProgressProvider } from "@/lib/auto-progress/provider";
-import { getAuthenticatedParticipant } from "@/lib/supabase/auto-progress-account";
-import { getAutoProgressForParticipant, getProgressObservationSummaries, getUnverifiedProgressLeaderboard } from "@/lib/supabase/auto-progress-provider";
+import { getProgressObservationSummaries, getUnverifiedProgressLeaderboard } from "@/lib/supabase/auto-progress-provider";
 import { UnverifiedProgressLeaderboard } from "@/components/unverified-progress-leaderboard";
 import { ProgressObservationLeaderboard } from "@/components/progress-observation-leaderboard";
 
@@ -17,29 +13,14 @@ export const metadata: Metadata = {
 };
 
 export default async function ProgressPage() {
-  const [snapshot, identity, importedProgress, observations] = await Promise.all([
+  const [snapshot, importedProgress, observations] = await Promise.all([
     getLeaderboardProvider().getPublicSnapshot(),
-    getAuthenticatedParticipant().catch(() => ({ status: "check_failed" as const })),
     getUnverifiedProgressLeaderboard().catch(() => []),
     getProgressObservationSummaries().catch(() => []),
   ]);
-  let progress = null;
-  let loadFailed = false;
-  if (identity.status === "linked") {
-    try {
-      progress = await getAutoProgressForParticipant(identity.participant.participantId);
-    } catch {
-      loadFailed = true;
-    }
-  }
+
   return <ProgressExplorer
     snapshot={snapshot}
-    personalProgress={<ProgressRefreshPanel
-      identityState={identity.status}
-      progress={progress}
-      loadFailed={loadFailed}
-      refreshAvailable={isAutoProgressEnabled() && googleSkillsAutoProgressProvider.availability === "available"}
-    />}
     diagnostics={<details className="diagnostics-disclosure">
       <summary>
         <span className="diagnostics-summary-icon"><Activity size={18} aria-hidden="true" /></span>

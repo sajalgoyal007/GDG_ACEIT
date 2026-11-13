@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -9,22 +10,28 @@ import {
   ArrowUpRight,
   Award,
   BadgeCheck,
+  Binary,
+  Cloud,
   Code2,
   Gamepad2,
   GitBranch,
   Lock,
+  MapPin,
   Medal,
+  Palette,
   RefreshCw,
+  Search,
+  Smartphone,
   Sparkles,
   Trophy,
   Users,
 } from "lucide-react";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
+import { GdgEmblem } from "@/components/gdg-emblem";
 import { Tilt } from "@/components/tilt";
 import {
   Avatar,
-  formatShortDate,
   formatTimestamp,
   ParticipantDialog,
   ProgressMeter,
@@ -34,36 +41,41 @@ import { rankParticipants } from "@/lib/leaderboard";
 
 type RankedParticipant = { participant: PublicParticipant; rank: number | null };
 
-const kpiDefinitions = [
-  { key: "registered", label: "Registered Builders", detail: "Students in the campaign", icon: Users, tone: "blue" },
-  { key: "verified", label: "Total Verified Badges", detail: "Skill + Arcade", icon: BadgeCheck, tone: "red" },
-  { key: "skill", label: "Skill Badges", detail: "Primary leaderboard metric", icon: Award, tone: "yellow" },
-  { key: "frozen", label: "Frozen Ranks", detail: "Locked at 10+ Skill", icon: Lock, tone: "green" },
-] as const;
-
 const roadmap = [
   {
     step: "01",
-    title: "Join & map profile",
-    detail: "Register with your Google developer profile so the chapter can track your campaign path.",
+    title: "Register & Map Profile",
+    detail: "Join the campaign with your Google developer profile so your progress is tracked.",
     icon: Users,
     tone: "blue",
   },
   {
     step: "02",
-    title: "Complete Skill & Arcade labs",
-    detail: "Work through Google Cloud Skill Badges and Arcade labs at your own pace with the community.",
-    icon: Code2,
+    title: "Earn Skill & Arcade Badges",
+    detail: "Complete Google Cloud Skill Badges and Arcade labs alongside the community.",
+    icon: Award,
     tone: "yellow",
   },
   {
     step: "03",
-    title: "Lock your frozen rank",
-    detail: "Reach 10 Skill Badges to capture a permanent frozen rank on the chapter leaderboard.",
+    title: "Lock Permanent Rank at 10 Skill Badges",
+    detail: "Reach the milestone to freeze a permanent rank on the chapter leaderboard.",
     icon: Lock,
     tone: "green",
   },
 ] as const;
+
+const domains = [
+  { label: "Cloud & Generative AI", detail: "Gemini · Vertex AI", icon: Cloud, tone: "blue" },
+  { label: "Full-Stack Web", detail: "Next.js · React · Node", icon: Code2, tone: "red" },
+  { label: "Mobile & Flutter", detail: "Material 3", icon: Smartphone, tone: "yellow" },
+  { label: "Competitive Programming", detail: "DSA · Problem solving", icon: Binary, tone: "green" },
+  { label: "UI/UX & Community", detail: "Design systems · Mentorship", icon: Palette, tone: "violet" },
+] as const;
+
+function toneStyle(tone: string) {
+  return { "--tone": `var(--google-${tone === "violet" ? "blue" : tone})` } as CSSProperties;
+}
 
 export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
   const { participants, registeredCount, lastSyncedAt } = snapshot;
@@ -71,23 +83,56 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
   const reduceMotion = useReducedMotion();
   const [isRefreshing, startRefresh] = useTransition();
   const [selected, setSelected] = useState<PublicParticipant | null>(null);
+  const [lookup, setLookup] = useState("");
+  const [lookupOpen, setLookupOpen] = useState(false);
 
   const ranked = useMemo(() => rankParticipants(participants), [participants]);
   const rankedParticipants = useMemo(() => ranked.filter((entry) => entry.rank !== null), [ranked]);
   const podium = rankedParticipants.slice(0, 3);
   const topTen = rankedParticipants.slice(0, 10);
+
   const reviewedCount = participants.filter((participant) => participant.lastCheckedAt).length;
   const hasReviewedParticipants = reviewedCount > 0;
   const awaitingVerification = participants.length - reviewedCount;
   const isDemo = snapshot.dataMode === "demo";
+  const showVerifiedCounts = isDemo || hasReviewedParticipants;
   const builderCount = registeredCount || participants.length;
 
-  const kpiValues: Record<(typeof kpiDefinitions)[number]["key"], number | string> = {
-    registered: builderCount,
-    verified: !isDemo && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges,
-    skill: !isDemo && !hasReviewedParticipants ? "—" : snapshot.totalSkillBadges,
-    frozen: !isDemo && !hasReviewedParticipants ? "—" : snapshot.frozenRankCount,
-  };
+  const formatCount = (value: number) => (showVerifiedCounts ? value.toLocaleString("en-IN") : "—");
+  const verifiedDisplay = showVerifiedCounts ? `${snapshot.totalVerifiedBadges.toLocaleString("en-IN")}+` : "—";
+
+  const normalizedLookup = lookup.trim().toLocaleLowerCase();
+  const lookupMatches = useMemo(() => {
+    if (!normalizedLookup) return [];
+    return ranked
+      .filter(({ participant }) => participant.displayName.toLocaleLowerCase().includes(normalizedLookup))
+      .slice(0, 5);
+  }, [normalizedLookup, ranked]);
+
+  const tickerItems = [
+    { label: "Builders", value: builderCount.toLocaleString("en-IN"), tone: "blue" },
+    { label: "Verified badges", value: formatCount(snapshot.totalVerifiedBadges), tone: "red" },
+    { label: "Skill badges", value: formatCount(snapshot.totalSkillBadges), tone: "yellow" },
+    { label: "Frozen ranks", value: formatCount(snapshot.frozenRankCount), tone: "green" },
+    { label: "Tier 1 Study Jams chapter", value: "Top 5 National", tone: "blue" },
+    { label: "Learn with Communities 2026", value: "Live now", tone: "green" },
+  ];
+
+  function openParticipant(participant: PublicParticipant) {
+    setSelected(participant);
+    setLookup("");
+    setLookupOpen(false);
+  }
+
+  function submitLookup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const first = lookupMatches[0];
+    if (first) {
+      openParticipant(first.participant);
+      return;
+    }
+    router.push("/progress");
+  }
 
   return (
     <div className="g-app">
@@ -97,33 +142,28 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
         <section className="g-hero" aria-labelledby="home-title">
           <motion.div
             className="g-hero-copy"
-            initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <p className="g-eyebrow"><span className="g-eyebrow-dot" />GDG ON CAMPUS ACEIT <span>/</span> JAIPUR, RAJASTHAN</p>
-            <h1 id="home-title" aria-label="GDG On Campus ACEIT — Cloud and AI Campaign 2026">
-              GDG On Campus ACEIT
-              <span className="g-hero-gradient">Cloud &amp; AI Campaign 2026</span>
-            </h1>
-            <p className="g-hero-lede">
-              Student builders at Arya College of Engineering &amp; IT learning cloud, AI, and open-source engineering together — then proving it on a live chapter leaderboard.
-            </p>
+            <span className="g-live-pill">
+              <span className="g-live-pill-dot" aria-hidden="true" />
+              GDGoC ACEIT · Jaipur
+            </span>
 
-            <div className="g-hero-status">
-              <span className="g-status-pill">
-                <span className="g-status-pulse" aria-hidden="true" />
-                {isDemo ? "Demo snapshot" : "Live community record"}
+            <h1 id="home-title" className="g-hero-title">
+              <span className="g-hero-title-line">GDG On Campus</span>
+              <span className="g-hero-title-line">
+                <span className="g-wordmark" aria-hidden="true">
+                  {"ACEIT".split("").map((letter, index) => <span key={`${letter}-${index}`}>{letter}</span>)}
+                </span>
+                <span className="sr-only">ACEIT</span>
               </span>
-              <span className="g-status-meta">
-                <Lock size={13} aria-hidden="true" />
-                {isDemo ? "Synthetic examples" : `${builderCount.toLocaleString("en-IN")} builders tracked`}
-              </span>
-              <span className="g-status-meta">
-                <span className="g-status-meta-label">LAST UPDATED</span>
-                <time dateTime={lastSyncedAt}>{formatShortDate(lastSyncedAt)}</time>
-              </span>
-            </div>
+            </h1>
+
+            <p className="g-hero-lede">
+              The student developer community at Arya College of Engineering &amp; IT, building cloud, AI, and open-source skills together.
+            </p>
 
             <div className="g-hero-actions">
               <Link className="g-btn g-btn-primary" href="/progress">
@@ -131,72 +171,134 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
                 <ArrowRight size={16} aria-hidden="true" />
               </Link>
               <Link className="g-btn g-btn-ghost" href="/about">
-                About GDG ACEIT
+                About Chapter
                 <ArrowUpRight size={16} aria-hidden="true" />
               </Link>
             </div>
 
-            <div className="g-hero-footnote">
-              <span><Sparkles size={13} aria-hidden="true" />Learn</span>
-              <span><Code2 size={13} aria-hidden="true" />Build</span>
-              <span><GitBranch size={13} aria-hidden="true" />Connect</span>
+            <div className="g-hero-meta" aria-label="Chapter values">
+              <span className="g-hero-meta-item"><Sparkles size={13} aria-hidden="true" />Learn</span>
+              <span className="g-hero-meta-sep" aria-hidden="true" />
+              <span className="g-hero-meta-item"><Code2 size={13} aria-hidden="true" />Build</span>
+              <span className="g-hero-meta-sep" aria-hidden="true" />
+              <span className="g-hero-meta-item"><GitBranch size={13} aria-hidden="true" />Connect</span>
+              <span className="g-hero-meta-sep" aria-hidden="true" />
+              <span className="g-hero-meta-item"><MapPin size={13} aria-hidden="true" />Kukas, Jaipur</span>
+            </div>
+
+            <div
+              className="g-hero-lookup"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setLookupOpen(false);
+              }}
+            >
+              <label className="g-lookup-label" htmlFor="participant-lookup">Quick participant lookup</label>
+              <form className="g-lookup-field" role="search" onSubmit={submitLookup}>
+                <Search size={16} aria-hidden="true" />
+                <input
+                  id="participant-lookup"
+                  value={lookup}
+                  onChange={(event) => {
+                    setLookup(event.target.value);
+                    setLookupOpen(true);
+                  }}
+                  onFocus={() => setLookupOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setLookupOpen(false);
+                      event.currentTarget.blur();
+                    }
+                  }}
+                  placeholder="Find a builder by name…"
+                  autoComplete="off"
+                  spellCheck={false}
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-expanded={lookupOpen && normalizedLookup.length > 0}
+                  aria-controls="participant-lookup-results"
+                />
+                <button type="submit" className="g-lookup-submit">Open</button>
+              </form>
+
+              {lookupOpen && normalizedLookup.length > 0 && (
+                <div className="g-lookup-results" id="participant-lookup-results">
+                  {lookupMatches.length > 0 ? (
+                    <>
+                      <div className="g-lookup-options" role="listbox" aria-label="Participant search results">
+                        {lookupMatches.map(({ participant, rank }) => (
+                          <button
+                            key={participant.id}
+                            type="button"
+                            role="option"
+                            aria-selected={false}
+                            className="g-lookup-result"
+                            onClick={() => openParticipant(participant)}
+                          >
+                            <Avatar participant={participant} size="sm" />
+                            <span className="g-lookup-result-copy">
+                              <strong>{participant.displayName}</strong>
+                              <small>{participant.frozenRank ? "Frozen rank captured" : participant.lastCheckedAt ? "Reviewed participant" : "Awaiting review"}</small>
+                            </span>
+                            <span className="g-lookup-result-meta">{rank ? `#${rank}` : "New"}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="g-lookup-footer">
+                        <span>{lookupMatches.length} match{lookupMatches.length === 1 ? "" : "es"} shown</span>
+                        <Link href="/progress">Full leaderboard →</Link>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="g-lookup-empty">No builder matches “{lookup.trim()}”. Try another name.</p>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
 
           <motion.div
             className="g-hero-visual"
-            initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+            initial={reduceMotion ? false : { opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.65, delay: reduceMotion ? 0 : 0.12, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.65, delay: reduceMotion ? 0 : 0.1, ease: [0.22, 1, 0.36, 1] }}
           >
             <span className="g-hero-glow" aria-hidden="true" />
-            <Tilt max={14} scale={1.035} className="g-emblem-wrap">
-              <div className="g-emblem">
-                <span className="g-emblem-grid" aria-hidden="true" />
-                <span className="g-emblem-ring g-ring-blue" aria-hidden="true" />
-                <span className="g-emblem-ring g-ring-red" aria-hidden="true" />
-                <span className="g-emblem-ring g-ring-yellow" aria-hidden="true" />
-                <span className="g-emblem-ring g-ring-green" aria-hidden="true" />
-                <span className="g-emblem-corner corner-blue" aria-hidden="true" />
-                <span className="g-emblem-corner corner-red" aria-hidden="true" />
-                <span className="g-emblem-corner corner-yellow" aria-hidden="true" />
-                <span className="g-emblem-corner corner-green" aria-hidden="true" />
-                <div className="g-emblem-type" aria-hidden="true">
-                  <span className="g-angle angle-blue">&lt;</span>
-                  <span className="g-slash">/</span>
-                  <span className="g-angle angle-green">&gt;</span>
-                </div>
-                <span className="g-emblem-label">GDG ON CAMPUS</span>
-                <span className="g-emblem-sub">ACEIT · 2026</span>
-              </div>
-            </Tilt>
-            <span className="g-float-chip chip-blue" aria-hidden="true">CLOUD</span>
-            <span className="g-float-chip chip-red" aria-hidden="true">AI</span>
-            <span className="g-float-chip chip-yellow" aria-hidden="true">ARCADE</span>
-            <span className="g-float-chip chip-green" aria-hidden="true">OPEN SOURCE</span>
+            <GdgEmblem />
+            <div className="g-hero-telemetry" aria-label="Live campaign telemetry">
+              <span className="g-telemetry-pill g-telemetry-blue">
+                <strong>{builderCount.toLocaleString("en-IN")}</strong>
+                <span>Builders</span>
+              </span>
+              <span className="g-telemetry-pill g-telemetry-yellow">
+                <strong>{verifiedDisplay}</strong>
+                <span>Verified Badges</span>
+              </span>
+              <span className="g-telemetry-pill g-telemetry-green">
+                <strong>{formatCount(snapshot.frozenRankCount)}</strong>
+                <span>Milestone Locked</span>
+              </span>
+            </div>
           </motion.div>
         </section>
 
-        <motion.section
-          className="g-kpi-strip"
-          aria-label="Live campaign statistics"
-          initial={reduceMotion ? false : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.22 }}
-        >
-          {kpiDefinitions.map(({ key, label, detail, icon: Icon, tone }) => {
-            const value = kpiValues[key];
-            return (
-              <Tilt as="article" key={key} max={7} scale={1.02} className={`g-kpi g-kpi-${tone}`}>
-                <span className="g-kpi-icon" aria-hidden="true"><Icon size={18} /></span>
-                <p>{label}</p>
-                <strong>{typeof value === "number" ? value.toLocaleString("en-IN") : value}</strong>
-                <small>{detail}</small>
-                <span className="g-kpi-line" aria-hidden="true" />
-              </Tilt>
-            );
-          })}
-        </motion.section>
+        <section className="g-ticker" aria-label="Campaign at a glance">
+          <div className="g-ticker-viewport">
+            <div className="g-ticker-track">
+              {[0, 1].map((copy) => (
+                <div className="g-ticker-group" key={copy} aria-hidden={copy === 1 ? "true" : undefined}>
+                  {tickerItems.map((item, index) => (
+                    <span className="g-ticker-item" key={`${copy}-${item.label}`}>
+                      {index > 0 && <span className="g-ticker-sep" aria-hidden="true" />}
+                      <span className="g-ticker-dot" style={toneStyle(item.tone)} aria-hidden="true" />
+                      <strong>{item.value}</strong>
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {!isDemo && awaitingVerification > 0 && (
           <p className="g-inline-note" role="status">
@@ -208,25 +310,29 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
         <section className="g-section" aria-labelledby="podium-title">
           <div className="g-section-head">
             <div>
-              <p className="g-kicker">CHAMPIONS</p>
-              <h2 id="podium-title">Top 3 of the campaign</h2>
+              <p className="g-kicker">Champions</p>
+              <h2 id="podium-title">The top three of the campaign</h2>
             </div>
             <p className="g-section-copy">Verified Skill Badges set the pace. Arcade badges are celebrated separately and never change rank.</p>
           </div>
 
           {podium.length > 0 ? (
             <div className="g-podium">
-              {[podium[1], podium[0], podium[2]].map((entry, index) => entry ? (
+              {[
+                podium[1] ? { entry: podium[1], slot: 2 as const } : null,
+                podium[0] ? { entry: podium[0], slot: 1 as const } : null,
+                podium[2] ? { entry: podium[2], slot: 3 as const } : null,
+              ].map((item, index) => item ? (
                 <PodiumCard
-                  key={entry.participant.id}
-                  entry={entry}
-                  slot={index === 1 ? 1 : index === 0 ? 2 : 3}
-                  onOpen={() => setSelected(entry.participant)}
+                  key={item.entry.participant.id}
+                  entry={item.entry}
+                  slot={item.slot}
+                  onOpen={() => setSelected(item.entry.participant)}
                 />
               ) : <span key={`placeholder-${index}`} className="g-podium-placeholder" aria-hidden="true" />)}
             </div>
           ) : (
-            <div className="g-empty g-empty-wide">
+            <div className="g-empty">
               <span className="g-empty-icon"><Trophy size={18} aria-hidden="true" /></span>
               <strong>Champions appear after the first badge review</strong>
               <p>Reviewed Skill Badges unlock ranked podium positions for this campaign.</p>
@@ -237,41 +343,42 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
         <section className="g-section g-top10-section" aria-labelledby="top10-title">
           <div className="g-section-head">
             <div>
-              <p className="g-kicker">LEADERBOARD SNAPSHOT</p>
-              <h2 id="top10-title">The top 10</h2>
+              <p className="g-kicker">Leaderboard snapshot</p>
+              <h2 id="top10-title">The top 10 builders</h2>
             </div>
-            <Link className="g-text-link" href="/progress">Open full explorer <ArrowRight size={15} aria-hidden="true" /></Link>
+            <Link className="g-text-link" href="/progress">Open full leaderboard <ArrowRight size={15} aria-hidden="true" /></Link>
           </div>
 
           {topTen.length > 0 ? (
             <div className="g-top10-grid">
-              {topTen.map((entry) => {
-                const { participant, rank } = entry;
-                return (
-                  <button
-                    type="button"
-                    key={participant.id}
-                    className="g-top10-row"
-                    onClick={() => setSelected(participant)}
-                    aria-label={`Open ${participant.displayName}'s profile, rank ${rank}`}
-                  >
-                    <span className={`g-top10-rank${rank === 1 ? " is-first" : ""}`}>{rank === 1 ? <Trophy size={14} aria-hidden="true" /> : `#${rank}`}</span>
-                    <Avatar participant={participant} size="sm" />
-                    <span className="g-top10-person">
-                      <strong>{participant.displayName}</strong>
-                      <small>{participant.frozenRank ? "Frozen rank" : "Skill Badge pace"}</small>
-                    </span>
-                    <span className="g-top10-metrics">
-                      <span className="g-top10-skill"><Award size={12} aria-hidden="true" />{participant.skillBadgeCount ?? "—"}</span>
-                      <span className="g-top10-arcade"><Gamepad2 size={12} aria-hidden="true" />{participant.arcadeGameBadgeCount ?? "—"}</span>
-                    </span>
-                    <span className="g-top10-bar" aria-hidden="true">
-                      <span style={{ transform: `scaleX(${Math.min((participant.skillBadgeCount ?? 0) / 10, 1)})` }} />
-                    </span>
-                    {participant.frozenRank && <Lock size={11} className="g-top10-lock" aria-hidden="true" />}
-                  </button>
-                );
-              })}
+              {topTen.map(({ participant, rank }) => (
+                <button
+                  type="button"
+                  key={participant.id}
+                  className="g-top10-row"
+                  onClick={() => setSelected(participant)}
+                  aria-label={`Open ${participant.displayName}'s profile, rank ${rank}`}
+                >
+                  <span className={`g-top10-rank${rank === 1 ? " is-first" : ""}`}>{rank === 1 ? <Trophy size={13} aria-hidden="true" /> : `#${rank}`}</span>
+                  <Avatar participant={participant} size="sm" />
+                  <span className="g-top10-person">
+                    <strong>{participant.displayName}</strong>
+                    <small>{participant.frozenRank ? `Frozen rank #${participant.frozenRank}` : "Climbing the Skill Badge track"}</small>
+                  </span>
+                  <span className="g-top10-metrics">
+                    <span className="g-top10-skill"><Award size={12} aria-hidden="true" />{participant.skillBadgeCount ?? "—"}</span>
+                    <span className="g-top10-arcade"><Gamepad2 size={12} aria-hidden="true" />{participant.arcadeGameBadgeCount ?? "—"}</span>
+                  </span>
+                  <span className="g-top10-bar" aria-hidden="true">
+                    <motion.span
+                      initial={reduceMotion ? false : { scaleX: 0 }}
+                      animate={{ scaleX: Math.min((participant.skillBadgeCount ?? 0) / 10, 1) }}
+                      transition={{ duration: reduceMotion ? 0 : 0.7, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </span>
+                  {participant.frozenRank ? <Lock size={11} className="g-top10-lock" aria-label="Frozen rank" /> : <span aria-hidden="true" />}
+                </button>
+              ))}
             </div>
           ) : (
             <div className="g-empty">
@@ -282,12 +389,18 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
           )}
 
           <div className="g-view-all">
-            <Link className="g-btn g-btn-primary g-btn-wide" href="/progress">
-              View All {builderCount.toLocaleString("en-IN")} Participants on Leaderboard
+            <Link className="g-btn g-btn-primary" href="/progress">
+              View All {builderCount.toLocaleString("en-IN")} Builders on Full Leaderboard
               <ArrowRight size={16} aria-hidden="true" />
             </Link>
-            <span className="g-timestamp"><span>LAST UPDATED</span><time dateTime={lastSyncedAt}>{formatTimestamp(lastSyncedAt)} IST</time></span>
-            <button className="g-refresh" type="button" onClick={() => startRefresh(() => router.refresh())} disabled={isRefreshing} aria-busy={isRefreshing}>
+            <span className="g-timestamp"><span>Last updated</span><time dateTime={lastSyncedAt}>{formatTimestamp(lastSyncedAt)} IST</time></span>
+            <button
+              className="g-refresh"
+              type="button"
+              onClick={() => startRefresh(() => router.refresh())}
+              disabled={isRefreshing}
+              aria-busy={isRefreshing}
+            >
               <RefreshCw size={14} aria-hidden="true" className={isRefreshing ? "is-spinning" : undefined} />
               {isRefreshing ? "Refreshing" : "Refresh data"}
             </button>
@@ -297,27 +410,65 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
         <section className="g-section" aria-labelledby="roadmap-title">
           <div className="g-section-head">
             <div>
-              <p className="g-kicker">CAMPAIGN ROADMAP</p>
+              <p className="g-kicker">Campaign roadmap</p>
               <h2 id="roadmap-title">Three steps to a locked rank</h2>
             </div>
             <p className="g-section-copy">A simple path from registration to a permanent place on the chapter leaderboard.</p>
           </div>
-          <div className="g-roadmap">
-            {roadmap.map(({ step, title, detail, icon: Icon, tone }, index) => (
-              <Tilt as="article" key={step} max={6} scale={1.02} className={`g-roadmap-card g-roadmap-${tone}`}>
-                <span className="g-roadmap-step">{step}</span>
-                <span className="g-roadmap-icon" aria-hidden="true"><Icon size={19} /></span>
-                <h3>{title}</h3>
-                <p>{detail}</p>
-                {index < roadmap.length - 1 && <span className="g-roadmap-connector" aria-hidden="true"><ArrowRight size={16} /></span>}
-              </Tilt>
-            ))}
+
+          <div className="g-bento">
+            <article className="g-bento-card g-bento-steps">
+              <div className="g-bento-head">
+                <h3 className="g-bento-title">How the campaign works</h3>
+                <p className="g-bento-copy">Every builder follows the same transparent track. Skill Badges decide rank; Arcade is its own scoreboard.</p>
+              </div>
+              <div className="g-steps">
+                {roadmap.map(({ step, title, detail, icon: Icon, tone }, index) => (
+                  <div className="g-step" key={step} style={toneStyle(tone)}>
+                    <span className="g-step-index">{step}</span>
+                    <span className="g-step-icon" aria-hidden="true"><Icon size={18} /></span>
+                    <span className="g-step-body">
+                      <strong>{title}</strong>
+                      <small>{detail}</small>
+                    </span>
+                    {index < roadmap.length - 1 && <ArrowRight size={15} className="g-step-arrow" aria-hidden="true" />}
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="g-bento-card g-bento-domains">
+              <div className="g-bento-head">
+                <h3 className="g-bento-title">Domains we build in</h3>
+                <p className="g-bento-copy">Five tracks, one builder community.</p>
+              </div>
+              <div className="g-domain-list">
+                {domains.map(({ label, detail, tone }, index) => (
+                  <div className="g-domain-row" key={label}>
+                    <span className="g-domain-dot" style={toneStyle(tone)} aria-hidden="true" />
+                    <strong>{label}</strong>
+                    <small>{index === 0 ? "Flagship" : detail}</small>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="g-bento-card g-bento-note">
+              <div>
+                <span className="g-bento-badge"><BadgeCheck size={12} aria-hidden="true" />Chapter milestone</span>
+                <h3>Google Cloud Study Jams — Tier 1 &amp; Top 5</h3>
+                <p>Recognised on the national cohort leaderboard for campaign participation and verified builder outcomes.</p>
+              </div>
+              <Link className="g-bento-link" href="/about">
+                Read the chapter story <ArrowUpRight size={14} aria-hidden="true" />
+              </Link>
+            </article>
           </div>
         </section>
 
         <section className="g-cta-band" aria-labelledby="cta-title">
           <div>
-            <p className="g-kicker">READY TO BUILD?</p>
+            <p className="g-kicker">Ready to build?</p>
             <h2 id="cta-title">Your next badge starts with one lab.</h2>
           </div>
           <div className="g-cta-actions">
@@ -340,20 +491,23 @@ function PodiumCard({ entry, slot, onOpen }: { entry: RankedParticipant; slot: 1
   const { participant, rank } = entry;
   const tone = slot === 1 ? "gold" : slot === 2 ? "blue" : "green";
   const Icon = slot === 1 ? Trophy : Medal;
+  const role = slot === 1 ? "Campaign champion" : slot === 2 ? "Runner-up" : "Third place";
 
   return (
-    <Tilt as="article" max={9} scale={1.025} className={`g-podium-card g-podium-${tone}${slot === 1 ? " is-champion" : ""}`}>
+    <Tilt as="article" max={8} scale={1.02} className={`g-podium-card g-podium-${tone}${slot === 1 ? " is-champion" : ""}`}>
       <button type="button" className="g-card-hit" onClick={onOpen} aria-label={`Open ${participant.displayName}'s profile, rank ${rank}`} />
       <div className="g-podium-top">
-        <span className="g-podium-rank"><Icon size={15} aria-hidden="true" />#{rank}</span>
-        {participant.frozenRank ? <span className="g-lock-chip"><Lock size={11} aria-hidden="true" />Frozen</span> : <span className="g-lock-chip g-lock-chip-soft">Live rank</span>}
+        <span className="g-podium-rank"><Icon size={14} aria-hidden="true" />#{rank}</span>
+        {participant.frozenRank
+          ? <span className="g-lock-chip"><Lock size={11} aria-hidden="true" />Frozen</span>
+          : <span className="g-lock-chip g-lock-chip-soft">Live rank</span>}
       </div>
       <div className="g-podium-avatar">
         <Avatar participant={participant} size="lg" />
         {slot === 1 && <span className="g-crown" aria-hidden="true">★</span>}
       </div>
       <h3>{participant.displayName}</h3>
-      <p className="g-podium-role">{slot === 1 ? "Campaign leader" : slot === 2 ? "Runner-up" : "Third place"}</p>
+      <p className="g-podium-role">{role}</p>
       <div className="g-podium-stats">
         <span className="g-podium-stat g-podium-skill"><Award size={14} aria-hidden="true" /><strong>{participant.skillBadgeCount ?? "—"}</strong><small>Skill</small></span>
         <span className="g-podium-stat g-podium-arcade"><Gamepad2 size={14} aria-hidden="true" /><strong>{participant.arcadeGameBadgeCount ?? "—"}</strong><small>Arcade</small></span>

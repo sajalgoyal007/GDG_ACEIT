@@ -36,15 +36,14 @@ type FilterKey = "all" | "frozen" | "skill" | "arcade";
 const PAGE_SIZE = 25;
 
 const filters: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "All" },
+  { key: "all", label: "All Participants" },
   { key: "frozen", label: "Frozen Ranks (10+ Skill)" },
   { key: "skill", label: "Skill Leaders" },
   { key: "arcade", label: "Arcade Earners" },
 ];
 
-export function ProgressExplorer({ snapshot, personalProgress, diagnostics }: {
+export function ProgressExplorer({ snapshot, diagnostics }: {
   snapshot: LeaderboardSnapshot;
-  personalProgress?: ReactNode;
   diagnostics?: ReactNode;
 }) {
   const { participants, registeredCount, lastSyncedAt } = snapshot;
@@ -114,13 +113,11 @@ export function ProgressExplorer({ snapshot, personalProgress, diagnostics }: {
         </section>
 
         <section className="g-progress-kpis" aria-label="Live leaderboard summary">
-          <div className="g-progress-kpi g-kpi-blue"><Users size={16} aria-hidden="true" /><span>Registered</span><strong>{registeredCount.toLocaleString("en-IN")}</strong></div>
-          <div className="g-progress-kpi g-kpi-red"><BadgeCheck size={16} aria-hidden="true" /><span>Verified badges</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges.toLocaleString("en-IN")}</strong></div>
-          <div className="g-progress-kpi g-kpi-yellow"><Award size={16} aria-hidden="true" /><span>Skill badges</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.totalSkillBadges.toLocaleString("en-IN")}</strong></div>
-          <div className="g-progress-kpi g-kpi-green"><Lock size={16} aria-hidden="true" /><span>Frozen ranks</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.frozenRankCount.toLocaleString("en-IN")}</strong></div>
+          <div className="g-progress-kpi g-kpi-blue"><Users size={16} aria-hidden="true" /><span>Active Builders</span><strong>{registeredCount.toLocaleString("en-IN")}</strong></div>
+          <div className="g-progress-kpi g-kpi-red"><BadgeCheck size={16} aria-hidden="true" /><span>Total Badges</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.totalVerifiedBadges.toLocaleString("en-IN")}</strong></div>
+          <div className="g-progress-kpi g-kpi-yellow"><Award size={16} aria-hidden="true" /><span>Skill Badges</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.totalSkillBadges.toLocaleString("en-IN")}</strong></div>
+          <div className="g-progress-kpi g-kpi-green"><Lock size={16} aria-hidden="true" /><span>Frozen Ranks</span><strong>{!isDemo && !hasReviewedParticipants ? "—" : snapshot.frozenRankCount.toLocaleString("en-IN")}</strong></div>
         </section>
-
-        {personalProgress && <div className="g-personal-progress">{personalProgress}</div>}
 
         {!isDemo && awaitingVerification > 0 && (
           <p className="g-inline-note" role="status">

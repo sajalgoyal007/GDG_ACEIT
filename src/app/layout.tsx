@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary", title: "GDG On Campus ACEIT — Cloud & AI Campaign 2026", description: "A student developer community learning together and building practical skills." },
 };
 
-export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f8f9fa" }, { media: "(prefers-color-scheme: dark)", color: "#0b0f19" }] };
+export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#ffffff" }, { media: "(prefers-color-scheme: dark)", color: "#0d1117" }] };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('gdg-aceit-theme');t=(t==='light'||t==='dark')?t:'system';var r=document.documentElement;r.dataset.theme=(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';r.dataset.themePreference=t}catch(e){var r=document.documentElement;r.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.dataset.themePreference='system'}` }} /></head><body><ThemeProvider><AuthLinkNotice />{children}</ThemeProvider></body></html>;

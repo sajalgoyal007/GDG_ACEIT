@@ -6,8 +6,8 @@ import { Check, ChevronDown, Monitor, Moon, Sun } from "lucide-react";
 import { useThemePreference, type ThemePreference } from "@/components/theme-provider";
 
 const options: { value: ThemePreference; label: string; description: string; Icon: typeof Sun }[] = [
-  { value: "light", label: "Light", description: "Google Daylight appearance", Icon: Sun },
-  { value: "dark", label: "Dark", description: "Google Obsidian appearance", Icon: Moon },
+  { value: "light", label: "Light", description: "Crisp Google white surfaces", Icon: Sun },
+  { value: "dark", label: "Dark", description: "Google Deep Carbon surfaces", Icon: Moon },
   { value: "system", label: "System", description: "Follow this device's setting", Icon: Monitor },
 ];
 

@@ -5,124 +5,150 @@ import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
+  Binary,
+  Building2,
   Cloud,
   Code2,
-  GitBranch,
+  Gamepad2,
   Globe2,
   GraduationCap,
+  MapPin,
+  Palette,
   Rocket,
+  Smartphone,
   Sparkles,
   Trophy,
   Users,
-  Wrench,
 } from "lucide-react";
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
+import { GdgEmblem } from "@/components/gdg-emblem";
 import { Tilt } from "@/components/tilt";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Meet GDG On Campus ACEIT — the student developer chapter at Arya College of Engineering & IT, Kukas, Jaipur — its mission, milestones, and 2026–2027 organizing team.",
+  description: "Meet GDG On Campus ACEIT — the student developer chapter at Arya College of Engineering & IT, Kukas, Jaipur — its organizers, domains, and flagship milestones.",
 };
 
 const impactStats = [
-  { value: "195+", label: "Active Cloud Learners", detail: "Builders exploring Google Cloud and AI", icon: Users, tone: "blue" },
-  { value: "Tier 1", label: "Study Jam Chapter", detail: "Recognised for campaign participation", icon: BadgeCheck, tone: "green" },
-  { value: "Campus", label: "Hackathons & DevFests", detail: "Build weekends across ACEIT", icon: Rocket, tone: "red" },
-  { value: "Peer-led", label: "Technical Workshops", detail: "Sessions led by student builders", icon: GraduationCap, tone: "yellow" },
-] as const;
-
-const pillars = [
-  {
-    title: "Cloud & AI Study Jams",
-    detail: "Structured Google Cloud learning paths, Gen AI labs, and cohort accountability that turn curiosity into completed Skill Badges.",
-    icon: Cloud,
-    tone: "blue",
-    tags: ["Google Cloud", "Vertex AI", "Study Jams"],
-  },
-  {
-    title: "Hackathons & Rapid Prototyping",
-    detail: "Campus-wide sprints where teams scope an idea, ship a working prototype, and pitch it to builders and mentors in days.",
-    icon: Rocket,
-    tone: "red",
-    tags: ["TechSprint", "Hack-Arya-Verse", "Pitch day"],
-  },
-  {
-    title: "Open-Source & Peer Mentorship",
-    detail: "First pull requests, code reviews, and mentor circles that make contributing to real repositories feel approachable.",
-    icon: GitBranch,
-    tone: "yellow",
-    tags: ["GitHub", "Code review", "Mentor circles"],
-  },
-  {
-    title: "Production Engineering",
-    detail: "Beyond the demo: testing, deployment, performance, and the engineering habits that carry a project into production.",
-    icon: Wrench,
-    tone: "green",
-    tags: ["Ship", "Test", "Scale"],
-  },
-] as const;
-
-const highlights = [
-  {
-    kicker: "LEARN · 2026",
-    title: "Google Cloud Study Jams & Learn with Communities",
-    detail: "Tier 1 chapter recognition, guided Cloud Skills Boost paths, and verified badge progression across the 2026 campaign.",
-    icon: Cloud,
-    tone: "blue",
-    href: "https://gdg.community.dev/events/details/google-gdg-on-campus-arya-college-of-engineering-it-jaipur-india-presents-google-cloud-study-jams-2025/",
-    link: "View the study jam listing",
-  },
-  {
-    kicker: "BUILD · CAMPUS",
-    title: "TechSprint ACEIT Hackathon",
-    detail: "A campus-wide innovation sprint where student teams build practical software solutions and present them to the chapter.",
-    icon: Rocket,
-    tone: "red",
-    href: "https://in.linkedin.com/company/gdg-aceit",
-    link: "See chapter updates",
-  },
-  {
-    kicker: "CONNECT · KUKAS",
-    title: "Hack-Arya-Verse & Campus Developer Culture",
-    detail: "Collaborative hackathons and developer sessions at Arya Old Campus, Kukas, growing a shared builder culture across batches.",
-    icon: Sparkles,
-    tone: "yellow",
-    href: "https://www.aryacollege.in/arya-event/arya-gdg-club",
-    link: "Explore the campus club",
-  },
-  {
-    kicker: "WIN · TEAM MEDHA",
-    title: "Student Builder Wins & Hackathon Champions",
-    detail: "ACEIT builders earning first place in campus and inter-college hackathons — including Team Medha's championship finish.",
-    icon: Trophy,
-    tone: "green",
-    href: "https://in.linkedin.com/company/gdg-aceit",
-    link: "Read the community post",
-  },
+  { value: "195+", label: "Active student builders", detail: "Learning cloud, AI, and open-source engineering", icon: Users, tone: "blue" },
+  { value: "395+", label: "Verified badges", detail: "Earned through the 2026 campaign", icon: BadgeCheck, tone: "red" },
+  { value: "Tier 1", label: "Study Jams chapter", detail: "Top 5 national cohort recognition", icon: Trophy, tone: "yellow" },
+  { value: "5", label: "Builder domains", detail: "Cloud, web, mobile, CP, and design", icon: Code2, tone: "green" },
 ] as const;
 
 const team = [
   {
     name: "Sajal Goyal",
     initials: "SG",
-    role: "Student Organizer / Lead",
+    role: "Organizer",
     focus: "Campaign direction, partner coordination, and the chapter's cloud learning roadmap.",
     tone: "blue",
   },
   {
     name: "Shreya Soni",
     initials: "SS",
-    role: "Co-Organizer / Core Team",
+    role: "Organizer",
     focus: "Community operations, event experience, and peer learning circles.",
     tone: "red",
   },
   {
     name: "Shreyansh Gupta",
     initials: "SG",
-    role: "Co-Organizer / Core Team",
+    role: "Organizer",
     focus: "Technical programming, hackathon mentorship, and builder support.",
     tone: "green",
+  },
+] as const;
+
+const domains = [
+  {
+    title: "Cloud & Generative AI",
+    detail: "Hands-on Google Cloud paths, Gemini labs, and cohort study jams that turn curiosity into shipped skills.",
+    icon: Cloud,
+    tone: "blue",
+    tags: ["Google Cloud", "Gemini", "Vertex AI", "BigQuery"],
+  },
+  {
+    title: "Full-Stack Web Engineering",
+    detail: "From interface to infrastructure — modern React and Node architectures built for production.",
+    icon: Code2,
+    tone: "red",
+    tags: ["Next.js", "React", "Node.js", "TypeScript"],
+  },
+  {
+    title: "Mobile & Flutter",
+    detail: "Cross-platform products with Material 3 craft, tested on real devices and shipped by student teams.",
+    icon: Smartphone,
+    tone: "yellow",
+    tags: ["Flutter", "Material 3", "Firebase"],
+  },
+  {
+    title: "Competitive Programming & DSA",
+    detail: "Weekly problem-solving circles, algorithmic thinking, and technical interview preparation.",
+    icon: Binary,
+    tone: "green",
+    tags: ["DSA", "Contests", "Interview prep"],
+  },
+  {
+    title: "UI/UX & Community Building",
+    detail: "Design systems, campus hackathons, and peer mentorship that make the chapter feel like home.",
+    icon: Palette,
+    tone: "violet",
+    tags: ["Design systems", "Hackathons", "Mentorship"],
+  },
+] as const;
+
+const highlights = [
+  {
+    kicker: "LEARN · COHORT 1",
+    title: "Google Cloud Study Jams — Tier 1 Chapter & Top 5 Ranking",
+    detail: "Recognised on the national cohort leaderboard for campaign participation, completion, and verified builder outcomes.",
+    icon: Cloud,
+    tone: "blue",
+    href: "https://gdg.community.dev/",
+    link: "Explore GDG community",
+    internal: false,
+  },
+  {
+    kicker: "BUILD · 2026",
+    title: "Google Cloud Learn with Communities 2026",
+    detail: "195+ active student builders and 395+ verified badges — the chapter's largest coordinated learning campaign to date.",
+    icon: BadgeCheck,
+    tone: "green",
+    href: "/progress",
+    link: "View the live leaderboard",
+    internal: true,
+  },
+  {
+    kicker: "SHIP · CAMPUS",
+    title: "TechSprint ACEIT Hackathon",
+    detail: "A campus innovation sprint where teams scope, build, and pitch practical software for real engineering problems.",
+    icon: Rocket,
+    tone: "red",
+    href: "https://in.linkedin.com/company/gdg-aceit",
+    link: "See chapter updates",
+    internal: false,
+  },
+  {
+    kicker: "CONNECT · KUKAS",
+    title: "Hack-Arya-Verse & AryaVerse",
+    detail: "Flagship hackathons and developer fests at Arya Old Campus, Kukas, growing a shared builder culture across batches.",
+    icon: Sparkles,
+    tone: "yellow",
+    href: "https://www.aryacollege.in/arya-event/arya-gdg-club",
+    link: "Explore the campus club",
+    internal: false,
+  },
+  {
+    kicker: "WIN · TEAM MEDHA",
+    title: "Student Builder Wins — Team Medha & Hackathon Champions",
+    detail: "ACEIT builders taking first place in campus and inter-college hackathons, including Team Medha's championship finish.",
+    icon: Trophy,
+    tone: "green",
+    href: "https://in.linkedin.com/company/gdg-aceit",
+    link: "Read the community post",
+    internal: false,
   },
 ] as const;
 
@@ -132,21 +158,24 @@ const communityLinks = [
     label: "GDG Community",
     detail: "Find GDG On Campus chapters and upcoming Google developer events.",
     icon: Globe2,
-    external: true,
   },
   {
     href: "https://in.linkedin.com/company/gdg-aceit",
     label: "GDG ACEIT on LinkedIn",
     detail: "Chapter announcements, event recaps, and student builder wins.",
     icon: Users,
-    external: true,
   },
   {
     href: "https://www.aryacollege.in/arya-event/arya-gdg-club",
     label: "Arya GDG Club",
     detail: "The chapter home at Arya College of Engineering & IT, Kukas.",
     icon: GraduationCap,
-    external: true,
+  },
+  {
+    href: "https://www.cloudskillsboost.google/",
+    label: "Google Cloud Skills Boost",
+    detail: "The learning platform behind Skill Badges and Arcade labs.",
+    icon: Cloud,
   },
 ] as const;
 
@@ -157,95 +186,55 @@ export default function AboutPage() {
       <main className="g-main g-about-main">
         <section className="g-about-hero" aria-labelledby="about-title">
           <div className="g-about-copy">
-            <p className="g-eyebrow"><span className="g-eyebrow-dot" />OUR CHAPTER <span>/</span> KUKAS, JAIPUR</p>
-            <h1 id="about-title">GDG On Campus <span className="g-hero-gradient">ACEIT</span></h1>
+            <p className="g-eyebrow"><span className="g-eyebrow-dot" />GDG ON CAMPUS <span>/</span> ARYA COLLEGE OF ENGINEERING &amp; IT</p>
+            <h1 id="about-title">
+              GDG On Campus{" "}
+              <span className="g-wordmark" aria-hidden="true">
+                {"ACEIT".split("").map((letter, index) => <span key={`${letter}-${index}`}>{letter}</span>)}
+              </span>
+              <span className="sr-only">ACEIT</span>
+            </h1>
             <p className="g-about-lede">
-              We help student developers at Arya College of Engineering &amp; IT bridge academic learning and real-world cloud, AI, web, and open-source engineering — through Google&apos;s <span className="g-inline-code">&lt; / &gt;</span> ethos of <strong>Learn · Build · Connect</strong>.
+              <strong>Learn · Build · Connect</strong> with the student developer community at Arya College of Engineering &amp; IT in Kukas, Jaipur, Rajasthan — where campus curiosity becomes production-grade craft.
             </p>
             <div className="g-about-actions">
-              <Link className="g-btn g-btn-primary" href="/progress">Explore the leaderboard <ArrowRight size={16} aria-hidden="true" /></Link>
-              <a className="g-btn g-btn-ghost" href="https://gdg.community.dev/" target="_blank" rel="noreferrer">Visit GDG Community <ArrowUpRight size={16} aria-hidden="true" /></a>
+              <Link className="g-btn g-btn-primary" href="/progress">
+                Explore the leaderboard
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <a className="g-btn g-btn-ghost" href="https://gdg.community.dev/" target="_blank" rel="noreferrer">
+                Visit GDG Community
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
             </div>
-            <div className="g-about-tags">
-              <span>Learn</span><span>Build</span><span>Connect</span>
+            <div className="g-about-meta" aria-label="Chapter facts">
+              <span className="g-about-fact"><MapPin size={13} aria-hidden="true" />Kukas, Jaipur · Rajasthan</span>
+              <span className="g-about-fact"><GraduationCap size={13} aria-hidden="true" />Affiliated to RTU</span>
+              <span className="g-about-fact"><Users size={13} aria-hidden="true" />Student-led chapter</span>
             </div>
           </div>
 
-          <div className="g-about-visual" aria-hidden="true">
-            <span className="g-about-ring" />
-            <span className="g-about-ring g-about-ring-two" />
-            <span className="g-about-mark-wrap"><Image src="/gdg-mark.png" alt="" width={132} height={132} priority /></span>
-            <span className="g-about-code">&lt; / &gt;</span>
-            <span className="g-about-chip chip-blue">CLOUD</span>
-            <span className="g-about-chip chip-red">AI</span>
-            <span className="g-about-chip chip-yellow">WEB</span>
-            <span className="g-about-chip chip-green">OPEN SOURCE</span>
+          <div className="g-about-visual">
+            <GdgEmblem variant="compact" />
           </div>
         </section>
 
         <section className="g-section" aria-labelledby="impact-title">
           <div className="g-section-head">
             <div>
-              <p className="g-kicker">CHAPTER IMPACT</p>
+              <p className="g-kicker">Chapter impact</p>
               <h2 id="impact-title">Built by students, for students</h2>
             </div>
             <p className="g-section-copy">A learning community measured by the builders it helps ship, not by the slides it presents.</p>
           </div>
           <div className="g-impact-grid">
             {impactStats.map(({ value, label, detail, icon: Icon, tone }) => (
-              <Tilt as="article" key={label} max={7} scale={1.02} className={`g-impact g-kpi-${tone}`}>
+              <Tilt as="article" key={label} max={6} scale={1.015} className={`g-impact g-kpi-${tone}`}>
                 <span className="g-impact-icon" aria-hidden="true"><Icon size={18} /></span>
                 <strong>{value}</strong>
-                <h3>{label}</h3>
+                <span className="g-impact-label">{label}</span>
                 <p>{detail}</p>
               </Tilt>
-            ))}
-          </div>
-        </section>
-
-        <section className="g-section" aria-labelledby="pillars-title">
-          <div className="g-section-head">
-            <div>
-              <p className="g-kicker">CORE PILLARS</p>
-              <h2 id="pillars-title">Four ways we build developers</h2>
-            </div>
-            <p className="g-section-copy">Every chapter activity maps back to one of these four pillars.</p>
-          </div>
-          <div className="g-pillar-grid">
-            {pillars.map(({ title, detail, icon: Icon, tone, tags }, index) => (
-              <Tilt as="article" key={title} max={8} scale={1.02} className={`g-pillar g-pillar-${tone}`}>
-                <span className="g-pillar-index">0{index + 1}</span>
-                <span className="g-pillar-icon" aria-hidden="true"><Icon size={20} /></span>
-                <h3>{title}</h3>
-                <p>{detail}</p>
-                <span className="g-pillar-tags">
-                  {tags.map((tag) => <span key={tag}>{tag}</span>)}
-                </span>
-              </Tilt>
-            ))}
-          </div>
-        </section>
-
-        <section className="g-section" aria-labelledby="highlights-title">
-          <div className="g-section-head">
-            <div>
-              <p className="g-kicker">FLAGSHIP MILESTONES</p>
-              <h2 id="highlights-title">Highlights from the chapter</h2>
-            </div>
-            <p className="g-section-copy">Public chapter milestones that shaped the 2026 builder community.</p>
-          </div>
-          <div className="g-highlight-grid">
-            {highlights.map(({ kicker, title, detail, icon: Icon, tone, href, link }, index) => (
-              <article key={title} className={`g-highlight g-highlight-${tone}`}>
-                <div className="g-highlight-top">
-                  <span className="g-highlight-icon" aria-hidden="true"><Icon size={18} /></span>
-                  <span className="g-highlight-index">0{index + 1}</span>
-                </div>
-                <p className="g-highlight-kicker">{kicker}</p>
-                <h3>{title}</h3>
-                <p className="g-highlight-detail">{detail}</p>
-                <a href={href} target="_blank" rel="noreferrer">{link} <ArrowUpRight size={14} aria-hidden="true" /></a>
-              </article>
             ))}
           </div>
         </section>
@@ -253,14 +242,14 @@ export default function AboutPage() {
         <section className="g-section" aria-labelledby="team-title">
           <div className="g-section-head">
             <div>
-              <p className="g-kicker">2026–2027 ORGANIZING TEAM</p>
-              <h2 id="team-title">The people behind the campaign</h2>
+              <p className="g-kicker">2026–2027 organizing team</p>
+              <h2 id="team-title">The people behind the chapter</h2>
             </div>
-            <p className="g-section-copy">Student organizers keeping the chapter learning, building, and shipping together.</p>
+            <p className="g-section-copy">Three student organizers keeping ACEIT learning, building, and shipping together.</p>
           </div>
           <div className="g-team-grid">
             {team.map(({ name, initials, role, focus, tone }) => (
-              <Tilt as="article" key={name} max={9} scale={1.025} className={`g-team-card g-team-${tone}`}>
+              <Tilt as="article" key={name} max={9} scale={1.02} className={`g-team-card g-team-${tone}`}>
                 <span className="g-team-ring" aria-hidden="true">
                   <span className="g-team-initials">{initials}</span>
                 </span>
@@ -273,13 +262,91 @@ export default function AboutPage() {
           </div>
         </section>
 
+        <section className="g-section" aria-labelledby="domains-title">
+          <div className="g-section-head">
+            <div>
+              <p className="g-kicker">Domains we work in</p>
+              <h2 id="domains-title">Five tracks, one builder community</h2>
+            </div>
+            <p className="g-section-copy">Google technologies sit at the centre, surrounded by the engineering and design disciplines that make products real.</p>
+          </div>
+          <div className="g-domain-grid">
+            {domains.map(({ title, detail, icon: Icon, tone, tags }, index) => (
+              <Tilt as="article" key={title} max={7} scale={1.015} className={`g-domain-card g-domain-${tone}`}>
+                <div className="g-domain-top">
+                  <span className="g-domain-icon" aria-hidden="true"><Icon size={19} /></span>
+                  <span className="g-domain-index">{String(index + 1).padStart(2, "0")}</span>
+                </div>
+                <h3>{title}</h3>
+                <p>{detail}</p>
+                <span className="g-domain-tags">
+                  {tags.map((tag) => <span key={tag}>{tag}</span>)}
+                </span>
+              </Tilt>
+            ))}
+          </div>
+        </section>
+
+        <section className="g-section" aria-labelledby="highlights-title">
+          <div className="g-section-head">
+            <div>
+              <p className="g-kicker">Flagship highlights</p>
+              <h2 id="highlights-title">Milestones that shaped the chapter</h2>
+            </div>
+            <p className="g-section-copy">Public chapter milestones from the 2026 campaign and the campus developer culture behind them.</p>
+          </div>
+          <div className="g-highlight-grid">
+            {highlights.map(({ kicker, title, detail, icon: Icon, tone, href, link, internal }) => (
+              <article key={title} className={`g-highlight g-highlight-${tone}`}>
+                <div className="g-highlight-top">
+                  <span className="g-highlight-icon" aria-hidden="true"><Icon size={18} /></span>
+                  <span className="g-highlight-kicker">{kicker}</span>
+                </div>
+                <h3>{title}</h3>
+                <p className="g-highlight-detail">{detail}</p>
+                {internal
+                  ? <Link href={href}>{link} <ArrowRight size={14} aria-hidden="true" /></Link>
+                  : <a href={href} target="_blank" rel="noreferrer">{link} <ArrowUpRight size={14} aria-hidden="true" /></a>}
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="g-section" aria-labelledby="campus-title">
+          <div className="g-campus-card">
+            <div className="g-campus-copy">
+              <p className="g-kicker">The campus</p>
+              <h2 id="campus-title">About Arya College of Engineering &amp; IT, Jaipur</h2>
+              <p>
+                ACEIT is the Kukas, Jaipur campus of the Arya Group of Colleges, affiliated with Rajasthan Technical University (RTU). Its student developer culture runs on coding clubs, peer study groups, and an innovation ecosystem that gives builders room to experiment, ship, and present their work. GDG On Campus ACEIT is the student-led chapter connecting that campus energy to Google&apos;s developer ecosystem.
+              </p>
+              <div className="g-campus-facts">
+                <span className="g-campus-fact"><MapPin size={12} aria-hidden="true" />Kukas, Jaipur</span>
+                <span className="g-campus-fact"><GraduationCap size={12} aria-hidden="true" />RTU affiliated</span>
+                <span className="g-campus-fact"><Building2 size={12} aria-hidden="true" />Arya Group of Colleges</span>
+                <span className="g-campus-fact"><Gamepad2 size={12} aria-hidden="true" />Hackathons &amp; devfests</span>
+              </div>
+              <a className="g-campus-link" href="https://www.aryacollege.in/arya-event/arya-gdg-club" target="_blank" rel="noreferrer">
+                Explore the ACEIT campus club <ArrowUpRight size={14} aria-hidden="true" />
+              </a>
+            </div>
+            <div className="g-campus-visual">
+              <span className="g-campus-plate">
+                <Image className="g-campus-mark" src="/gdg-mark.png" alt="" width={56} height={56} />
+                <strong>ACEIT</strong>
+                <span>KUKAS · JAIPUR · RTU</span>
+              </span>
+            </div>
+          </div>
+        </section>
+
         <section className="g-section" aria-labelledby="links-title">
           <div className="g-section-head">
             <div>
-              <p className="g-kicker">OFFICIAL COMMUNITY LINKS</p>
+              <p className="g-kicker">Official community links</p>
               <h2 id="links-title">Stay connected</h2>
             </div>
-            <p className="g-section-copy">Chapter resources, public updates, and the live campaign leaderboard.</p>
+            <p className="g-section-copy">Chapter resources, public updates, and the live campaign leaderboard — all in one place.</p>
           </div>
           <div className="g-link-grid">
             {communityLinks.map(({ href, label, detail, icon: Icon }) => (
@@ -299,7 +366,7 @@ export default function AboutPage() {
 
         <section className="g-cta-band" aria-labelledby="about-cta-title">
           <div>
-            <p className="g-kicker">BUILD WITH US</p>
+            <p className="g-kicker">Build with us</p>
             <h2 id="about-cta-title">The next chapter is written by builders.</h2>
           </div>
           <div className="g-cta-actions">
