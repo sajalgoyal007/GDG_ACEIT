@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, Home, LockKeyhole, Menu, Trophy, Users, X } from "lucide-react";
@@ -13,22 +14,7 @@ const navLinks = [
   { href: "/about", label: "About", Icon: Users },
 ];
 
-/** Crisp four-color "< >" chapter mark used in the sticky header. */
-function GdgMark() {
-  return (
-    <svg className="g-brand-mark" viewBox="0 0 40 40" role="presentation" aria-hidden="true" focusable="false">
-      <rect x="0.75" y="0.75" width="38.5" height="38.5" rx="10.5" className="g-brand-tile" />
-      <g fill="none" strokeWidth="3.1" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16.4 12.6 9.6 20l6.8 7.4" stroke="#4285F4" />
-        <path d="M9.6 20h3.4" stroke="#34A853" />
-        <path d="M23.6 12.6 30.4 20l-6.8 7.4" stroke="#EA4335" />
-        <path d="M30.4 20h-3.4" stroke="#FBBC04" />
-      </g>
-      <circle cx="20" cy="20" r="1.9" className="g-brand-spark" />
-    </svg>
-  );
-}
-
+/** Official GDG mark used in the sticky header. */
 export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "database" }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -57,7 +43,7 @@ export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "databas
     <header className="g-nav">
       <div className="g-nav-inner">
         <Link className="g-brand" href="/" aria-label="GDG On Campus ACEIT home" onClick={() => setMobileMenuOpen(false)}>
-          <GdgMark />
+          <Image className="g-brand-mark" src="/gdg-mark.png" alt="" width={40} height={40} priority />
           <span className="g-brand-copy">
             <strong>GDG On Campus</strong>
             <small>ACEIT · JAIPUR</small>

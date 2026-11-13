@@ -79,17 +79,7 @@
   flex: none;
   width: 34px;
   height: 34px;
-}
-
-.g-brand-tile {
-  fill: var(--bg-surface);
-  stroke: var(--border-subtle);
-  stroke-width: 1.5;
-}
-
-.g-brand-spark {
-  fill: var(--text-tertiary);
-  opacity: 0.55;
+  border-radius: 9px;
 }
 
 .g-brand-copy {
@@ -859,16 +849,29 @@ html[data-theme="light"] .avatar-purple { color: #6b21a8; background: rgba(107, 
 
 .g-wordmark {
   display: inline-flex;
-  color: #4285f4;
+  padding-right: 0.06em;
   letter-spacing: -0.03em;
+  background-image: linear-gradient(
+    96deg,
+    #4285f4 0%,
+    #4285f4 16%,
+    #ea4335 34%,
+    #ea4335 45%,
+    #fbbc04 58%,
+    #fbbc04 68%,
+    #34a853 84%,
+    #34a853 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Signature Google Blue with whisper-soft multi-hue shifts across the letters. */
-.g-wordmark > span { color: #4285f4; }
-.g-wordmark > span:nth-child(2) { color: color-mix(in srgb, #4285f4 84%, var(--google-green)); }
-.g-wordmark > span:nth-child(3) { color: color-mix(in srgb, #4285f4 92%, var(--google-yellow)); }
-.g-wordmark > span:nth-child(4) { color: color-mix(in srgb, #4285f4 88%, var(--google-red)); }
-.g-wordmark > span:nth-child(5) { color: color-mix(in srgb, #4285f4 90%, var(--google-green)); }
+/* Letters stay transparent so the shared Google gradient paints the word. */
+.g-wordmark > span {
+  color: inherit;
+}
 
 .g-hero-lede {
   max-width: 500px;
