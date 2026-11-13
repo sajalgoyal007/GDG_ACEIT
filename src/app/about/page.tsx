@@ -248,15 +248,24 @@ export default function AboutPage() {
             <p className="g-section-copy">Three student organizers keeping ACEIT learning, building, and shipping together.</p>
           </div>
           <div className="g-team-grid">
-            {team.map(({ name, initials, role, focus, tone }) => (
+            {team.map(({ name, initials, role, focus, tone }, index) => (
               <Tilt as="article" key={name} max={9} scale={1.02} className={`g-team-card g-team-${tone}`}>
-                <span className="g-team-ring" aria-hidden="true">
-                  <span className="g-team-initials">{initials}</span>
-                </span>
-                <span className="g-team-badge">{role}</span>
+                <span className="g-team-band" aria-hidden="true" />
+                <div className="g-team-head">
+                  <span className="g-team-ring" aria-hidden="true">
+                    <span className="g-team-initials">{initials}</span>
+                  </span>
+                  <span className="g-team-heading">
+                    <span className="g-team-badge">{role}</span>
+                    <span className="g-team-id">GDGoC · ID {String(index + 1).padStart(2, "0")}</span>
+                  </span>
+                </div>
                 <h3>{name}</h3>
                 <p>{focus}</p>
-                <span className="g-team-foot"><Code2 size={13} aria-hidden="true" />GDGoC ACEIT · 2026–27</span>
+                <span className="g-team-foot">
+                  <span className="g-team-chip">2026–27 Organizing Team</span>
+                  <Code2 size={13} aria-hidden="true" />
+                </span>
               </Tilt>
             ))}
           </div>

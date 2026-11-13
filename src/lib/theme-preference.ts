@@ -1,12 +1,15 @@
 export type ThemePreference = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
 
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "light";
+
 /**
- * Reads a persisted preference. Anything missing or unrecognized is treated as
- * the first-visit default: follow the operating system.
+ * Reads a persisted preference. Anything missing or unrecognized falls back to
+ * the first-visit default: crisp Google White. Dark and System are only applied
+ * after the visitor explicitly selects them.
  */
 export function normalizeThemePreference(value: string | null | undefined): ThemePreference {
-  return value === "light" || value === "dark" ? value : "system";
+  return value === "light" || value === "dark" || value === "system" ? value : DEFAULT_THEME_PREFERENCE;
 }
 
 /**

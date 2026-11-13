@@ -2,16 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { normalizeThemePreference, resolveTheme, resolveThemeAttributes } from "./theme-preference.ts";
 
-test("a first visit with no saved value defaults to System", () => {
-  assert.equal(normalizeThemePreference(null), "system");
-  assert.equal(normalizeThemePreference(undefined), "system");
-  assert.equal(normalizeThemePreference(""), "system");
+test("a first visit with no saved value defaults to crisp Google White", () => {
+  assert.equal(normalizeThemePreference(null), "light");
+  assert.equal(normalizeThemePreference(undefined), "light");
+  assert.equal(normalizeThemePreference(""), "light");
 });
 
-test("only explicit light and dark preferences are restored", () => {
+test("every explicit preference is restored, including System", () => {
   assert.equal(normalizeThemePreference("light"), "light");
   assert.equal(normalizeThemePreference("dark"), "dark");
-  assert.equal(normalizeThemePreference("sepia"), "system");
+  assert.equal(normalizeThemePreference("system"), "system");
+  assert.equal(normalizeThemePreference("sepia"), "light");
 });
 
 test("System follows the operating system in both directions", () => {

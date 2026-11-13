@@ -6,8 +6,8 @@ import { Check, ChevronDown, Monitor, Moon, Sun } from "lucide-react";
 import { useThemePreference, type ThemePreference } from "@/components/theme-provider";
 
 const options: { value: ThemePreference; label: string; description: string; Icon: typeof Sun }[] = [
-  { value: "light", label: "Light", description: "Crisp Google white surfaces", Icon: Sun },
-  { value: "dark", label: "Dark", description: "Google Deep Carbon surfaces", Icon: Moon },
+  { value: "light", label: "Light", description: "Crisp Google White · default", Icon: Sun },
+  { value: "dark", label: "Dark", description: "Google Carbon #0D1117", Icon: Moon },
   { value: "system", label: "System", description: "Follow this device's setting", Icon: Monitor },
 ];
 
@@ -117,8 +117,12 @@ export function ThemeControl() {
                 onClick={() => selectTheme(value)}
               >
                 <Icon size={15} aria-hidden="true" />
+                <span className={`theme-control-swatch theme-control-swatch-${value}`} aria-hidden="true" />
                 <span>
-                  <strong>{label}</strong>
+                  <strong>
+                    {label}
+                    {value === "light" && <em className="theme-control-default">Default</em>}
+                  </strong>
                   <small>{description}</small>
                 </span>
                 <Check size={14} aria-hidden="true" className="theme-control-check" />

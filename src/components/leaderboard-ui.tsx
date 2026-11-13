@@ -32,9 +32,10 @@ export function RankBadge({ rank, frozen }: { rank: number | null; frozen?: bool
   if (rank === null) {
     return <span className="g-rank g-rank-unranked" aria-label="Unranked until badge verification">—</span>;
   }
+  const tone = rank <= 3 ? ` g-rank-top g-rank-${rank}` : "";
   return (
     <span
-      className={`g-rank${frozen ? " g-rank-frozen" : ""}`}
+      className={`g-rank${tone}${frozen ? " g-rank-frozen" : ""}`}
       title={frozen ? `Rank #${rank} (locked at 10 Skill Badges)` : `Rank #${rank}`}
     >
       <small>#</small>{rank}

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { normalizeThemePreference, resolveThemeAttributes, type ThemePreference } from "@/lib/theme-preference";
+import { DEFAULT_THEME_PREFERENCE, normalizeThemePreference, resolveThemeAttributes, type ThemePreference } from "@/lib/theme-preference";
 
 export type { ThemePreference };
 type ThemeContextValue = { preference: ThemePreference; setPreference: (value: ThemePreference) => void };
@@ -10,7 +10,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "gdg-aceit-theme";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPreferenceState] = useState<ThemePreference>("system");
+  const [preference, setPreferenceState] = useState<ThemePreference>(DEFAULT_THEME_PREFERENCE);
 
   const apply = useCallback((value: ThemePreference) => {
     const { theme, themePreference } = resolveThemeAttributes(
