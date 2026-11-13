@@ -2029,84 +2029,6 @@ html[data-theme="light"] .g-cta-band {
   max-width: 180px;
 }
 
-/* Pagination --------------------------------------------------------------- */
-
-.g-pagination {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-  padding: 14px 22px;
-  border-top: 1px solid var(--border-subtle);
-  background: var(--bg-surface-subtle);
-}
-
-.g-page-arrow {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.g-page-arrow:hover:not(:disabled) {
-  border-color: var(--border-strong);
-  color: var(--text-primary);
-}
-
-.g-page-arrow:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.g-page-numbers {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.g-page-number {
-  min-width: 30px;
-  height: 30px;
-  padding: 0 7px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-}
-
-.g-page-number:hover {
-  border-color: var(--border-subtle);
-  background: var(--bg-surface);
-}
-
-.g-page-number.is-active {
-  border-color: var(--accent-solid);
-  background: var(--accent-solid);
-  color: var(--accent-contrast);
-}
-
-.g-page-gap {
-  min-width: 20px;
-  color: var(--text-tertiary);
-  font-size: 11px;
-  text-align: center;
-}
-
-.g-page-summary {
-  margin-left: auto;
-  color: var(--text-tertiary);
-  font-size: 10.5px;
-}
-
 .g-diagnostics {
   margin-top: 22px;
 }
@@ -2997,13 +2919,9 @@ html[data-theme="light"] .g-cta-band {
     padding: 42px 0 40px;
   }
 
-  .g-hero-title {
-    font-size: clamp(38px, 10vw, 54px);
-  }
-
   .g-hero-lede,
   .g-about-lede {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .g-hero-visual {
@@ -3012,10 +2930,6 @@ html[data-theme="light"] .g-cta-band {
 
   .g-emblem-wrap {
     width: min(100%, 380px);
-  }
-
-  .g-section-head h2 {
-    font-size: 25px;
   }
 
   .g-bento {
@@ -3101,10 +3015,6 @@ html[data-theme="light"] .g-cta-band {
     gap: 6px;
   }
 
-  .g-hero-meta-item {
-    font-size: 10px;
-  }
-
   .g-emblem-wrap {
     width: min(100%, 330px);
   }
@@ -3132,10 +3042,6 @@ html[data-theme="light"] .g-cta-band {
 
   .g-progress-kpi {
     padding: 12px 13px;
-  }
-
-  .g-progress-kpi > strong {
-    font-size: 23px;
   }
 
   .g-board-head {
@@ -3167,8 +3073,7 @@ html[data-theme="light"] .g-cta-band {
 
   .g-filter {
     flex: none;
-    padding: 0 9px;
-    font-size: 10px;
+    padding: 0 11px;
   }
 
   .g-board-meta {
@@ -3183,30 +3088,12 @@ html[data-theme="light"] .g-cta-band {
     padding: 13px 14px;
   }
 
-  .g-pagination {
-    padding: 12px 16px;
-  }
-
-  .g-page-summary {
-    width: 100%;
-    margin-left: 0;
-    text-align: center;
-  }
-
   .g-progress-head {
     padding-top: 34px;
   }
 
-  .g-progress-title h1 {
-    font-size: 40px;
-  }
-
   .g-about-hero {
     padding: 42px 0 40px;
-  }
-
-  .g-about-copy h1 {
-    font-size: clamp(34px, 9vw, 46px);
   }
 
   .g-about-visual {
@@ -3262,14 +3149,6 @@ html[data-theme="light"] .g-cta-band {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .g-progress-kpi > span {
-    font-size: 8px;
-  }
-
-  .g-progress-kpi > strong {
-    font-size: 21px;
-  }
-
   .g-progress-actions {
     width: 100%;
   }
@@ -3311,10 +3190,6 @@ html[data-theme="light"] .g-cta-band {
 
   .g-cta-band .g-btn {
     width: 100%;
-  }
-
-  .g-page-numbers .g-page-number:not(.is-active):not(:first-child):not(:last-child) {
-    display: none;
   }
 }
 
@@ -3853,10 +3728,6 @@ html[data-theme="light"] .g-progress-kpi {
     padding: 11px 12px;
   }
 
-  .g-kpi-copy strong {
-    font-size: 18px;
-  }
-
   .g-kpi-copy small {
     display: none;
   }
@@ -3891,15 +3762,486 @@ html[data-theme="light"] .g-progress-kpi {
     height: 15px;
   }
 
-  .g-kpi-copy strong {
-    font-size: 17px;
-  }
-
   .g-kpi-copy > span {
-    font-size: 10px;
+    font-size: 11.5px;
     line-height: 1.15;
     overflow-wrap: anywhere;
     white-space: normal;
+  }
+}
+
+/* ==========================================================================
+   TYPOGRAPHY PASS — legible scale, fewer micro-labels, calmer hierarchy
+   Mobile-first ramp: 30 → 48 → 52 (display), 20 → 24 → 28 (sections).
+   ========================================================================== */
+
+/* Display headlines --------------------------------------------------------- */
+
+.g-hero-title,
+.g-progress-title h1,
+.g-about-copy h1 {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+}
+
+.g-wordmark {
+  letter-spacing: -0.025em;
+}
+
+/* Section headings ---------------------------------------------------------- */
+
+.g-section-head h2,
+.g-board-head h2,
+.g-campus-copy h2,
+.g-cta-band h2 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.22;
+}
+
+/* Supporting copy ----------------------------------------------------------- */
+
+.g-hero-lede,
+.g-about-lede,
+.g-progress-title > p:last-child {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.g-section-copy,
+.g-bento-copy,
+.g-bento-note p,
+.g-domain-card > p,
+.g-highlight-detail,
+.g-team-card > p,
+.g-campus-copy > p {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* Micro-labels get a floor of ~11px so nothing renders at 8–10px ---------- */
+
+.g-eyebrow,
+.g-kicker,
+.g-live-pill,
+.g-footer-links > span,
+.g-hero-chip,
+.g-bento-badge,
+.g-team-badge,
+.g-team-chip,
+.g-domain-index,
+.g-highlight-kicker,
+.g-campus-plate span,
+.g-cta-updated {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+}
+
+.g-brand-copy small {
+  font-size: 10px;
+}
+
+.g-live {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+}
+
+/* Navigation ---------------------------------------------------------------- */
+
+.g-brand-copy strong {
+  font-size: 14px;
+}
+
+.g-nav-link {
+  font-size: 13px;
+}
+
+.g-admin-link {
+  font-size: 12.5px;
+}
+
+.g-drawer-link {
+  font-size: 14px;
+}
+
+.g-drawer-current {
+  font-size: 10.5px;
+}
+
+.g-drawer-admin strong {
+  font-size: 13.5px;
+}
+
+.g-drawer-admin small {
+  font-size: 12px;
+}
+
+/* Hero details -------------------------------------------------------------- */
+
+.g-hero-meta-item {
+  font-size: 12px;
+}
+
+.g-btn {
+  font-size: 14px;
+}
+
+.g-text-link,
+.g-refresh {
+  font-size: 13px;
+}
+
+.g-inline-note {
+  font-size: 13px;
+}
+
+.g-timestamp {
+  font-size: 12px;
+}
+
+.g-timestamp span {
+  font-size: 10.5px;
+}
+
+/* KPI strip + progress KPIs ------------------------------------------------- */
+
+.g-kpi-copy strong,
+.g-progress-kpi > strong,
+.g-impact > strong {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.g-kpi-copy > span,
+.g-progress-kpi > span {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.g-kpi-copy small {
+  font-size: 12px;
+}
+
+/* Bento + process ----------------------------------------------------------- */
+
+.g-bento-title,
+.g-bento-note h3 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.g-step-body strong {
+  font-size: 14px;
+}
+
+.g-step-body small {
+  font-size: 13px;
+}
+
+.g-step-index {
+  font-size: 11px;
+}
+
+.g-domain-row,
+.g-domain-row strong {
+  font-size: 13.5px;
+}
+
+.g-domain-row small {
+  font-size: 11px;
+}
+
+.g-bento-link {
+  font-size: 13px;
+}
+
+/* Leaderboard toolbar ------------------------------------------------------- */
+
+.g-search input {
+  font-size: 13.5px;
+}
+
+.g-filter {
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.g-board-count {
+  font-size: 11.5px;
+}
+
+.g-board-meta {
+  font-size: 12.5px;
+}
+
+.g-board-rule {
+  font-size: 11px;
+}
+
+/* Leaderboard rows ---------------------------------------------------------- */
+
+.g-table {
+  font-size: 13.5px;
+}
+
+.g-table th {
+  padding: 11px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.g-table td {
+  padding: 12px 16px;
+}
+
+.g-table th:first-child,
+.g-table td:first-child {
+  padding-left: 16px;
+}
+
+.g-table th:last-child,
+.g-table td:last-child {
+  padding-right: 16px;
+}
+
+.g-row-person strong,
+.g-mobile-person strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.g-row-person small,
+.g-mobile-person small {
+  font-size: 12.5px;
+}
+
+.g-rank {
+  min-width: 42px;
+  height: 30px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.g-rank small {
+  font-size: 11px;
+}
+
+.g-cell-badge,
+.g-pill,
+.g-pill strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.g-pill strong {
+  font-weight: 700;
+}
+
+.g-cell-badge {
+  padding: 4px 10px;
+}
+
+.g-cell-total {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.g-cell-muted {
+  font-size: 12.5px;
+}
+
+.g-lock-chip,
+.g-status {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.g-progress-value {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.g-progress-value small {
+  font-size: 11px;
+}
+
+.g-mobile-card {
+  gap: 11px;
+  padding: 16px 18px;
+}
+
+/* About page + organizer cards ---------------------------------------------- */
+
+.g-about-fact,
+.g-campus-fact {
+  font-size: 12px;
+}
+
+.g-impact-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.g-impact p {
+  font-size: 13px;
+}
+
+.g-team-initials {
+  font-size: 20px;
+}
+
+.g-team-card h3,
+.g-domain-card h3,
+.g-highlight h3 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.g-team-foot {
+  font-size: 12px;
+}
+
+.g-domain-tags span {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.g-highlight > a,
+.g-campus-link {
+  font-size: 13px;
+}
+
+.g-link-card strong {
+  font-size: 14px;
+}
+
+.g-link-card small {
+  font-size: 12.5px;
+}
+
+.g-campus-plate strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* Footer -------------------------------------------------------------------- */
+
+.g-footer-brand strong {
+  font-size: 14.5px;
+}
+
+.g-footer-brand small {
+  font-size: 12px;
+}
+
+.g-footer-links a {
+  font-size: 13px;
+}
+
+.g-footer-bottom {
+  font-size: 12px;
+}
+
+/* Small-tablet and up ------------------------------------------------------- */
+
+@media (min-width: 640px) {
+  .g-hero-title,
+  .g-progress-title h1,
+  .g-about-copy h1 {
+    font-size: 48px;
+  }
+
+  .g-section-head h2,
+  .g-board-head h2,
+  .g-campus-copy h2,
+  .g-cta-band h2 {
+    font-size: 24px;
+  }
+
+  .g-hero-lede,
+  .g-about-lede,
+  .g-progress-title > p:last-child {
+    font-size: 16px;
+  }
+
+  .g-section-copy,
+  .g-bento-copy,
+  .g-bento-note p,
+  .g-domain-card > p,
+  .g-highlight-detail,
+  .g-team-card > p,
+  .g-campus-copy > p {
+    font-size: 15px;
+  }
+
+  .g-kpi-copy strong,
+  .g-progress-kpi > strong,
+  .g-impact > strong {
+    font-size: 30px;
+  }
+
+  .g-kpi-copy > span,
+  .g-progress-kpi > span {
+    font-size: 14px;
+  }
+
+  .g-row-person strong,
+  .g-mobile-person strong {
+    font-size: 16px;
+  }
+
+  .g-rank {
+    font-size: 14px;
+  }
+
+  .g-cell-total {
+    font-size: 15px;
+  }
+
+  .g-table th {
+    padding: 12px 20px;
+  }
+
+  .g-table td {
+    padding: 12px 20px;
+  }
+
+  .g-table th:first-child,
+  .g-table td:first-child {
+    padding-left: 20px;
+  }
+
+  .g-table th:last-child,
+  .g-table td:last-child {
+    padding-right: 20px;
+  }
+}
+
+/* Desktop ------------------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  .g-hero-title,
+  .g-progress-title h1,
+  .g-about-copy h1 {
+    font-size: 52px;
+  }
+
+  .g-section-head h2,
+  .g-board-head h2,
+  .g-campus-copy h2,
+  .g-cta-band h2 {
+    font-size: 28px;
   }
 }
 

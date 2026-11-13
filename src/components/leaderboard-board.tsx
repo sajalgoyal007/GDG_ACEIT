@@ -1,18 +1,9 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState, useTransition, type ReactNode } from "react";
+import { useId, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-  Award,
-  ChevronLeft,
-  ChevronRight,
-  Gamepad2,
-  Lock,
-  RefreshCw,
-  Search,
-  X,
-} from "lucide-react";
+import { Award, Gamepad2, Lock, RefreshCw, Search, X } from "lucide-react";
 import {
   Avatar,
   BadgePills,
@@ -27,7 +18,6 @@ import type { LeaderboardSnapshot, PublicParticipant } from "@/lib/types";
 import { matchesRankFreezeFilter, rankParticipants } from "@/lib/leaderboard";
 
 type FilterKey = "all" | "frozen" | "skill" | "arcade";
-const PAGE_SIZE = 25;
 
 const filters: { key: FilterKey; label: string }[] = [
   { key: "all", label: "All" },
@@ -38,8 +28,8 @@ const filters: { key: FilterKey; label: string }[] = [
 
 /**
  * The single interactive leaderboard used by both the home page and /progress.
- * It owns search, filters, pagination, the participant dialog, and the
- * LAST UPDATED / Refresh data controls so both pages behave identically.
+ * It owns search, filters, the full continuous list, the participant dialog,
+ * and the LAST UPDATED / Refresh data controls so both pages behave identically.
  */
 export function LeaderboardBoard({
   snapshot,
@@ -61,7 +51,6 @@ export function LeaderboardBoard({
   const [isRefreshing, startRefresh] = useTransition();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<PublicParticipant | null>(null);
 
   const ranked = useMemo(() => rankParticipants(participants), [participants]);
@@ -77,21 +66,6 @@ export function LeaderboardBoard({
       return true;
     });
   }, [ranked, search, filter]);
-
-  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
-  const safePage = Math.min(page, pageCount);
-  const pageStart = (safePage - 1) * PAGE_SIZE;
-  const pageRows = visible.slice(pageStart, pageStart + PAGE_SIZE);
-  const rangeStart = visible.length === 0 ? 0 : pageStart + 1;
-  const rangeEnd = Math.min(pageStart + PAGE_SIZE, visible.length);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search, filter]);
-
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
 
   function resetFilters() {
     setSearch("");
@@ -174,8 +148,8 @@ export function LeaderboardBoard({
 
         <div className="g-board-meta">
           <span>
-            Showing <strong>{rangeStart.toLocaleString("en-IN")}–{rangeEnd.toLocaleString("en-IN")}</strong> of{" "}
-            <strong>{visible.length.toLocaleString("en-IN")}</strong>
+            Showing all <strong>{visible.length.toLocaleString("en-IN")}</strong>{" "}
+            {visible.length === 1 ? "builder" : "builders"} in one continuous list
           </span>
           <span className="g-board-rule">Ranked by verified Skill Badges · Arcade never affects rank</span>
         </div>
@@ -197,13 +171,8 @@ export function LeaderboardBoard({
                     <th scope="col">Status</th>
                   </tr>
                 </thead>
-                <motion.tbody
-                  key={`page-${safePage}-${filter}-${search}`}
-                  initial={reduceMotion ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: reduceMotion ? 0 : 0.24 }}
-                >
-                  {pageRows.map(({ participant, rank }) => (
+                <tbody>
+                  {visible.map(({ participant, rank }) => (
                     <tr key={participant.id}>
                       <td>
                         <RankBadge rank={rank} frozen={Boolean(participant.frozenRank)} />
@@ -280,12 +249,12 @@ export function LeaderboardBoard({
                       </td>
                     </tr>
                   ))}
-                </motion.tbody>
+                </tbody>
               </table>
             </div>
 
             <ul className="g-mobile-board" aria-label="Leaderboard participants">
-              {pageRows.map(({ participant, rank }) => (
+              {visible.map(({ participant, rank }) => (
                 <li key={participant.id}>
                   <button
                     type="button"
@@ -335,8 +304,6 @@ export function LeaderboardBoard({
                 </li>
               ))}
             </ul>
-
-            <Pagination page={safePage} pageCount={pageCount} onPage={setPage} />
           </>
         )}
       </section>
@@ -352,52 +319,5 @@ export function LeaderboardBoard({
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function Pagination({ page, pageCount, onPage }: { page: number; pageCount: number; onPage: (page: number) => void }) {
-  if (pageCount <= 1) return null;
-  const tokens: (number | "gap")[] = [];
-  if (pageCount <= 7) {
-    for (let index = 1; index <= pageCount; index += 1) tokens.push(index);
-  } else {
-    tokens.push(1);
-    const start = Math.max(2, page - 1);
-    const end = Math.min(pageCount - 1, page + 1);
-    if (start > 2) tokens.push("gap");
-    for (let index = start; index <= end; index += 1) tokens.push(index);
-    if (end < pageCount - 1) tokens.push("gap");
-    tokens.push(pageCount);
-  }
-
-  return (
-    <nav className="g-pagination" aria-label="Leaderboard pages">
-      <button type="button" className="g-page-arrow" onClick={() => onPage(page - 1)} disabled={page === 1} aria-label="Previous page">
-        <ChevronLeft size={16} />
-      </button>
-      <span className="g-page-numbers">
-        {tokens.map((token, index) =>
-          token === "gap" ? (
-            <span key={`gap-${index}`} className="g-page-gap" aria-hidden="true">
-              …
-            </span>
-          ) : (
-            <button
-              key={token}
-              type="button"
-              className={token === page ? "g-page-number is-active" : "g-page-number"}
-              aria-current={token === page ? "page" : undefined}
-              onClick={() => onPage(token)}
-            >
-              {token}
-            </button>
-          ),
-        )}
-      </span>
-      <button type="button" className="g-page-arrow" onClick={() => onPage(page + 1)} disabled={page === pageCount} aria-label="Next page">
-        <ChevronRight size={16} />
-      </button>
-      <span className="g-page-summary">Page {page} of {pageCount}</span>
-    </nav>
   );
 }
