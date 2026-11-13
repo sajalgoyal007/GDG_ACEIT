@@ -4,104 +4,77 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, LockKeyhole, Menu, TrendingUp, Users, X } from "lucide-react";
+import { ArrowUpRight, Home, LockKeyhole, Menu, Trophy, Users, X } from "lucide-react";
 import { ThemeControl } from "@/components/theme-control";
+
+const navLinks = [
+  { href: "/", label: "Home", Icon: Home },
+  { href: "/progress", label: "Leaderboard", Icon: Trophy },
+  { href: "/about", label: "About", Icon: Users },
+];
 
 export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "database" }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Close mobile navigation drawer whenever pathname changes
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Close mobile menu on Escape key
   useEffect(() => {
     if (!mobileMenuOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMobileMenuOpen(false);
-      }
+      if (event.key === "Escape") setMobileMenuOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
 
-  // Lock body scroll when mobile menu is open
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.classList.add("mobile-menu-open");
-    } else {
-      document.body.classList.remove("mobile-menu-open");
-    }
-    return () => {
-      document.body.classList.remove("mobile-menu-open");
-    };
+    if (mobileMenuOpen) document.body.classList.add("mobile-menu-open");
+    else document.body.classList.remove("mobile-menu-open");
+    return () => document.body.classList.remove("mobile-menu-open");
   }, [mobileMenuOpen]);
 
-  const navLinks = [
-    { href: "/", label: "Dashboard", Icon: LayoutDashboard },
-    { href: "/progress", label: "Progress", Icon: TrendingUp },
-    { href: "/about", label: "About", Icon: Users },
-  ];
-
   return (
-    <header className="community-topbar">
-      <div className="topbar-inner">
-        <Link
-          className="community-brand"
-          href="/"
-          aria-label="GDG On Campus ACEIT home"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <Image
-            className="community-brand-mark"
-            src="/gdg-mark.png"
-            alt=""
-            width={44}
-            height={44}
-            priority
-          />
-          <span className="community-brand-copy">
-            <strong>GDG On Campus ACEIT</strong>
-            <small>JAIPUR · RAJASTHAN</small>
+    <header className="g-nav">
+      <div className="g-nav-inner">
+        <Link className="g-brand" href="/" aria-label="GDG On Campus ACEIT home" onClick={() => setMobileMenuOpen(false)}>
+          <Image className="g-brand-mark" src="/gdg-mark.png" alt="" width={40} height={40} priority />
+          <span className="g-brand-copy">
+            <strong>GDG On Campus</strong>
+            <small>ACEIT · JAIPUR</small>
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="reference-nav desktop-nav" aria-label="Main navigation">
-          {navLinks.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              aria-current={pathname === href ? "page" : undefined}
-            >
-              {label}
-            </Link>
-          ))}
+        <nav className="g-nav-links" aria-label="Main navigation">
+          {navLinks.map(({ href, label }) => {
+            const active = pathname === href;
+            return (
+              <Link key={href} href={href} className={active ? "g-nav-link is-active" : "g-nav-link"} aria-current={active ? "page" : undefined}>
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Desktop Trailing Actions */}
-        <div className="desktop-trailing-actions">
-          {dataMode === "demo" ? (
-            <span className="demo-label"><span aria-hidden="true" />DEMO DATA</span>
-          ) : (
-            <span className="demo-label live-label"><span aria-hidden="true" />LIVE</span>
-          )}
+        <div className="g-nav-actions">
+          <span className={dataMode === "demo" ? "g-live g-live-demo" : "g-live"} title={dataMode === "demo" ? "Synthetic demo records" : "Community-recorded data"}>
+            <span className="g-live-dot" aria-hidden="true" />
+            {dataMode === "demo" ? "DEMO" : "LIVE"}
+          </span>
           <ThemeControl />
-          <Link className="header-admin" href="/admin/login" aria-label="Admin sign in">
+          <Link className="g-admin-link" href="/admin/login" aria-label="Admin sign in">
             <LockKeyhole size={14} aria-hidden="true" />
             <span>Admin</span>
           </Link>
         </div>
 
-        {/* Dedicated Mobile Header Controls */}
-        <div className="mobile-header-actions">
+        <div className="g-mobile-actions">
           <ThemeControl />
           <button
             type="button"
-            className="mobile-nav-toggle"
+            className="g-menu-toggle"
             aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="community-mobile-nav"
@@ -112,68 +85,37 @@ export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "databas
         </div>
       </div>
 
-      {/* Mobile Drawer Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="mobile-nav-backdrop"
-          onClick={() => setMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      {mobileMenuOpen && <div className="g-drawer-backdrop" onClick={() => setMobileMenuOpen(false)} aria-hidden="true" />}
 
-      {/* Mobile Navigation Drawer */}
       <div
         id="community-mobile-nav"
-        className={`mobile-nav-drawer${mobileMenuOpen ? " is-open" : ""}`}
+        className={`g-drawer${mobileMenuOpen ? " is-open" : ""}`}
         aria-label="Mobile site navigation"
         aria-hidden={!mobileMenuOpen}
       >
-        <div className="mobile-nav-inner">
-          <div className="mobile-nav-status">
-            {dataMode === "demo" ? (
-              <span className="demo-label"><span aria-hidden="true" />DEMO DATA SNAPSHOT</span>
-            ) : (
-              <span className="demo-label live-label"><span aria-hidden="true" />LIVE COMMUNITY RECORD</span>
-            )}
-          </div>
+        <div className="g-drawer-inner">
+          <span className={dataMode === "demo" ? "g-live g-live-demo" : "g-live"}>
+            <span className="g-live-dot" aria-hidden="true" />
+            {dataMode === "demo" ? "DEMO SNAPSHOT" : "LIVE COMMUNITY RECORD"}
+          </span>
 
-          <nav className="mobile-nav-list" aria-label="Mobile navigation links">
+          <nav className="g-drawer-links" aria-label="Mobile navigation links">
             {navLinks.map(({ href, label, Icon }) => {
-              const isActive = pathname === href;
+              const active = pathname === href;
               return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`mobile-nav-link${isActive ? " is-active" : ""}`}
-                  aria-current={isActive ? "page" : undefined}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="mobile-nav-link-main">
-                    <Icon size={17} aria-hidden="true" />
-                    <span>{label}</span>
-                  </span>
-                  {isActive && <span className="mobile-nav-current-pill">Active</span>}
+                <Link key={href} href={href} className={active ? "g-drawer-link is-active" : "g-drawer-link"} aria-current={active ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
+                  <span><Icon size={18} aria-hidden="true" />{label}</span>
+                  {active ? <span className="g-drawer-current" aria-hidden="true">Here</span> : <ArrowUpRight size={16} aria-hidden="true" />}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="mobile-nav-admin-wrap">
-            <Link
-              href="/admin/login"
-              className="mobile-nav-admin-card"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <div className="mobile-admin-icon">
-                <LockKeyhole size={18} aria-hidden="true" />
-              </div>
-              <div className="mobile-admin-copy">
-                <strong>Admin Workspace</strong>
-                <small>Badge imports &amp; participant management</small>
-              </div>
-              <span className="mobile-admin-arrow" aria-hidden="true">→</span>
-            </Link>
-          </div>
+          <Link href="/admin/login" className="g-drawer-admin" onClick={() => setMobileMenuOpen(false)}>
+            <span className="g-drawer-admin-icon"><LockKeyhole size={18} aria-hidden="true" /></span>
+            <span><strong>Admin workspace</strong><small>Badge sync &amp; participant management</small></span>
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </header>

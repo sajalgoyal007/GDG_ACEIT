@@ -225,7 +225,15 @@ export function runParsing(manifestPath: string, outputPath: string): ParseSumma
   }
 
   const manifestRaw = fs.readFileSync(manifestPath, "utf8");
-  const manifest = JSON.parse(manifestRaw) as { profiles: Record<string, any> };
+  const manifest = JSON.parse(manifestRaw) as {
+    profiles: Record<string, {
+      participant_name?: string;
+      profile_url?: string;
+      status?: number;
+      html_path?: string | null;
+      error?: string | null;
+    }>;
+  };
   const profiles = manifest.profiles ?? {};
 
   const results: Record<string, ParsedProfileRecord> = {};
@@ -273,8 +281,8 @@ try {
   console.log("Status distribution:", summary.statusCounts);
   console.log(`Total unique badges recorded: ${summary.totalUniqueBadgesRecorded}`);
   console.log(`Results saved to: ${outputPath}`);
-} catch (err: any) {
-  console.error("PARSE_ERROR:", err.message);
+} catch (err: unknown) {
+  console.error("PARSE_ERROR:", err instanceof Error ? err.message : String(err));
   process.exit(1);
 }
 

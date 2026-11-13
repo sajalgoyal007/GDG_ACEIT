@@ -6,21 +6,21 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://gdg-aceit.vercel.app"),
   applicationName: "GDG On Campus ACEIT",
-  title: { default: "GDG On Campus ACEIT — Learn with Communities 2026", template: "%s · GDG On Campus ACEIT" },
-  description: "A student developer community at Arya College of Engineering & IT, learning together and building practical skills in 2026.",
+  title: { default: "GDG On Campus ACEIT — Cloud & AI Campaign 2026", template: "%s · GDG On Campus ACEIT" },
+  description: "Student builders at Arya College of Engineering & IT, Kukas, Jaipur learning cloud, AI, and open-source engineering together.",
   icons: { icon: "/gdg-mark.png", shortcut: "/gdg-mark.png", apple: "/gdg-mark.png" },
   openGraph: {
     type: "website",
     siteName: "GDG On Campus ACEIT",
-    title: "GDG On Campus ACEIT — Learn with Communities 2026",
+    title: "GDG On Campus ACEIT — Cloud & AI Campaign 2026",
     description: "Learn together, explore developer technologies, and build practical projects with the ACEIT student developer community.",
     url: "https://gdg-aceit.vercel.app",
     images: [{ url: "/gdg-mark.png", width: 400, height: 400, alt: "Google Developer Groups mark" }],
   },
-  twitter: { card: "summary", title: "GDG On Campus ACEIT — Learn with Communities 2026", description: "A student developer community learning together and building practical skills." },
+  twitter: { card: "summary", title: "GDG On Campus ACEIT — Cloud & AI Campaign 2026", description: "A student developer community learning together and building practical skills." },
 };
 
-export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f5f1e8" }, { media: "(prefers-color-scheme: dark)", color: "#141412" }] };
+export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f8f9fa" }, { media: "(prefers-color-scheme: dark)", color: "#0b0f19" }] };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en" suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('gdg-aceit-theme');t=(t==='light'||t==='dark')?t:'system';var r=document.documentElement;r.dataset.theme=(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light';r.dataset.themePreference=t}catch(e){var r=document.documentElement;r.dataset.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';r.dataset.themePreference='system'}` }} /></head><body><ThemeProvider><AuthLinkNotice />{children}</ThemeProvider></body></html>;

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Activity, ChevronDown } from "lucide-react";
-import { Dashboard } from "@/components/dashboard";
+import { ProgressExplorer } from "@/components/progress-explorer";
 import { ProgressRefreshPanel } from "@/components/progress-refresh-panel";
 import { getLeaderboardProvider } from "@/lib/leaderboard-provider";
 import { isAutoProgressEnabled } from "@/lib/auto-progress/config";
@@ -32,9 +32,8 @@ export default async function ProgressPage() {
       loadFailed = true;
     }
   }
-  return <Dashboard
+  return <ProgressExplorer
     snapshot={snapshot}
-    view="progress"
     personalProgress={<ProgressRefreshPanel
       identityState={identity.status}
       progress={progress}
