@@ -45,6 +45,23 @@ test("a complete observation batch is accepted and shaped for the RPC", () => {
   });
 });
 
+test("unknown course templates remain structurally valid for automatic syllabus ignoring", () => {
+  const result = validateObservationBatch([
+    complete({
+      badges: [
+        { badgeKey: "course_template:754", badgeTitle: "Official syllabus course" },
+        { badgeKey: "course_template:999999", badgeTitle: "Future non-syllabus course" },
+      ],
+    }),
+  ]);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.deepEqual(
+    toStagingPayload(result.value)[0]?.badges.map((badge) => badge.badge_key),
+    ["course_template:754", "course_template:999999"],
+  );
+});
+
 test("duplicate participants are rejected", () => {
   const result = validateObservationBatch([complete(), complete()]);
   assert.equal(result.ok, false);

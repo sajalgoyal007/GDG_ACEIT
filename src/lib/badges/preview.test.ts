@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { computeBadgeSyncPreview } from "./preview.ts";
 import type { PreviewParticipantInput } from "./preview.ts";
+import {
+  NON_SYLLABUS_COURSE_DETAIL,
+  SYLLABUS_CORRECTION_DETAIL,
+} from "./syllabus.ts";
 
 function participant(overrides: Partial<PreviewParticipantInput> = {}): PreviewParticipantInput {
   return {
@@ -107,11 +111,23 @@ test("removed participants are always rejected and never applied", () => {
   assert.equal(preview.totals.participants, 0);
 });
 
-test("unclassified and pending badges block the affected participant", () => {
-  for (const [category, status] of [
-    ["unclassified", "unclassified"],
-    ["skill", "pending"],
-  ] as const) {
+test("unclassified games and pending syllabus badges block the affected participant", () => {
+  const cases = [
+    {
+      category: "unclassified" as const,
+      status: "unclassified" as const,
+      badgeKey: "game:999",
+      expectedStatus: "unclassified",
+    },
+    {
+      category: "skill" as const,
+      status: "pending" as const,
+      badgeKey: "course_template:638",
+      expectedStatus: "pending",
+    },
+  ];
+
+  for (const item of cases) {
     const preview = computeBadgeSyncPreview({
       runId: "run-1",
       mode: "badge_observations",
@@ -119,16 +135,16 @@ test("unclassified and pending badges block the affected participant", () => {
         participant({
           badges: [
             { badgeKey: "course_template:754", category: "skill", status: "approved" },
-            { badgeKey: "course_template:999", category, status },
+            { badgeKey: item.badgeKey, category: item.category, status: item.status },
           ],
         }),
       ],
     });
     const row = preview.participants[0]!;
-    assert.equal(row.status, category === "unclassified" ? "unclassified" : "pending");
+    assert.equal(row.status, item.expectedStatus);
     assert.equal(row.skillCount, 1);
-    assert.equal(row.unclassifiedBadgeCount, category === "unclassified" ? 1 : 0);
-    assert.equal(row.pendingBadgeCount, status === "pending" ? 1 : 0);
+    assert.equal(row.unclassifiedBadgeCount, item.category === "unclassified" ? 1 : 0);
+    assert.equal(row.pendingBadgeCount, item.status === "pending" ? 1 : 0);
     assert.ok(row.blockingReason);
   }
 });
@@ -151,6 +167,64 @@ test("ignored badges are excluded and do not block", () => {
   assert.equal(row.skillCount, 1);
   assert.equal(row.arcadeCount, 0);
   assert.equal(row.totalCount, 1);
+});
+
+test("non-syllabus courses are auto-ignored, logged, and never counted", () => {
+  const preview = computeBadgeSyncPreview({
+    runId: "run-1",
+    mode: "badge_observations",
+    participants: [
+      participant({
+        badges: [
+          { badgeKey: "course_template:754", category: "skill", status: "approved" },
+          // Stale, hostile, or unknown catalog decisions cannot resurrect a
+          // course that is outside the official ten-badge syllabus.
+          { badgeKey: "course_template:1080", category: "skill", status: "approved" },
+          { badgeKey: "course_template:999999", category: "unclassified", status: "unclassified" },
+        ],
+      }),
+    ],
+  });
+  const row = preview.participants[0]!;
+  assert.equal(row.status, "approved");
+  assert.equal(row.skillCount, 1);
+  assert.equal(row.unclassifiedBadgeCount, 0);
+  assert.equal(row.pendingBadgeCount, 0);
+  assert.equal(row.blockingReason, null);
+  assert.deepEqual(row.previewDetails, [NON_SYLLABUS_COURSE_DETAIL]);
+});
+
+test("verified Skill counts are capped at ten", () => {
+  const preview = computeBadgeSyncPreview({
+    runId: "run-1",
+    mode: "classified_counts",
+    participants: [participant({ counts: { skill: 17, arcade: 3, total: 20 } })],
+  });
+  const row = preview.participants[0]!;
+  assert.equal(row.skillCount, 10);
+  assert.equal(row.arcadeCount, 3);
+  assert.equal(row.totalCount, 13);
+  assert.equal(preview.totals.skill, 10);
+  assert.equal(preview.totals.total, 13);
+});
+
+test("a sub-ten syllabus correction may reduce an invalid previous Skill total", () => {
+  const preview = computeBadgeSyncPreview({
+    runId: "run-1",
+    mode: "classified_counts",
+    participants: [
+      participant({
+        counts: { skill: 8, arcade: 2 },
+        previous: { verifiedTotal: 12, skill: 12, arcade: 0, lastVerifiedAt: null, verificationSource: null },
+      }),
+    ],
+  });
+  const row = preview.participants[0]!;
+  assert.equal(row.status, "approved");
+  assert.equal(row.isRegression, true);
+  assert.equal(row.skillCount, 8);
+  assert.equal(row.totalCount, 10);
+  assert.deepEqual(row.previewDetails, [SYLLABUS_CORRECTION_DETAIL]);
 });
 
 test("preview fingerprint is stable across ordering and changes with content", () => {
@@ -212,6 +286,21 @@ test("preview fingerprint is stable across ordering and changes with content", (
     ],
   });
   assert.notEqual(recategorized.fingerprint, baseline.fingerprint);
+
+  const withIgnoredCourse = computeBadgeSyncPreview({
+    runId: "run-1",
+    mode: "badge_observations",
+    participants: [
+      { ...first, badges: [
+        { badgeKey: "course_template:754", category: "skill", status: "approved" },
+        { badgeKey: "course_template:1080", category: "skill", status: "approved" },
+        { badgeKey: "game:1", category: "arcade", status: "approved" },
+      ] },
+      second,
+    ],
+  });
+  assert.notEqual(withIgnoredCourse.fingerprint, baseline.fingerprint);
+  assert.deepEqual(withIgnoredCourse.participants[0]!.previewDetails, [NON_SYLLABUS_COURSE_DETAIL]);
 
   const newRun = computeBadgeSyncPreview({
     runId: "run-2",
@@ -280,7 +369,7 @@ test("incomplete, unclassified and pending rows never contribute to preview tota
       participant({
         participantId: "22222222-2222-4222-8222-222222222222",
         rowNumber: 3,
-        badges: [{ badgeKey: "course_template:999", category: "unclassified", status: "unclassified" }],
+        badges: [{ badgeKey: "game:999", category: "unclassified", status: "unclassified" }],
       }),
       participant({
         participantId: "33333333-3333-4333-8333-333333333333",

@@ -2,8 +2,10 @@
  * Managed badge catalog rules.
  *
  * The catalog is the only authority for whether a structural badge identity
- * contributes to Skill or Arcade counts. Unknown identities always resolve to
- * `unclassified`; they are never guessed from a title.
+ * contributes to Skill or Arcade counts. Skill is locked to the official
+ * 10-Badge Campaign Syllabus; every other course template is ignored. Unknown
+ * games remain `unclassified` until an admin classifies them, and nothing is
+ * ever guessed from a badge title.
  */
 
 import {
@@ -12,6 +14,11 @@ import {
   type BadgeCategory,
   type BadgeStructuralCategory,
 } from "./identity.ts";
+import {
+  isNonSyllabusCourseBadgeKey,
+  isOfficialSyllabusBadgeKey,
+  officialSyllabusDisplayName,
+} from "./syllabus.ts";
 
 export const BADGE_CATEGORIES = ["skill", "arcade", "ignored", "unclassified"] as const;
 
@@ -43,16 +50,24 @@ export function isStructuralCategory(value: unknown): value is BadgeStructuralCa
   return value === "skill" || value === "arcade";
 }
 
-/** Unknown structural identities are always unclassified, never guessed. */
+/** Unknown game identities stay unclassified; never guessed from a title. */
 export function defaultCategoryForUnknownBadge(): "unclassified" {
   return "unclassified";
+}
+
+/**
+ * Unknown course templates can never pollute Skill totals or block a preview.
+ * Unknown games keep the original unclassified behaviour.
+ */
+export function defaultCategoryForUnknownBadgeKey(badgeKey: string): CatalogCategory {
+  return isNonSyllabusCourseBadgeKey(badgeKey) ? "ignored" : "unclassified";
 }
 
 export function resolveCatalogCategory(
   badgeKey: string,
   catalog: ReadonlyMap<string, { category: CatalogCategory }>,
 ): CatalogCategory {
-  return catalog.get(badgeKey)?.category ?? defaultCategoryForUnknownBadge();
+  return catalog.get(badgeKey)?.category ?? defaultCategoryForUnknownBadgeKey(badgeKey);
 }
 
 /** The fixed structural family a catalog key can ever belong to. */
@@ -72,6 +87,42 @@ export function isCategoryAllowedForBadgeKey(badgeKey: string, category: Catalog
   return category === structural;
 }
 
+/** Skill membership is exclusive to the 10 exact official syllabus identities. */
+function validateSyllabusCategory(
+  badgeKey: string,
+  category: CatalogCategory,
+  displayName?: string,
+): ValidationResult<true> {
+  const isSyllabus = isOfficialSyllabusBadgeKey(badgeKey);
+  if (category === "skill" && !isSyllabus) {
+    return {
+      ok: false,
+      reason: "Only the official 10-badge campaign syllabus can be categorized as skill.",
+    };
+  }
+  if (isNonSyllabusCourseBadgeKey(badgeKey) && category !== "ignored") {
+    return {
+      ok: false,
+      reason: "Non-syllabus course templates are always ignored.",
+    };
+  }
+  if (isSyllabus) {
+    if (category !== "skill") {
+      return {
+        ok: false,
+        reason: "An official 10-badge campaign syllabus course must remain skill.",
+      };
+    }
+    if (displayName !== undefined && displayName.trim() !== officialSyllabusDisplayName(badgeKey)) {
+      return {
+        ok: false,
+        reason: "An official syllabus course must keep its exact campaign title.",
+      };
+    }
+  }
+  return { ok: true, value: true };
+}
+
 export function validateCatalogEntry(entry: CatalogEntry): ValidationResult<CatalogEntry> {
   const badgeKey = entry.badgeKey.trim();
   const displayName = entry.displayName.trim();
@@ -88,6 +139,8 @@ export function validateCatalogEntry(entry: CatalogEntry): ValidationResult<Cata
   if (!isCategoryAllowedForBadgeKey(badgeKey, entry.category)) {
     return { ok: false, reason: "Catalog category conflicts with the structural badge type." };
   }
+  const syllabusValidation = validateSyllabusCategory(badgeKey, entry.category, displayName);
+  if (!syllabusValidation.ok) return syllabusValidation;
   if (source.length < 1 || source.length > 120) {
     return { ok: false, reason: "Catalog source must be 1 to 120 characters." };
   }
@@ -98,6 +151,7 @@ export function validateCategoryChange(input: {
   badgeKey: string;
   nextCategory: CatalogCategory;
   reason: string;
+  nextDisplayName?: string;
 }): ValidationResult<{ reason: string }> {
   if (!isValidBadgeKey(input.badgeKey)) {
     return { ok: false, reason: "Catalog key must be course_template:<id> or game:<id>." };
@@ -108,6 +162,12 @@ export function validateCategoryChange(input: {
   if (!isCategoryAllowedForBadgeKey(input.badgeKey, input.nextCategory)) {
     return { ok: false, reason: "Catalog category conflicts with the structural badge type." };
   }
+  const syllabusValidation = validateSyllabusCategory(
+    input.badgeKey,
+    input.nextCategory,
+    input.nextDisplayName,
+  );
+  if (!syllabusValidation.ok) return syllabusValidation;
   const reason = input.reason.trim();
   if (reason.length < 1 || reason.length > 1000) {
     return { ok: false, reason: "Category change reason must be 1 to 1000 characters." };
@@ -129,6 +189,7 @@ export function changeCatalogCategory(
     badgeKey: entry.badgeKey,
     nextCategory,
     reason,
+    nextDisplayName,
   });
   if (!validation.ok) return validation;
 

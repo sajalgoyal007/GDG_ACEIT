@@ -59,6 +59,8 @@ export interface BadgeSyncSnapshotParticipant {
   is_stale: boolean;
   blocking_reason: string | null;
   review_note: string | null;
+  /** Clean preview log lines such as "Non-syllabus course (ignored)". */
+  preview_details?: string[] | null;
   /** Post-apply snapshot recorded by the apply RPC; null before apply. */
   applied_total?: number | null;
   applied_skill_count?: number | null;
@@ -79,6 +81,7 @@ export interface BadgeSyncSnapshotBadge {
   status: ClassifiedBadgePreviewStatus;
   observed_at: string | null;
   earned_on: string | null;
+  detail_note?: string | null;
 }
 
 export interface BadgeSyncSnapshot {
@@ -113,6 +116,8 @@ export interface BadgeSyncApplyResult {
   applied_count: number;
   blocked_count: number;
   applied_at: string;
+  frozen_ranks_cleared?: number;
+  frozen_rank_cleared_participants?: string[];
 }
 
 export interface BadgeSyncRollbackRow {

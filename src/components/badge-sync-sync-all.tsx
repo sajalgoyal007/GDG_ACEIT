@@ -27,6 +27,7 @@ import {
   type BadgeSyncBatchResponse,
 } from "@/lib/badges/batch-state";
 import type { BadgeSyncSnapshotParticipant } from "@/lib/badges/snapshot";
+import { isOfficialSyllabusBadgeKey } from "@/lib/badges/syllabus";
 
 const SYNC_ENDPOINT = "/api/admin/badge-sync/batch";
 const MAX_BATCHES = 64;
@@ -68,11 +69,14 @@ async function postBatch(body: Record<string, unknown>): Promise<BadgeSyncBatchR
 }
 
 function participantReason(participant: BadgeSyncSnapshotParticipant) {
-  if (participant.blocking_reason) return participant.blocking_reason;
-  if (participant.review_note) return participant.review_note;
-  if (participant.observation_status === "incomplete") return "Evidence incomplete — previous counts preserved.";
-  if (participant.observation_status === "failed") return "Evidence failed — previous counts preserved.";
-  return "—";
+  const notes = [...(participant.preview_details ?? [])];
+  if (participant.blocking_reason) notes.push(participant.blocking_reason);
+  if (participant.review_note) notes.push(participant.review_note);
+  if (notes.length === 0) {
+    if (participant.observation_status === "incomplete") notes.push("Evidence incomplete — previous counts preserved.");
+    if (participant.observation_status === "failed") notes.push("Evidence failed — previous counts preserved.");
+  }
+  return notes.length === 0 ? "—" : notes.join(" · ");
 }
 
 function phaseTone(phase: string) {
@@ -439,6 +443,15 @@ export function BadgeSyncSyncAll({
 
           {snapshot && run ? (
             <>
+              <div className="admin-feedback success" role="note">
+                <p><BadgeCheck size={14} aria-hidden="true" /> Official 10-Badge Campaign Syllabus enforced.</p>
+                <small>
+                  Only the ten exact syllabus courses count as Skill Badges. Every other course is logged as
+                  {" "}Non-syllabus course (ignored) in the participant note. Arcade is unchanged. A false Frozen Rank
+                  {" "}is cleared only when this preview is explicitly applied with a verified Skill count below 10.
+                </small>
+              </div>
+
               <div className="badge-sync-preview-summary">
                 <p className="admin-panel-eyebrow">PREVIEW DELTA SUMMARY</p>
                 <div className="badge-sync-kpis">
@@ -466,7 +479,7 @@ export function BadgeSyncSyncAll({
                   action={applyAction}
                   className="admin-form badge-sync-apply badge-sync-apply-bar"
                   onSubmit={(event) => {
-                    if (!window.confirm(`Apply the previewed badge counts for ${approvedParticipants} approved participant${approvedParticipants === 1 ? "" : "s"}? The server revalidates the stored fingerprint before writing.`)) {
+                    if (!window.confirm(`Apply the previewed badge counts for ${approvedParticipants} approved participant${approvedParticipants === 1 ? "" : "s"}? The server revalidates the stored fingerprint before writing. A false Frozen Rank is cleared only by this apply when the verified Skill count is below 10.`)) {
                       event.preventDefault();
                     }
                   }}
@@ -507,6 +520,7 @@ export function BadgeSyncSyncAll({
               {run.status === "applied" && run.apply_result && (
                 <p className="badge-sync-inline-feedback success" role="status">
                   <CheckCircle2 size={14} aria-hidden="true" /> Applied {run.apply_result.applied_count} participant update{run.apply_result.applied_count === 1 ? "" : "s"} at {run.apply_result.applied_at}.
+                  {typeof run.apply_result.frozen_ranks_cleared === "number" && ` ${run.apply_result.frozen_ranks_cleared} false Frozen Rank${run.apply_result.frozen_ranks_cleared === 1 ? "" : "s"} cleared.`}
                 </p>
               )}
 
@@ -530,12 +544,17 @@ export function BadgeSyncSyncAll({
         <section className="badge-sync-classifier" aria-labelledby="badge-sync-classifier-title">
           <h5 id="badge-sync-classifier-title">Unclassified identities</h5>
           <p className="admin-help">
-            Classification is catalog-wide and audited. A course template can be Skill or ignored; a game can be
-            Arcade or ignored. Nothing is inferred from the badge title.
+            Classification is catalog-wide and audited. Only the ten exact official campaign courses can be Skill;
+            every other course template is always ignored. A game can be Arcade or ignored. Nothing is inferred from
+            the badge title.
           </p>
           <ul className="badge-sync-classifier-list">
             {unclassified.map((entry) => {
-              const options = entry.badgeKey.startsWith("game:") ? ["arcade", "ignored"] : ["skill", "ignored"];
+              const options = entry.badgeKey.startsWith("game:")
+                ? ["arcade", "ignored"]
+                : isOfficialSyllabusBadgeKey(entry.badgeKey)
+                  ? ["skill"]
+                  : ["ignored"];
               return (
                 <li key={entry.badgeKey}>
                   <div className="badge-sync-classifier-copy">

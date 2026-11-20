@@ -9,13 +9,23 @@
  *   - skill_count + arcade_count = total_count for every complete row.
  *   - incomplete/failed observations carry NULL counts, never zero.
  *   - removed participants are rejected and never applied.
- *   - unclassified badges block the affected participant.
- *   - a proposed total below the previous verified total is a regression.
+ *   - only the official 10-badge syllabus contributes to Skill totals.
+ *   - non-syllabus course templates are ignored and logged in preview details.
+ *   - unclassified games and syllabus identities block the affected participant.
+ *   - a proposed total below the previous verified total is a regression, except
+ *     when correcting a previous Skill total above the 10-badge syllabus cap.
  */
 
 import { createHash } from "node:crypto";
 import type { BadgeCategory } from "./identity.ts";
 import { isValidBadgeKey } from "./identity.ts";
+import {
+  capVerifiedSkillCount,
+  isNonSyllabusCourseBadgeKey,
+  MAX_VERIFIED_SKILL_BADGES,
+  NON_SYLLABUS_COURSE_DETAIL,
+  SYLLABUS_CORRECTION_DETAIL,
+} from "./syllabus.ts";
 
 export type ObservationStatus = "complete" | "incomplete" | "failed";
 export type StagingStatus = "pending" | "approved" | "rejected" | "ignored" | "unclassified";
@@ -69,6 +79,7 @@ export interface PreviewParticipantResult {
   isRegression: boolean;
   isStale: boolean;
   blockingReason: string | null;
+  previewDetails: string[];
 }
 
 export interface BadgeSyncPreviewInput {
@@ -118,6 +129,7 @@ function evaluateParticipant(
     previousLastVerifiedAt: input.previous.lastVerifiedAt,
     previousVerificationSource: input.previous.verificationSource,
     isStale: false,
+    previewDetails: [],
   };
 
   if (isRemoved) {
@@ -152,17 +164,29 @@ function evaluateParticipant(
         blockingReason: "Observation is not complete; counts are unknown, not zero.",
       };
     }
-    const skill = assertCount(input.counts.skill, "skill count");
+    const declaredSkill = assertCount(input.counts.skill, "skill count");
     const arcade = assertCount(input.counts.arcade, "arcade count");
-    const total = skill + arcade;
-    if (input.counts.total !== undefined && input.counts.total !== total) {
+    const declaredTotal = declaredSkill + arcade;
+    if (input.counts.total !== undefined && input.counts.total !== declaredTotal) {
       throw new Error("skill_count + arcade_count must equal total_count.");
     }
+    // The official syllabus has ten identities; no import path may report more.
+    const skill = capVerifiedSkillCount(declaredSkill);
+    const total = skill + arcade;
+    const previewDetails: string[] = [];
     const isRegression = total < base.previousVerifiedTotal;
+    const correctsInvalidSkillTotal =
+      input.previous.skill !== null
+      && input.previous.skill > MAX_VERIFIED_SKILL_BADGES
+      && skill <= MAX_VERIFIED_SKILL_BADGES;
+    const rejected = isRegression && !correctsInvalidSkillTotal;
+    if (isRegression && correctsInvalidSkillTotal) {
+      previewDetails.push(SYLLABUS_CORRECTION_DETAIL);
+    }
     return {
       ...base,
       observationStatus: "complete",
-      status: isRegression ? "rejected" : "approved",
+      status: rejected ? "rejected" : "approved",
       skillCount: skill,
       arcadeCount: arcade,
       totalCount: total,
@@ -170,9 +194,10 @@ function evaluateParticipant(
       pendingBadgeCount: 0,
       unclassifiedBadgeCount: 0,
       isRegression,
-      blockingReason: isRegression
+      blockingReason: rejected
         ? "Regression: the proposed total is below the previous verified total."
         : null,
+      previewDetails,
     };
   }
 
@@ -196,10 +221,11 @@ function evaluateParticipant(
   }
 
   const badges = input.badges ?? [];
-  let skill = 0;
+  let rawSkill = 0;
   let arcade = 0;
   let pending = 0;
   let unclassified = 0;
+  const previewDetails: string[] = [];
   const seen = new Set<string>();
   for (const badge of badges) {
     if (!isValidBadgeKey(badge.badgeKey)) {
@@ -209,12 +235,30 @@ function evaluateParticipant(
       throw new Error(`Duplicate badge identity in staged participant: ${badge.badgeKey}`);
     }
     seen.add(badge.badgeKey);
+
+    // Auto-ignore every course outside the exact 10-badge whitelist, even if a
+    // stale catalog row or staged decision still calls it skill/unclassified.
+    if (isNonSyllabusCourseBadgeKey(badge.badgeKey)) {
+      if (!previewDetails.includes(NON_SYLLABUS_COURSE_DETAIL)) {
+        previewDetails.push(NON_SYLLABUS_COURSE_DETAIL);
+      }
+      continue;
+    }
+
     if (badge.status === "pending") pending += 1;
     if (badge.category === "unclassified" || badge.status === "unclassified") unclassified += 1;
-    if (badge.status === "approved" && badge.category === "skill") skill += 1;
+    if (badge.status === "approved" && badge.category === "skill") rawSkill += 1;
     if (badge.status === "approved" && badge.category === "arcade") arcade += 1;
   }
+  // Only ten official identities exist, but cap explicitly so no data path can
+  // ever report a verified Skill total above the Frozen Rank threshold.
+  const skill = capVerifiedSkillCount(rawSkill);
   const total = skill + arcade;
+  const isRegression = total < base.previousVerifiedTotal;
+  const correctsInvalidSkillTotal =
+    input.previous.skill !== null
+    && input.previous.skill > MAX_VERIFIED_SKILL_BADGES
+    && skill <= MAX_VERIFIED_SKILL_BADGES;
 
   let status: StagingStatus;
   let blockingReason: string | null;
@@ -224,12 +268,15 @@ function evaluateParticipant(
   } else if (pending > 0) {
     status = "pending";
     blockingReason = "Pending badge identities require explicit admin approval.";
-  } else if (total < base.previousVerifiedTotal) {
+  } else if (isRegression && !correctsInvalidSkillTotal) {
     status = "rejected";
     blockingReason = "Regression: the proposed total is below the previous verified total.";
   } else {
     status = "approved";
     blockingReason = null;
+    if (isRegression && correctsInvalidSkillTotal) {
+      previewDetails.push(SYLLABUS_CORRECTION_DETAIL);
+    }
   }
 
   return {
@@ -242,8 +289,9 @@ function evaluateParticipant(
     delta: total - base.previousVerifiedTotal,
     pendingBadgeCount: pending,
     unclassifiedBadgeCount: unclassified,
-    isRegression: total < base.previousVerifiedTotal,
+    isRegression,
     blockingReason,
+    previewDetails: previewDetails.sort(),
   };
 }
 
@@ -300,6 +348,7 @@ function fingerprintPayload(
         unclassified: row.unclassifiedBadgeCount,
         regression: row.isRegression,
         blocking_reason: row.blockingReason,
+        preview_details: row.previewDetails,
       })),
     badges: badgeRows,
   };
@@ -336,7 +385,7 @@ export function computeBadgeSyncPreview(input: BadgeSyncPreviewInput): BadgeSync
 
   const totals: BadgeSyncPreviewTotals = {
     participants: applicable.length,
-    skill: applicable.reduce((sum, row) => sum + (row.skillCount ?? 0), 0),
+    skill: applicable.reduce((sum, row) => sum + capVerifiedSkillCount(row.skillCount ?? 0), 0),
     arcade: applicable.reduce((sum, row) => sum + (row.arcadeCount ?? 0), 0),
     total: 0,
     unclassifiedParticipants: participants.filter((row) => row.status === "unclassified").length,
