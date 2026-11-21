@@ -25,6 +25,7 @@ import {
   JharokhaHalo,
 } from "@/components/jaipur-heritage-backdrop";
 import { LeaderboardBoard } from "@/components/leaderboard-board";
+import { MobileGdgBadge } from "@/components/mobile-gdg-badge";
 import { Motion3DCard } from "@/components/motion-3d-card";
 import type { LeaderboardSnapshot } from "@/lib/types";
 
@@ -87,8 +88,40 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
       <CommunityNavigation dataMode={snapshot.dataMode} />
 
       <main className="g-main">
-        <section className="g-hero" aria-labelledby="home-title">
+        <section className="g-hero" aria-labelledby="home-title home-title-mobile">
           <JaipurHeritageBackdrop variant="hero" />
+
+          <div className="g-hero-mobile">
+            <div className="g-hero-mobile-head">
+              <MobileGdgBadge />
+              <div className="g-hero-mobile-copy">
+                <JaipurChapterBadge label="GDG On Campus ACEIT · Pink City Chapter" />
+                <h1 id="home-title-mobile" className="g-hero-mobile-heading">
+                  <span>GDG On Campus</span>
+                  <span>
+                    <span className="g-wordmark" aria-hidden="true">
+                      {"ACEIT".split("").map((letter, index) => <span key={`${letter}-${index}`}>{letter}</span>)}
+                    </span>
+                    <span className="sr-only">ACEIT</span>
+                  </span>
+                </h1>
+              </div>
+            </div>
+            <p className="g-hero-mobile-lede">
+              Student developers at Arya College of Engineering &amp; IT, Jaipur — learning cloud, AI, and open source together.
+            </p>
+            <div className="g-hero-actions g-hero-mobile-actions">
+              <Link className="g-btn g-btn-primary" href="#leaderboard">
+                Jump to leaderboard
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <Link className="g-btn g-btn-ghost" href="/about">
+                About Chapter
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+
           <motion.div
             className="g-hero-copy"
             initial={reduceMotion ? false : { opacity: 0, y: 16 }}

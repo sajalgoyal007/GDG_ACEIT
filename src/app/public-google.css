@@ -4806,3 +4806,788 @@ html[data-theme="light"] .g-jaipur-backdrop-strip {
   background: linear-gradient(90deg, var(--google-green), var(--google-yellow));
 }
 
+/* ==========================================================================
+   MOBILE-ONLY MATERIAL 3 REFINEMENT (< 768px)
+   Everything below is either hidden by default or scoped to the mobile
+   breakpoint, so the >= 768px layout keeps its existing proportions.
+   ========================================================================== */
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.g-filter-label-short,
+.g-hero-mobile,
+.g-about-mobile,
+.g-native-board,
+.g-back-top,
+.g-mobile-gdg-badge {
+  display: none;
+}
+
+/* Lightweight miniature GDG "< >" badge ------------------------------------ */
+
+.g-mobile-gdg-badge {
+  position: relative;
+  flex: none;
+  width: 62px;
+  height: 62px;
+  perspective: 260px;
+}
+
+.g-mobile-gdg-badge-depth {
+  position: absolute;
+  inset: 10px 6px 4px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--google-blue), var(--google-red) 42%, var(--google-yellow) 70%, var(--google-green));
+  filter: blur(10px);
+  opacity: 0.32;
+  transform: translateY(7px) rotate(-9deg);
+}
+
+.g-mobile-gdg-badge-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--google-blue) 28%, var(--border-subtle));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  box-shadow: 0 12px 26px -16px rgba(32, 33, 36, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transform: rotate(-8deg) rotateX(9deg);
+}
+
+.g-mobile-gdg-badge-face::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 15px;
+  background: linear-gradient(90deg, var(--google-blue) 0 25%, var(--google-red) 25% 50%, var(--google-yellow) 50% 75%, var(--google-green) 75% 100%);
+  opacity: 0.1;
+}
+
+.g-mobile-gdg-bracket {
+  position: relative;
+  z-index: 1;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.g-mobile-gdg-mark {
+  position: relative;
+  z-index: 1;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+@media (max-width: 767.98px) {
+  /* The global html/body overflow-x rule makes body a scroll container, which
+     breaks position: sticky. The public shell clips X itself on mobile. */
+  html:root,
+  body:not(.g-app) {
+    overflow: visible;
+  }
+
+  /* Slim, single-row app bar ------------------------------------------------ */
+  .g-nav-inner {
+    height: 56px;
+    padding: 0 12px;
+    column-gap: 8px;
+  }
+
+  .g-brand {
+    gap: 8px;
+  }
+
+  .g-brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+
+  .g-brand-copy strong {
+    font-size: 13px;
+    letter-spacing: -0.03em;
+  }
+
+  .g-brand-copy small {
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+  }
+
+  .g-brand-jaipur {
+    display: none;
+  }
+
+  .g-mobile-actions {
+    gap: 6px;
+  }
+
+  .g-nav .theme-control-trigger,
+  .g-menu-toggle {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 12px;
+    justify-content: center;
+  }
+
+  .g-nav .theme-control-label,
+  .g-nav .theme-control-trigger > svg:last-of-type {
+    display: none;
+  }
+
+  .g-drawer {
+    top: 56px;
+    padding: 0 12px 12px;
+  }
+
+  .g-drawer-inner {
+    gap: 12px;
+    padding: 12px;
+    border-radius: 0 0 18px 18px;
+  }
+
+  .g-drawer-link,
+  .g-drawer-admin {
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+  }
+
+  .g-drawer-link {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .g-drawer-link.is-active {
+    background: color-mix(in srgb, var(--google-blue) 8%, var(--bg-surface-subtle));
+    color: var(--text-primary);
+  }
+
+  .g-drawer-link.is-active::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--google-blue), var(--google-red) 34%, var(--google-yellow) 67%, var(--google-green));
+  }
+
+  /* Compact, skyline-framed mobile heroes ----------------------------------- */
+  .g-hero,
+  .g-about-hero {
+    gap: 0;
+    padding: 20px 0;
+  }
+
+  .g-hero-copy,
+  .g-hero-visual,
+  .g-about-copy,
+  .g-about-visual {
+    display: none;
+  }
+
+  .g-hero-mobile,
+  .g-about-mobile {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+  }
+
+  .g-mobile-gdg-badge {
+    display: block;
+  }
+
+  .g-hero-mobile-head,
+  .g-about-mobile-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .g-hero-mobile-copy,
+  .g-about-mobile-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .g-hero-mobile .g-jaipur-badge,
+  .g-about-mobile .g-jaipur-badge {
+    margin-bottom: 6px;
+    font-size: 8px;
+  }
+
+  .g-hero-mobile-heading,
+  .g-about-mobile-heading {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    font-size: clamp(30px, 8.5vw, 38px);
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    line-height: 0.98;
+  }
+
+  .g-hero-mobile-heading > span,
+  .g-about-mobile-heading > span {
+    display: block;
+  }
+
+  .g-hero-mobile-lede,
+  .g-about-mobile-lede {
+    margin: 14px 0 0;
+    color: var(--text-secondary);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .g-about-mobile-lede strong {
+    color: var(--text-primary);
+  }
+
+  .g-hero-mobile-actions,
+  .g-about-mobile-actions {
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .g-hero-mobile-actions .g-btn,
+  .g-about-mobile-actions .g-btn {
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: 12px;
+    justify-content: center;
+  }
+
+  .g-hero > .g-jaipur-backdrop,
+  .g-about-hero > .g-jaipur-backdrop {
+    --jaipur-mid-op: 0.24;
+    --jaipur-near-op: 0.34;
+    mask-image: linear-gradient(180deg, transparent 0%, #000 52%, #000 100%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 52%, #000 100%);
+  }
+
+  .g-jaipur-mid > svg,
+  .g-jaipur-near > svg {
+    bottom: -4%;
+  }
+
+  .g-jaipur-horizon {
+    height: 22%;
+  }
+
+  .g-jaipur-jaali {
+    width: 96px;
+    height: 96px;
+    opacity: 0.18;
+  }
+
+  /* Tight 2x2 KPI grid ------------------------------------------------------ */
+  .g-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .g-kpi-pill {
+    gap: 8px;
+    padding: 10px 11px;
+    border-radius: 14px;
+  }
+
+  .g-kpi-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .g-kpi-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .g-kpi-copy strong {
+    font-size: 20px;
+  }
+
+  .g-kpi-copy > span {
+    font-size: 9.5px;
+  }
+
+  .g-kpi-copy small {
+    display: none;
+  }
+
+  /* Section rhythm ---------------------------------------------------------- */
+  .g-section {
+    padding-top: 34px;
+  }
+
+  .g-section + .g-section {
+    padding-top: 36px;
+  }
+
+  .g-main {
+    width: calc(100% - 28px);
+  }
+
+  /* Progress head ----------------------------------------------------------- */
+  .g-progress-head {
+    gap: 12px;
+    padding: 22px 0 18px;
+  }
+
+  .g-progress-title h1 {
+    font-size: 32px;
+  }
+
+  .g-progress-title > p:last-child {
+    margin-top: 8px;
+    font-size: 12.5px;
+  }
+
+  .g-progress-actions {
+    width: 100%;
+  }
+
+  .g-progress-kpis {
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .g-progress-kpi {
+    padding: 10px 11px;
+    border-radius: 14px;
+  }
+
+  .g-progress-kpi > strong {
+    font-size: 20px;
+  }
+
+  /* Sticky native leaderboard controls -------------------------------------- */
+  .g-board {
+    margin-top: 14px;
+    border-radius: 18px;
+    overflow: visible;
+    scroll-margin-top: 64px;
+  }
+
+  .g-board-head {
+    padding: 14px 14px 0;
+  }
+
+  .g-board-head h2 {
+    font-size: 18px;
+  }
+
+  .g-board-count {
+    display: none;
+  }
+
+  .g-board-controls {
+    position: sticky;
+    top: 56px;
+    z-index: 20;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--bg-page) 95%, transparent);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+  }
+
+  .g-search {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: 40px;
+  }
+
+  .g-search input {
+    font-size: 13px;
+  }
+
+  .g-filter-pills {
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  .g-filter {
+    flex: none;
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .g-filter-label-full {
+    display: none;
+  }
+
+  .g-filter-label-short {
+    display: inline;
+  }
+
+  .g-board-meta {
+    padding: 10px 12px;
+    font-size: 10px;
+  }
+
+  /* Two-line native rows inside one surface --------------------------------- */
+  .g-mobile-board {
+    display: none;
+  }
+
+  .g-native-board {
+    display: block;
+    overflow: hidden;
+    border-top: 1px solid var(--border-subtle);
+    border-radius: 0 0 17px 17px;
+  }
+
+  .g-native-board > li {
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .g-native-board > li:last-child {
+    border-bottom: 0;
+  }
+
+  .g-native-row {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .g-native-row:active {
+    background: color-mix(in srgb, var(--primary-accent) 5%, transparent);
+  }
+
+  .g-native-line {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .g-native-line-top {
+    gap: 8px;
+  }
+
+  .g-native-row .g-rank {
+    min-width: 34px;
+    height: 24px;
+    padding: 0 5px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: -0.03em;
+  }
+
+  .g-native-row .g-rank small {
+    margin-right: 0;
+    font-size: 9px;
+  }
+
+  .g-native-row .g-rank-lock {
+    width: 9px;
+    height: 9px;
+  }
+
+  .g-native-row .person-avatar {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 10px;
+    font-size: 10px;
+  }
+
+  .g-native-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-primary);
+    font-size: 13.5px;
+    font-weight: 680;
+    letter-spacing: -0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .g-native-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: none;
+    min-width: 52px;
+    min-height: 24px;
+    padding: 0 8px;
+    border: 1px solid color-mix(in srgb, var(--google-blue) 30%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--google-blue) 9%, transparent);
+    color: var(--ink-blue);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 750;
+  }
+
+  .g-native-status.is-frozen {
+    border-color: color-mix(in srgb, var(--google-green) 34%, transparent);
+    background: color-mix(in srgb, var(--google-green) 10%, transparent);
+    color: var(--success-text);
+  }
+
+  .g-native-status.is-pending {
+    border-color: var(--border-subtle);
+    background: var(--bg-surface-subtle);
+    color: var(--text-tertiary);
+  }
+
+  .g-native-line-detail {
+    gap: 10px;
+    padding-left: 82px;
+  }
+
+  .g-native-chips {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-tertiary);
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+
+  .g-native-chips strong {
+    color: var(--text-secondary);
+    font-weight: 700;
+  }
+
+  .g-native-chip-sep {
+    color: var(--border-strong);
+  }
+
+  .g-native-track {
+    position: relative;
+    width: 64px;
+    height: 4px;
+    flex: none;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--bg-surface-subtle);
+  }
+
+  .g-native-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--google-blue), var(--google-green));
+    transform-origin: left center;
+  }
+
+  .g-back-top {
+    position: fixed;
+    right: 14px;
+    bottom: 18px;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
+    box-shadow: var(--shadow-elevated);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .g-back-top.is-visible {
+    display: inline-flex;
+  }
+
+  /* Horizontal organizer cards + tight bentos -------------------------------- */
+  .g-team-grid,
+  .g-domain-grid,
+  .g-highlight-grid {
+    gap: 10px;
+  }
+
+  .g-team-card {
+    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-areas:
+      "ring head"
+      "ring name"
+      "ring focus";
+    align-items: center;
+    justify-items: stretch;
+    gap: 2px 12px;
+    padding: 14px;
+    border-radius: 16px;
+    text-align: left;
+  }
+
+  .g-team-band,
+  .g-team-foot,
+  .g-team-id {
+    display: none;
+  }
+
+  .g-team-ring {
+    grid-area: ring;
+    width: 56px;
+    height: 56px;
+    margin: 0;
+    padding: 3px;
+  }
+
+  .g-team-initials {
+    font-size: 17px;
+  }
+
+  .g-team-head {
+    grid-area: head;
+    width: auto;
+    margin: 0;
+    gap: 6px;
+  }
+
+  .g-team-badge {
+    min-height: 20px;
+    padding: 0 8px;
+    font-size: 8px;
+  }
+
+  .g-team-card h3 {
+    grid-area: name;
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .g-team-card > p {
+    grid-area: focus;
+    max-width: none;
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+
+  .g-domain-card,
+  .g-highlight {
+    gap: 12px;
+    min-height: 0;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .g-domain-card h3,
+  .g-highlight h3 {
+    font-size: 15px;
+  }
+
+  .g-domain-card p,
+  .g-highlight-detail {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .g-domain-tags {
+    gap: 5px;
+  }
+
+  .g-domain-tags span {
+    padding: 4px 7px;
+    font-size: 9.5px;
+  }
+
+  /* Compact app-like footer -------------------------------------------------- */
+  .g-footer {
+    margin-top: 36px;
+    padding-top: 24px;
+  }
+
+  .g-footer-top {
+    gap: 14px;
+    padding-bottom: 18px;
+  }
+
+  .g-footer-mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .g-footer-brand strong {
+    font-size: 12.5px;
+  }
+
+  .g-footer-brand small {
+    font-size: 9.5px;
+  }
+
+  .g-footer-columns {
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .g-footer-links {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    flex: none;
+  }
+
+  .g-footer-links > span {
+    display: none;
+  }
+
+  .g-footer-links a {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    background: var(--bg-surface);
+    font-size: 11.5px;
+    white-space: nowrap;
+  }
+
+  .g-footer-bottom {
+    gap: 4px;
+    padding: 14px 0 10px;
+    font-size: 9.5px;
+  }
+}
+

@@ -23,6 +23,7 @@ import {
 import { CommunityFooter } from "@/components/community-footer";
 import { CommunityNavigation } from "@/components/community-navigation";
 import { GdgEmblem } from "@/components/gdg-emblem";
+import { MobileGdgBadge } from "@/components/mobile-gdg-badge";
 import { JaipurChapterBadge, JaipurHeritageBackdrop, JharokhaHalo } from "@/components/jaipur-heritage-backdrop";
 import { Motion3DCard } from "@/components/motion-3d-card";
 
@@ -185,8 +186,40 @@ export default function AboutPage() {
     <div className="g-app">
       <CommunityNavigation />
       <main className="g-main g-about-main">
-        <section className="g-about-hero" aria-labelledby="about-title">
+        <section className="g-about-hero" aria-labelledby="about-title about-title-mobile">
           <JaipurHeritageBackdrop variant="about" />
+
+          <div className="g-about-mobile">
+            <div className="g-about-mobile-head">
+              <MobileGdgBadge />
+              <div className="g-about-mobile-copy">
+                <JaipurChapterBadge className="g-about-badge" />
+                <h1 id="about-title-mobile" className="g-about-mobile-heading">
+                  <span>GDG On Campus</span>
+                  <span>
+                    <span className="g-wordmark" aria-hidden="true">
+                      {"ACEIT".split("").map((letter, index) => <span key={`${letter}-${index}`}>{letter}</span>)}
+                    </span>
+                    <span className="sr-only">ACEIT</span>
+                  </span>
+                </h1>
+              </div>
+            </div>
+            <p className="g-about-mobile-lede">
+              <strong>Learn · Build · Connect</strong> at Arya College of Engineering &amp; IT, Kukas, Jaipur.
+            </p>
+            <div className="g-about-actions g-about-mobile-actions">
+              <Link className="g-btn g-btn-primary" href="/progress">
+                Explore the leaderboard
+                <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <a className="g-btn g-btn-ghost" href="https://gdg.community.dev/" target="_blank" rel="noreferrer">
+                Visit GDG Community
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+            </div>
+          </div>
+
           <div className="g-about-copy">
             <p className="g-eyebrow"><span className="g-eyebrow-dot" />GDG ON CAMPUS <span>/</span> ARYA COLLEGE OF ENGINEERING &amp; IT</p>
             <JaipurChapterBadge className="g-about-badge" />

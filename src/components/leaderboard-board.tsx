@@ -1,9 +1,9 @@
 "use client";
 
-import { useId, useMemo, useState, useTransition, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
-import { Award, Gamepad2, Lock, RefreshCw, Search, X } from "lucide-react";
+import { ArrowUp, Award, Gamepad2, Lock, RefreshCw, Search, X } from "lucide-react";
 import {
   Avatar,
   BadgePills,
@@ -19,11 +19,11 @@ import { matchesRankFreezeFilter, rankParticipants } from "@/lib/leaderboard";
 
 type FilterKey = "all" | "frozen" | "skill" | "arcade";
 
-const filters: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "frozen", label: "Frozen Ranks (10+ Skill)" },
-  { key: "skill", label: "Skill" },
-  { key: "arcade", label: "Arcade" },
+const filters: { key: FilterKey; label: string; shortLabel: string }[] = [
+  { key: "all", label: "All", shortLabel: "All" },
+  { key: "frozen", label: "Frozen Ranks (10+ Skill)", shortLabel: "Frozen Ranks" },
+  { key: "skill", label: "Skill", shortLabel: "Skill" },
+  { key: "arcade", label: "Arcade", shortLabel: "Arcade" },
 ];
 
 /**
@@ -52,6 +52,9 @@ export function LeaderboardBoard({
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [selected, setSelected] = useState<PublicParticipant | null>(null);
+  const boardRef = useRef<HTMLElement>(null);
+  const nativeListRef = useRef<HTMLUListElement>(null);
+  const backTopRef = useRef<HTMLButtonElement>(null);
 
   const ranked = useMemo(() => rankParticipants(participants), [participants]);
   const isDemo = snapshot.dataMode === "demo";
@@ -67,6 +70,32 @@ export function LeaderboardBoard({
     });
   }, [ranked, search, filter]);
 
+  useEffect(() => {
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
+      const row = nativeListRef.current?.children[14];
+      const visible =
+        isMobile && row instanceof HTMLElement && row.getBoundingClientRect().bottom < 72;
+      backTopRef.current?.classList.toggle("is-visible", visible);
+    };
+
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [visible]);
+
   function resetFilters() {
     setSearch("");
     setFilter("all");
@@ -75,7 +104,7 @@ export function LeaderboardBoard({
   return (
     <div className="g-board-wrap">
       {banner}
-      <section className="g-board" aria-labelledby={headingId}>
+      <section ref={boardRef} className="g-board" aria-labelledby={headingId}>
         <div className="g-board-head">
           <div>
             <p className="g-kicker">{kicker}</p>
@@ -122,8 +151,8 @@ export function LeaderboardBoard({
           </label>
 
           <LayoutGroup>
-            <div className="g-filter-pills" role="group" aria-label="Filter leaderboard">
-              {filters.map(({ key, label }) => {
+            <div className="g-filter-pills no-scrollbar" role="group" aria-label="Filter leaderboard">
+              {filters.map(({ key, label, shortLabel }) => {
                 const active = filter === key;
                 return (
                   <motion.button
@@ -142,7 +171,10 @@ export function LeaderboardBoard({
                         transition={{ type: "spring", stiffness: 380, damping: 32 }}
                       />
                     )}
-                    <span className="g-filter-label">{label}</span>
+                    <span className="g-filter-label">
+                      <span className="g-filter-label-full">{label}</span>
+                      <span className="g-filter-label-short">{shortLabel}</span>
+                    </span>
                   </motion.button>
                 );
               })}
@@ -308,9 +340,78 @@ export function LeaderboardBoard({
                 </li>
               ))}
             </ul>
+
+            <ul ref={nativeListRef} className="g-native-board" aria-label="Leaderboard participants">
+              {visible.map(({ participant, rank }) => {
+                const reviewed = Boolean(participant.lastCheckedAt);
+                const skill = participant.skillBadgeCount ?? 0;
+                const cappedSkill = Math.min(Math.max(skill, 0), 10);
+                const statusClass = participant.frozenRank
+                  ? "g-native-status is-frozen"
+                  : reviewed
+                    ? "g-native-status"
+                    : "g-native-status is-pending";
+
+                return (
+                  <li key={participant.id}>
+                    <button
+                      type="button"
+                      className="g-native-row"
+                      onClick={() => setSelected(participant)}
+                      aria-label={`Open ${participant.displayName}'s profile`}
+                    >
+                      <span className="g-native-line g-native-line-top">
+                        <RankBadge rank={rank} frozen={Boolean(participant.frozenRank)} />
+                        <Avatar participant={participant} size="sm" />
+                        <span className="g-native-name">{participant.displayName}</span>
+                        <span className={statusClass}>
+                          {participant.frozenRank && <Lock size={11} aria-hidden="true" />}
+                          {reviewed ? `${cappedSkill}/10` : "—"}
+                        </span>
+                      </span>
+                      <span className="g-native-line g-native-line-detail">
+                        <span className="g-native-chips">
+                          {reviewed ? (
+                            <>
+                              <span><strong>{participant.skillBadgeCount ?? "—"}</strong> Skill</span>
+                              <span className="g-native-chip-sep" aria-hidden="true">·</span>
+                              <span><strong>{participant.arcadeGameBadgeCount ?? "—"}</strong> Arcade</span>
+                              <span className="g-native-chip-sep" aria-hidden="true">·</span>
+                              <span>Total <strong>{participant.verifiedBadgeCount}</strong></span>
+                            </>
+                          ) : (
+                            <span>Awaiting manual review</span>
+                          )}
+                        </span>
+                        <span
+                          className="g-native-track"
+                          role="progressbar"
+                          aria-label={`${participant.displayName} skill badge progress`}
+                          aria-valuemin={0}
+                          aria-valuemax={10}
+                          aria-valuenow={reviewed ? cappedSkill : 0}
+                        >
+                          <span className="g-native-fill" style={{ transform: `scaleX(${reviewed ? cappedSkill / 10 : 0})` }} />
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </>
         )}
       </section>
+
+      <button
+        ref={backTopRef}
+        type="button"
+        className="g-back-top"
+        aria-label="Back to top of leaderboard"
+        onClick={() => boardRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })}
+      >
+        <ArrowUp size={14} aria-hidden="true" /> Top
+      </button>
 
       <AnimatePresence>
         {selected && (

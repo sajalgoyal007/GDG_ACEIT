@@ -46,7 +46,7 @@ export function CommunityNavigation({ dataMode }: { dataMode?: "demo" | "databas
           <Image className="g-brand-mark" src="/gdg-mark.png" alt="" width={40} height={40} priority />
           <span className="g-brand-copy">
             <strong>GDG On Campus</strong>
-            <small>ACEIT · JAIPUR</small>
+            <small><span className="g-brand-aceit">ACEIT</span><span className="g-brand-jaipur"> · JAIPUR</span></small>
           </span>
         </Link>
 

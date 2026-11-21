@@ -26,7 +26,7 @@ export function CommunityFooter() {
             <small>Cloud &amp; AI Campaign 2026 · Kukas, Jaipur</small>
           </span>
         </div>
-        <div className="g-footer-columns">
+        <div className="g-footer-columns no-scrollbar">
           <nav className="g-footer-links" aria-label="Footer navigation">
             <span>EXPLORE</span>
             {internalLinks.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}
