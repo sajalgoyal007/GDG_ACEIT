@@ -5591,3 +5591,188 @@ html[data-theme="light"] .g-jaipur-backdrop-strip {
   }
 }
 
+/* ==========================================================================
+   HIGH-CONTRAST JAIPUR HORIZON — Amer Fort + Jal Mahal + Hawa Mahal
+   Final cascade layer: keeps the B&W silhouettes solid, visible, and anchored
+   below copy/CTAs while preserving the >= 768px editorial layout.
+   ========================================================================== */
+
+.g-jaipur-backdrop {
+  --jaipur-tone-1: #1f2937;
+  --jaipur-tone-2: #374151;
+  --jaipur-tone-3: #6b7280;
+}
+
+html[data-theme="dark"] .g-jaipur-backdrop {
+  --jaipur-tone-1: #e2e8f0;
+  --jaipur-tone-2: #94a3b8;
+  --jaipur-tone-3: #475569;
+}
+
+.g-jaipur-tone-1 { fill: var(--jaipur-tone-1); }
+.g-jaipur-tone-2 { fill: var(--jaipur-tone-2); }
+.g-jaipur-tone-3 { fill: var(--jaipur-tone-3); }
+.g-jaipur-stroke-1 { fill: none; stroke: var(--jaipur-tone-1); }
+.g-jaipur-stroke-2 { fill: none; stroke: var(--jaipur-tone-2); }
+.g-jaipur-stroke-3 { fill: none; stroke: var(--jaipur-tone-3); }
+
+.g-hero > .g-jaipur-backdrop,
+.g-about-hero > .g-jaipur-backdrop {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  grid-column: 1 / -1;
+  align-self: end;
+  width: 100%;
+  height: 208px;
+  margin-top: -34px;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  contain: paint;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+}
+
+.g-hero {
+  padding-bottom: 0;
+}
+
+.g-about-hero {
+  padding-bottom: 0;
+}
+
+.g-jaipur-layer {
+  inset: 0;
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+.g-jaipur-layer > .g-jaipur-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.g-jaipur-layer > .g-jaipur-art-mobile {
+  display: none;
+}
+
+.g-jaipur-far {
+  display: block;
+  opacity: 0.5;
+}
+
+.g-jaipur-mid {
+  opacity: 0.44;
+}
+
+.g-jaipur-near {
+  opacity: 0.62;
+}
+
+.g-jaipur-horizon {
+  height: 16%;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg-page) 88%, transparent));
+}
+
+/* The campus card gets the same skyline as a quiet bottom band -------------- */
+
+.g-campus-card {
+  padding-bottom: 126px;
+  isolation: isolate;
+}
+
+.g-campus-card > .g-campus-copy,
+.g-campus-card > .g-campus-visual {
+  position: relative;
+  z-index: 1;
+}
+
+.g-campus-card > .g-jaipur-backdrop {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 0;
+  height: 118px;
+  overflow: hidden;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 84%, transparent 100%);
+}
+
+.g-campus-card > .g-jaipur-backdrop .g-jaipur-horizon {
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg-surface-subtle) 88%, transparent));
+}
+
+/* Progress strip keeps the same solid engraving, just quieter ---------------- */
+
+.g-jaipur-strip-art {
+  bottom: -14px;
+  height: 118px;
+  opacity: 0.52;
+}
+
+.g-jaipur-strip-art > .g-jaipur-art-desktop {
+  display: block;
+}
+
+.g-jaipur-strip-art > .g-jaipur-art-mobile {
+  display: none;
+}
+
+/* Mobile: dedicated 128px band, both monuments side by side ---------------- */
+
+@media (max-width: 767.98px) {
+  .g-hero,
+  .g-about-hero {
+    display: block;
+    padding: 18px 0 0;
+  }
+
+  .g-hero > .g-jaipur-backdrop,
+  .g-about-hero > .g-jaipur-backdrop {
+    display: block;
+    height: 128px;
+    margin-top: 9px;
+    grid-column: auto;
+    mask-image: linear-gradient(180deg, transparent 0%, #000 10%, #000 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 10%, #000 86%, transparent 100%);
+  }
+
+  .g-jaipur-layer > .g-jaipur-art-desktop {
+    display: none;
+  }
+
+  .g-jaipur-layer > .g-jaipur-art-mobile {
+    display: block;
+  }
+
+  .g-jaipur-far {
+    display: block;
+    opacity: 0.46;
+  }
+
+  .g-jaipur-mid {
+    opacity: 0.4;
+  }
+
+  .g-jaipur-near {
+    opacity: 0.6;
+  }
+
+  .g-jaipur-horizon {
+    height: 20%;
+  }
+
+  .g-campus-card {
+    padding-bottom: 116px;
+  }
+
+  .g-campus-card > .g-jaipur-backdrop {
+    height: 110px;
+  }
+}
+

@@ -187,8 +187,6 @@ export default function AboutPage() {
       <CommunityNavigation />
       <main className="g-main g-about-main">
         <section className="g-about-hero" aria-labelledby="about-title about-title-mobile">
-          <JaipurHeritageBackdrop variant="about" />
-
           <div className="g-about-mobile">
             <div className="g-about-mobile-head">
               <MobileGdgBadge />
@@ -254,6 +252,8 @@ export default function AboutPage() {
             <JharokhaHalo />
             <GdgEmblem variant="compact" />
           </div>
+
+          <JaipurHeritageBackdrop variant="about" />
         </section>
 
         <section className="g-section" aria-labelledby="impact-title">
@@ -383,6 +383,7 @@ export default function AboutPage() {
                 <span>KUKAS · JAIPUR · RTU</span>
               </span>
             </div>
+            <JaipurHeritageBackdrop variant="campus" />
           </div>
         </section>
 
