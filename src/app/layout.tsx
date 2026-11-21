@@ -49,7 +49,7 @@ export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
