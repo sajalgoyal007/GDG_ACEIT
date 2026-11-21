@@ -89,6 +89,8 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
 
       <main className="g-main">
         <section className="g-hero" aria-labelledby="home-title home-title-mobile">
+          <JaipurHeritageBackdrop variant="hero" />
+
           <div className="g-hero-mobile">
             <div className="g-hero-mobile-head">
               <MobileGdgBadge />
@@ -176,8 +178,6 @@ export function HomeHub({ snapshot }: { snapshot: LeaderboardSnapshot }) {
             <span className="g-hero-glow" aria-hidden="true" />
             <GdgEmblem />
           </motion.div>
-
-          <JaipurHeritageBackdrop variant="hero" />
         </section>
 
         <section className="g-kpi-strip" aria-label="Live campaign metrics">

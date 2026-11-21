@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -10,166 +10,17 @@ import {
   useTransform,
 } from "motion/react";
 
-type JaipurVariant = "hero" | "about" | "strip" | "campus";
-
-type AmerLayout = {
-  width: number;
-  ridge: string;
-  ridgeFront: string;
-  hill: string;
-  wall: { x: number; end: number; top: number; bottom: number; merlon: number; rise: number };
-  palace: { x: number; y: number; w: number; h: number };
-  gate: { x: number; y: number; w: number; h: number };
-  towers: { x: number; y: number; w: number; bottom: number }[];
-  chhatris: { x: number; y: number; s: number }[];
-  windowGap: number;
-  windowWidth: number;
-};
-
-type HawaTier = { left: number; right: number; y: number; height: number; count: number };
-
-type HawaLayout = {
-  width: number;
-  center: number;
-  bottom: number;
-  tiers: HawaTier[];
-  towers: { x: number; w: number; top: number; bottom: number }[];
-  centralArch: { x: number; y: number; w: number; h: number };
-  stroke: number;
-};
-
-type LakeLayout = {
-  width: number;
-  waterY: number;
-  pavilion: { x: number; y: number; w: number; h: number };
-  chhatris: { x: number; y: number; s: number }[];
-  ripples: string[];
-};
-
-const AMER_DESKTOP: AmerLayout = {
-  width: 1440,
-  ridge:
-    "M0 232 L50 202 104 216 168 180 236 204 300 166 372 198 448 158 520 192 596 170 664 202 742 168 820 198 900 172 980 204 1060 178 1140 206 1220 182 1300 210 1380 188 1440 212 V260 H0Z",
-  ridgeFront:
-    "M0 246 L72 224 150 238 230 214 310 236 392 210 476 234 560 212 646 238 734 214 822 240 910 216 998 242 1086 218 1174 242 1262 220 1350 244 1440 226 V260 H0Z",
-  hill: "M18 236 Q96 156 218 138 Q342 114 468 164 Q540 194 612 236 Z",
-  wall: { x: 84, end: 526, top: 174, bottom: 238, merlon: 15, rise: 9 },
-  palace: { x: 216, y: 116, w: 212, h: 122 },
-  gate: { x: 274, y: 148, w: 96, h: 90 },
-  towers: [
-    { x: 102, y: 140, w: 44, bottom: 238 },
-    { x: 462, y: 134, w: 44, bottom: 238 },
-  ],
-  chhatris: [
-    { x: 250, y: 108, s: 1 },
-    { x: 320, y: 98, s: 1.16 },
-    { x: 390, y: 108, s: 1 },
-  ],
-  windowGap: 14,
-  windowWidth: 9,
-};
-
-const AMER_MOBILE: AmerLayout = {
-  width: 720,
-  ridge:
-    "M0 232 L26 212 54 220 86 196 120 214 154 186 190 208 226 184 262 210 300 190 338 214 378 192 418 216 458 194 498 218 538 196 578 220 618 198 658 222 700 204 720 214 V260 H0Z",
-  ridgeFront:
-    "M0 246 L34 230 72 242 112 224 152 240 194 222 236 242 278 224 320 244 362 226 404 246 446 228 488 246 530 230 572 248 614 232 656 248 700 236 720 242 V260 H0Z",
-  hill: "M8 236 Q48 178 108 158 Q174 142 240 180 Q276 204 312 236 Z",
-  wall: { x: 38, end: 292, top: 176, bottom: 240, merlon: 9, rise: 6 },
-  palace: { x: 92, y: 126, w: 150, h: 114 },
-  gate: { x: 134, y: 154, w: 64, h: 86 },
-  towers: [
-    { x: 50, y: 150, w: 24, bottom: 240 },
-    { x: 252, y: 146, w: 24, bottom: 240 },
-  ],
-  chhatris: [
-    { x: 110, y: 118, s: 0.62 },
-    { x: 166, y: 110, s: 0.72 },
-    { x: 222, y: 118, s: 0.62 },
-  ],
-  windowGap: 9,
-  windowWidth: 6,
-};
-
-const LAKE_DESKTOP: LakeLayout = {
-  width: 1440,
-  waterY: 236,
-  pavilion: { x: 642, y: 176, w: 180, h: 62 },
-  chhatris: [
-    { x: 672, y: 166, s: 0.8 },
-    { x: 732, y: 158, s: 0.96 },
-    { x: 792, y: 166, s: 0.8 },
-  ],
-  ripples: [
-    "M604 246H858",
-    "M628 253H836",
-    "M660 258H808",
-  ],
-};
-
-const LAKE_MOBILE: LakeLayout = {
-  width: 720,
-  waterY: 236,
-  pavilion: { x: 318, y: 176, w: 112, h: 63 },
-  chhatris: [
-    { x: 338, y: 168, s: 0.48 },
-    { x: 374, y: 160, s: 0.58 },
-    { x: 410, y: 168, s: 0.48 },
-  ],
-  ripples: [
-    "M302 246H446",
-    "M320 253H430",
-    "M342 258H408",
-  ],
-};
-
-const HAWA_DESKTOP: HawaLayout = {
-  width: 1440,
-  center: 1164,
-  bottom: 242,
-  tiers: [
-    { left: 1122, right: 1206, y: 66, height: 30, count: 3 },
-    { left: 1090, right: 1238, y: 96, height: 28, count: 5 },
-    { left: 1058, right: 1270, y: 124, height: 30, count: 7 },
-    { left: 1026, right: 1302, y: 154, height: 32, count: 9 },
-    { left: 994, right: 1334, y: 186, height: 56, count: 11 },
-  ],
-  towers: [
-    { x: 934, w: 56, top: 126, bottom: 242 },
-    { x: 1334, w: 56, top: 126, bottom: 242 },
-  ],
-  centralArch: { x: 1134, y: 198, w: 60, h: 44 },
-  stroke: 2.6,
-};
-
-const HAWA_MOBILE: HawaLayout = {
-  width: 720,
-  center: 574,
-  bottom: 242,
-  tiers: [
-    { left: 554, right: 594, y: 58, height: 24, count: 3 },
-    { left: 540, right: 608, y: 82, height: 24, count: 5 },
-    { left: 526, right: 622, y: 106, height: 26, count: 7 },
-    { left: 512, right: 636, y: 132, height: 28, count: 9 },
-    { left: 498, right: 650, y: 160, height: 82, count: 11 },
-  ],
-  towers: [
-    { x: 438, w: 44, top: 138, bottom: 242 },
-    { x: 650, w: 44, top: 138, bottom: 242 },
-  ],
-  centralArch: { x: 552, y: 190, w: 44, h: 52 },
-  stroke: 1.8,
-};
+type JaipurVariant = "hero" | "about" | "strip";
 
 /**
- * High-contrast monochrome Jaipur horizon for the public chapter pages.
+ * Monochrome Jaipur heritage atmosphere for the public chapter pages.
  *
- * Three solid-tone SVG planes — Aravalli/Amer Fort, Jal Mahal, and Hawa Mahal —
- * occupy their own compositor layers. Scroll and fine-pointer motion move them
- * at different rates, while reduced-motion visitors get the same static
- * engraving with no transforms. Desktop and phone compositions are authored
- * separately so both monuments stay readable at 1440px and 390px.
+ * Three hand-authored SVG planes — Aravalli/Amer Fort, Albert Hall + Jal Mahal,
+ * and the Hawa Mahal facade — sit on separate transform layers. Scroll progress
+ * and (on fine pointers) cursor position move each plane at a different rate,
+ * which reads as depth while staying on the compositor. Every transform is
+ * skipped for visitors who prefer reduced motion; the architecture still shows
+ * as a static engraving.
  */
 export function JaipurHeritageBackdrop({ variant = "hero" }: { variant?: JaipurVariant }) {
   const rawId = useId();
@@ -188,15 +39,19 @@ export function JaipurHeritageBackdrop({ variant = "hero" }: { variant?: JaipurV
   });
   const scroll = useSpring(scrollYProgress, { stiffness: 80, damping: 26, mass: 0.5 });
 
-  const farY = useTransform(scroll, [0, 1], [8, -16]);
-  const midY = useTransform(scroll, [0, 1], [5, -10]);
-  const nearY = useTransform(scroll, [0, 1], [-4, 8]);
-  const farX = useTransform(smoothX, [-1, 1], [10, -10]);
-  const midX = useTransform(smoothX, [-1, 1], [16, -16]);
-  const nearX = useTransform(smoothX, [-1, 1], [-12, 12]);
-  const farRotate = useTransform(smoothY, [-1, 1], [-0.8, 0.8]);
-  const midRotate = useTransform(smoothY, [-1, 1], [-1.2, 1.2]);
-  const nearRotate = useTransform(smoothY, [-1, 1], [0.9, -0.9]);
+  const farY = useTransform(scroll, [0, 1], [16, -44]);
+  const midY = useTransform(scroll, [0, 1], [32, -72]);
+  const nearY = useTransform(scroll, [0, 1], [54, -104]);
+  const farScale = useTransform(scroll, [0, 1], [1.06, 1.12]);
+  const midScale = useTransform(scroll, [0, 1], [1.03, 1.08]);
+  const nearScale = useTransform(scroll, [0, 1], [1, 1.035]);
+
+  const farX = useTransform(smoothX, [-1, 1], [14, -14]);
+  const midX = useTransform(smoothX, [-1, 1], [24, -24]);
+  const nearX = useTransform(smoothX, [-1, 1], [38, -38]);
+  const farRotate = useTransform(smoothY, [-1, 1], [-1.4, 1.4]);
+  const midRotate = useTransform(smoothY, [-1, 1], [-2.2, 2.2]);
+  const nearRotate = useTransform(smoothY, [-1, 1], [-3, 3]);
 
   useEffect(() => {
     if (reduceMotion || variant === "strip") return;
@@ -229,8 +84,14 @@ export function JaipurHeritageBackdrop({ variant = "hero" }: { variant?: JaipurV
   if (variant === "strip") {
     return (
       <div ref={backdropRef} className="g-jaipur-backdrop g-jaipur-backdrop-strip" aria-hidden="true">
+        <svg className="g-jaipur-strip-band" viewBox="0 0 1440 46" preserveAspectRatio="none">
+          <defs>
+            <JaaliPattern id={`${uid}-strip`} size={42} />
+          </defs>
+          <rect width="1440" height="46" fill={`url(#${uid}-strip)`} />
+        </svg>
         <div className="g-jaipur-strip-art">
-          <HawaPanorama uid={uid} />
+          <NearArt uid={uid} />
         </div>
       </div>
     );
@@ -238,24 +99,28 @@ export function JaipurHeritageBackdrop({ variant = "hero" }: { variant?: JaipurV
 
   return (
     <div ref={backdropRef} className={`g-jaipur-backdrop g-jaipur-${variant}`} aria-hidden="true">
+      <JaaliCorner id={`${uid}-jaali-tl`} className="g-jaipur-jaali g-jaipur-jaali-tl" />
+      <JaaliCorner id={`${uid}-jaali-br`} className="g-jaipur-jaali g-jaipur-jaali-br" />
+
       <motion.div
         className="g-jaipur-layer g-jaipur-far"
-        style={reduceMotion ? undefined : { x: farX, y: farY, rotateX: farRotate }}
+        style={reduceMotion ? undefined : { x: farX, y: farY, scale: farScale, rotateX: farRotate }}
       >
-        <AravalliPanorama uid={uid} />
+        <FarArt uid={uid} />
       </motion.div>
       <motion.div
         className="g-jaipur-layer g-jaipur-mid"
-        style={reduceMotion ? undefined : { x: midX, y: midY, rotateX: midRotate }}
+        style={reduceMotion ? undefined : { x: midX, y: midY, scale: midScale, rotateX: midRotate }}
       >
-        <LakePanorama uid={uid} />
+        <MidArt uid={uid} />
       </motion.div>
       <motion.div
         className="g-jaipur-layer g-jaipur-near"
-        style={reduceMotion ? undefined : { x: nearX, y: nearY, rotateX: nearRotate }}
+        style={reduceMotion ? undefined : { x: nearX, y: nearY, scale: nearScale, rotateX: nearRotate }}
       >
-        <HawaPanorama uid={uid} />
+        <NearArt uid={uid} />
       </motion.div>
+
       <span className="g-jaipur-horizon" />
     </div>
   );
@@ -320,373 +185,360 @@ export function JharokhaHalo({ className = "" }: { className?: string }) {
 }
 
 /* --------------------------------------------------------------------------
-   Panorama primitives
+   SVG engraving primitives
    -------------------------------------------------------------------------- */
 
-function Panorama({
-  uid,
-  name,
-  desktop,
-  mobile,
-}: {
-  uid: string;
-  name: string;
-  desktop: ReactNode;
-  mobile: ReactNode;
-}) {
+function JaaliPattern({ id, size }: { id: string; size: number }) {
+  const half = size / 2;
   return (
-    <>
-      <svg
-        className="g-jaipur-art g-jaipur-art-desktop"
-        viewBox="0 0 1440 260"
-        preserveAspectRatio="xMidYMax slice"
-        aria-hidden="true"
-        data-jaipur-art={`${name}-desktop-${uid}`}
-      >
-        {desktop}
-      </svg>
-      <svg
-        className="g-jaipur-art g-jaipur-art-mobile"
-        viewBox="0 0 720 260"
-        preserveAspectRatio="xMidYMax slice"
-        aria-hidden="true"
-        data-jaipur-art={`${name}-mobile-${uid}`}
-      >
-        {mobile}
-      </svg>
-    </>
-  );
-}
-
-function archPath(x: number, y: number, w: number, h: number) {
-  const r = w / 2;
-  return `M${x} ${y + h} V${y + r} Q${x} ${y} ${x + r} ${y} Q${x + w} ${y} ${x + w} ${y + r} V${y + h} Z`;
-}
-
-function crenellatedRect(
-  x: number,
-  top: number,
-  width: number,
-  bottom: number,
-  merlon: number,
-  rise: number,
-) {
-  let path = `M${x} ${bottom} V${top}`;
-  for (let cursor = x; cursor < x + width; cursor += merlon * 2) {
-    path += ` V${top - rise} H${Math.min(cursor + merlon, x + width)} V${top}`;
-    if (cursor + merlon * 2 < x + width) {
-      path += ` H${Math.min(cursor + merlon * 2, x + width)}`;
-    }
-  }
-  return `${path} H${x + width} V${bottom} Z`;
-}
-
-function rowOfArches(
-  startX: number,
-  y: number,
-  count: number,
-  spacing: number,
-  width: number,
-  height: number,
-) {
-  return Array.from({ length: count }, (_, index) =>
-    archPath(startX + index * spacing + (spacing - width) / 2, y, width, height),
-  );
-}
-
-function Chhatri({ x, y, s }: { x: number; y: number; s: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <path className="g-jaipur-tone-2" d="M-11 18V9H-15V5H15V9H11V18Z" />
-      <path className="g-jaipur-tone-1" d="M-13 6C-13 -4 -7 -11 0 -18C7 -11 13 -4 13 6Z" />
-      <path className="g-jaipur-stroke-3" d="M0 -18V-27" strokeWidth="1.6" />
-      <circle className="g-jaipur-tone-1" cx="0" cy="-29" r="2.4" />
-    </g>
-  );
-}
-
-function amerWindowPaths(layout: AmerLayout) {
-  const { palace, gate, windowGap, windowWidth } = layout;
-  const leftX = palace.x + 10;
-  const leftWidth = Math.max(0, gate.x - leftX - 8);
-  const rightX = gate.x + gate.w + 8;
-  const rightWidth = Math.max(0, palace.x + palace.w - rightX - 10);
-  const rows = [
-    { y: palace.y + 18, h: palace.h * 0.26 },
-    { y: palace.y + palace.h * 0.55, h: palace.h * 0.24 },
-  ];
-
-  return rows.flatMap(({ y, h }) => [
-    ...rowOfArches(
-      leftX,
-      y,
-      Math.max(1, Math.floor(leftWidth / windowGap)),
-      windowGap,
-      windowWidth,
-      h,
-    ),
-    ...rowOfArches(
-      rightX,
-      y,
-      Math.max(1, Math.floor(rightWidth / windowGap)),
-      windowGap,
-      windowWidth,
-      h,
-    ),
-  ]);
-}
-
-function AravalliPanorama({ uid }: { uid: string }) {
-  const render = (layout: AmerLayout, suffix: "desktop" | "mobile") => {
-    const maskId = `${uid}-amer-${suffix}`;
-    const gateArch = archPath(
-      layout.gate.x + Math.round(layout.gate.w * 0.16),
-      layout.gate.y + 16,
-      Math.round(layout.gate.w * 0.68),
-      layout.gate.h - 10,
-    );
-    return (
-      <>
-        <defs>
-          <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={layout.width} height="260">
-            <rect width={layout.width} height="260" fill="#fff" />
-            <path d={gateArch} fill="#000" />
-            {amerWindowPaths(layout).map((path, index) => (
-              <path key={index} d={path} fill="#000" />
-            ))}
-          </mask>
-        </defs>
-        <g mask={`url(#${maskId})`}>
-          <path className="g-jaipur-tone-3" d={layout.ridge} />
-          <path className="g-jaipur-tone-2" d={layout.ridgeFront} />
-          <path className="g-jaipur-tone-3" d={layout.hill} />
-          <path
-            className="g-jaipur-tone-2"
-            d={crenellatedRect(
-              layout.wall.x,
-              layout.wall.top,
-              layout.wall.end - layout.wall.x,
-              layout.wall.bottom,
-              layout.wall.merlon,
-              layout.wall.rise,
-            )}
-          />
-          <path
-            className="g-jaipur-tone-1"
-            d={`M${layout.palace.x} ${layout.palace.y + layout.palace.h} V${layout.palace.y} H${layout.palace.x + layout.palace.w} V${layout.palace.y + layout.palace.h} Z`}
-          />
-          <path
-            className="g-jaipur-tone-1"
-            d={crenellatedRect(
-              layout.gate.x,
-              layout.gate.y,
-              layout.gate.w,
-              layout.gate.y + layout.gate.h,
-              Math.max(8, Math.round(layout.gate.w / 5)),
-              suffix === "desktop" ? 8 : 5,
-            )}
-          />
-          {layout.towers.map((tower, index) => (
-            <path
-              key={index}
-              className="g-jaipur-tone-1"
-              d={crenellatedRect(
-                tower.x,
-                tower.y,
-                tower.w,
-                tower.bottom,
-                Math.max(7, Math.round(tower.w / 3)),
-                suffix === "desktop" ? 7 : 4,
-              )}
-            />
-          ))}
-        </g>
-        <path className="g-jaipur-stroke-3" d={gateArch} fill="none" strokeWidth={suffix === "desktop" ? 2.2 : 1.4} />
-        <path
-          className="g-jaipur-stroke-3"
-          d={archPath(
-            layout.gate.x + Math.round(layout.gate.w * 0.27),
-            layout.gate.y + 26,
-            Math.round(layout.gate.w * 0.46),
-            layout.gate.h - 20,
-          )}
-          fill="none"
-          strokeWidth={suffix === "desktop" ? 1.4 : 1}
-        />
-        {layout.chhatris.map((chhatri, index) => (
-          <Chhatri key={index} {...chhatri} />
-        ))}
-        <path
-          className="g-jaipur-stroke-2"
-          d={`M${layout.palace.x} ${layout.palace.y + 20} H${layout.palace.x + layout.palace.w}`}
-          strokeWidth={suffix === "desktop" ? 2 : 1.3}
-        />
-        <path
-          className="g-jaipur-stroke-2"
-          d={`M${layout.palace.x} ${layout.palace.y + 66} H${layout.palace.x + layout.palace.w}`}
-          strokeWidth={suffix === "desktop" ? 1.4 : 1}
-        />
-      </>
-    );
-  };
-
-  return (
-    <Panorama
-      uid={uid}
-      name="amer"
-      desktop={render(AMER_DESKTOP, "desktop")}
-      mobile={render(AMER_MOBILE, "mobile")}
-    />
-  );
-}
-
-function LakePanorama({ uid }: { uid: string }) {
-  const render = (layout: LakeLayout) => (
-    <>
-      <path className="g-jaipur-tone-3" d={`M0 ${layout.waterY} H${layout.width} V260 H0 Z`} />
+    <pattern id={id} width={size} height={size} patternUnits="userSpaceOnUse">
       <path
-        className="g-jaipur-tone-2"
-        d={`M${layout.pavilion.x} ${layout.pavilion.y + layout.pavilion.h} V${layout.pavilion.y} H${layout.pavilion.x + layout.pavilion.w} V${layout.pavilion.y + layout.pavilion.h} Z`}
+        d={`M${half} 1 L${half + 4} ${half - 6} L${size - 1} ${half} L${half + 4} ${half + 6} L${half} ${size - 1} L${half - 4} ${half + 6} L1 ${half} L${half - 4} ${half - 6} Z`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        opacity="0.7"
+      />
+      <circle cx={half} cy={half} r="1.8" fill="currentColor" opacity="0.55" />
+      <path
+        d={`M0 ${half}H4M${size - 4} ${half}H${size}M${half} 0V4M${half} ${size - 4}V${size}`}
+        stroke="currentColor"
+        strokeWidth="0.7"
+        opacity="0.4"
+      />
+    </pattern>
+  );
+}
+
+function JaaliCorner({ id, className }: { id: string; className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 240 240" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <JaaliPattern id={id} size={40} />
+      </defs>
+      <rect width="240" height="240" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+function FarArt({ uid }: { uid: string }) {
+  return (
+    <svg viewBox="0 0 1440 420" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id={`${uid}-ridge`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.62" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.05" />
+        </linearGradient>
+        <linearGradient id={`${uid}-fort`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.52" />
+          <stop offset="0.52" stopColor="currentColor" stopOpacity="0.26" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.1" />
+        </linearGradient>
+        <linearGradient id={`${uid}-fort-hill`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.42" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.16" />
+        </linearGradient>
+      </defs>
+
+      {/* Aravalli ridge */}
+      <path
+        d="M0 352L54 318L108 336L168 296L228 322L292 274L352 306L414 268L478 302L542 262L606 300L668 264L734 298L800 258L864 294L930 270L996 304L1060 276L1126 306L1192 282L1258 310L1322 288L1382 314L1440 300V420H0Z"
+        fill={`url(#${uid}-ridge)`}
       />
       <path
-        className="g-jaipur-tone-1"
-        d={`M${layout.pavilion.x - 8} ${layout.pavilion.y + layout.pavilion.h} V${layout.pavilion.y + 12} H${layout.pavilion.x + layout.pavilion.w + 8} V${layout.pavilion.y + layout.pavilion.h} Z`}
+        d="M0 386L88 356L172 374L258 340L346 368L436 336L528 366L620 342L712 370L806 344L896 372L990 348L1084 376L1178 350L1272 378L1360 354L1440 380V420H0Z"
+        fill="currentColor"
+        opacity="0.26"
       />
-      <g className="g-jaipur-tone-3">
-        {Array.from({ length: 5 }, (_, index) => {
-          const spacing = layout.pavilion.w / 5;
-          return (
-            <path
-              key={index}
-              d={archPath(
-                layout.pavilion.x + index * spacing + spacing * 0.22,
-                layout.pavilion.y + 26,
-                spacing * 0.56,
-                layout.pavilion.h - 32,
-              )}
-            />
-          );
-        })}
-      </g>
-      {layout.chhatris.map((chhatri, index) => (
-        <Chhatri key={index} {...chhatri} />
-      ))}
-      <g className="g-jaipur-stroke-3" strokeWidth="1.6">
-        {layout.ripples.map((ripple, index) => (
-          <path key={index} d={ripple} fill="none" />
-        ))}
-      </g>
-    </>
-  );
 
-  return (
-    <Panorama
-      uid={uid}
-      name="jal"
-      desktop={render(LAKE_DESKTOP)}
-      mobile={render(LAKE_MOBILE)}
-    />
-  );
-}
+      {/* Amer Fort hill */}
+      <path
+        d="M836 372Q922 294 1032 310Q1140 292 1274 372Z"
+        fill={`url(#${uid}-fort-hill)`}
+        opacity="0.85"
+      />
 
-function hawaFacadePath(layout: HawaLayout) {
-  const tiers = layout.tiers;
-  let path = `M${tiers[0].left} ${tiers[0].y}`;
-  tiers.forEach((tier, index) => {
-    path += ` H${tier.right}`;
-    const nextY = index === tiers.length - 1 ? layout.bottom : tiers[index + 1].y;
-    path += ` V${nextY}`;
-  });
-  path += ` H${tiers[tiers.length - 1].left}`;
-  for (let index = tiers.length - 1; index >= 0; index -= 1) {
-    path += ` V${tiers[index].y} H${tiers[index].left}`;
-  }
-  return `${path} Z`;
-}
-
-function hawaWindowPaths(layout: HawaLayout) {
-  return layout.tiers.flatMap((tier) => {
-    const usable = tier.right - tier.left - 12;
-    const spacing = usable / tier.count;
-    const width = Math.max(4, spacing * 0.6);
-    const height = Math.min(tier.height * 0.64, 20);
-    return rowOfArches(
-      tier.left + 6 + (spacing - width) / 2,
-      tier.y + 5,
-      tier.count,
-      spacing,
-      width,
-      height,
-    );
-  });
-}
-
-function HawaPanorama({ uid }: { uid: string }) {
-  const render = (layout: HawaLayout, suffix: "desktop" | "mobile") => {
-    const maskId = `${uid}-hawa-${suffix}`;
-    const facade = hawaFacadePath(layout);
-    const centralArch = archPath(
-      layout.centralArch.x,
-      layout.centralArch.y,
-      layout.centralArch.w,
-      layout.centralArch.h,
-    );
-    return (
-      <>
-        <defs>
-          <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={layout.width} height="260">
-            <rect width={layout.width} height="260" fill="#fff" />
-            {hawaWindowPaths(layout).map((path, index) => (
-              <path key={index} d={path} fill="#000" />
-            ))}
-            <path d={centralArch} fill="#000" />
-          </mask>
-        </defs>
-        {layout.towers.map((tower, index) => (
-          <path
-            key={index}
-            className="g-jaipur-tone-2"
-            d={crenellatedRect(
-              tower.x,
-              tower.top,
-              tower.w,
-              tower.bottom,
-              suffix === "desktop" ? 11 : 7,
-              suffix === "desktop" ? 7 : 4,
-            )}
-          />
-        ))}
-        <path className="g-jaipur-tone-1" d={facade} mask={`url(#${maskId})`} />
-        <g className="g-jaipur-stroke-2" fill="none" strokeWidth={layout.stroke}>
-          {layout.tiers.map((tier, index) => {
-            const y = index === layout.tiers.length - 1 ? layout.bottom : layout.tiers[index + 1].y;
-            return <path key={index} d={`M${tier.left} ${y - 3} Q${layout.center} ${y - 13} ${tier.right} ${y - 3}`} />;
-          })}
-        </g>
-        <path className="g-jaipur-stroke-3" d={centralArch} fill="none" strokeWidth={layout.stroke} />
+      {/* Amer Fort ramparts */}
+      <g stroke="currentColor" fill="none" strokeWidth="1.2" strokeLinejoin="round" strokeLinecap="round">
         <path
-          className="g-jaipur-stroke-3"
-          d={`M${layout.center - layout.centralArch.w * 0.62} ${layout.bottom - 8} H${layout.center + layout.centralArch.w * 0.62}`}
-          strokeWidth={layout.stroke}
+          d="M872 330L880 300H894V290H902V300H918V292H926V300H944V288H952V300H972V291H980V300H998V292H1006V300H1024V289H1032V300H1050V292H1058V300H1074V288H1082V300H1096L1102 330Z"
+          fill="currentColor"
+          fillOpacity="0.28"
+          opacity="0.85"
         />
-        {layout.towers.map((tower, index) => (
-          <g key={`lattice-${index}`} className="g-jaipur-stroke-3" strokeWidth={suffix === "desktop" ? 1.2 : 0.9}>
-            <path d={`M${tower.x + tower.w * 0.3} ${tower.top + 16} V${tower.bottom}`} />
-            <path d={`M${tower.x + tower.w * 0.7} ${tower.top + 16} V${tower.bottom}`} />
-            <path d={`M${tower.x + 4} ${tower.top + 34} H${tower.x + tower.w - 4}`} />
-            <path d={`M${tower.x + 4} ${tower.top + 70} H${tower.x + tower.w - 4}`} />
+        <path d="M912 330L922 348H1060L1072 330" opacity="0.55" />
+        <path d="M944 348V356M1000 348V358M1052 348V356" opacity="0.4" />
+      </g>
+
+      {/* Amer palace block */}
+      <g stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round">
+        <path d="M958 300V240H1108V300Z" fill={`url(#${uid}-fort)`} opacity="0.95" />
+        <path
+          d="M956 240V229H966V221H974V229H986V221H994V229H1008V219H1016V229H1028V221H1036V229H1048V219H1056V229H1068V221H1076V229H1090V219H1098V229H1110V240"
+          fill="currentColor"
+          fillOpacity="0.42"
+          opacity="0.9"
+        />
+        <path d="M976 300V270Q983 258 990 270V300M1008 300V262Q1016 248 1024 262V300M1042 300V266Q1050 252 1058 266V300M1076 300V272Q1083 260 1090 272V300" opacity="0.7" />
+        <path d="M958 288H1108" opacity="0.35" />
+      </g>
+
+      {/* Chhatris */}
+      <g fill="currentColor" opacity="0.62">
+        {[982, 1033, 1084].map((x) => (
+          <g key={x}>
+            <path d={`M${x - 9} 230V220H${x - 14}V216H${x + 14}V220H${x + 9}V230Z`} />
+            <path d={`M${x - 13} 217C${x - 13} 203 ${x - 6} 197 ${x} 185C${x + 6} 197 ${x + 13} 203 ${x + 13} 217Z`} />
+            <path d={`M${x} 185V174`} stroke="currentColor" strokeWidth="1.3" />
+            <circle cx={x} cy={171} r="2.6" />
           </g>
         ))}
-      </>
-    );
-  };
+      </g>
 
+      {/* Watchtower */}
+      <g stroke="currentColor" strokeWidth="1.1" fill="none" opacity="0.65">
+        <path d="M1116 330V258H1150V330" fill="currentColor" fillOpacity="0.14" />
+        <path d="M1114 258V249H1121V243H1127V249H1134V243H1140V249H1146V243H1152V258" fill="currentColor" fillOpacity="0.3" />
+        <path d="M1124 330V286Q1133 274 1142 286V330" opacity="0.6" />
+      </g>
+
+      {/* Flag and birds */}
+      <path d="M1033 174V148" stroke="currentColor" strokeWidth="1.3" opacity="0.7" />
+      <path d="M1033 148L1057 156L1033 164Z" fill="currentColor" opacity="0.6" />
+      <g stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3">
+        <path d="M240 152q8-8 16 0q8-8 16 0" />
+        <path d="M304 126q6-6 12 0q6-6 12 0" />
+        <path d="M1226 146q7-7 14 0q7-7 14 0" />
+      </g>
+    </svg>
+  );
+}
+
+function MidArt({ uid }: { uid: string }) {
   return (
-    <Panorama
-      uid={uid}
-      name="hawa"
-      desktop={render(HAWA_DESKTOP, "desktop")}
-      mobile={render(HAWA_MOBILE, "mobile")}
-    />
+    <svg viewBox="0 0 1440 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <pattern id={`${uid}-mid-arch`} width="46" height="54" patternUnits="userSpaceOnUse">
+          <path
+            d="M6 52V25Q6 12 23 12Q40 12 40 25V52"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.1"
+            opacity="0.75"
+          />
+          <path
+            d="M12 52V27Q12 18 23 18Q34 18 34 27V52"
+            fill="currentColor"
+            opacity="0.16"
+          />
+          <path d="M23 12V4" stroke="currentColor" strokeWidth="0.8" opacity="0.55" />
+          <path d="M5 52H41" stroke="currentColor" strokeWidth="0.8" opacity="0.4" />
+        </pattern>
+        <linearGradient id={`${uid}-dome`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.34" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.08" />
+        </linearGradient>
+        <linearGradient id={`${uid}-museum`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.3" />
+          <stop offset="0.55" stopColor="currentColor" stopOpacity="0.16" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.07" />
+        </linearGradient>
+        <linearGradient id={`${uid}-palace`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.32" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.09" />
+        </linearGradient>
+      </defs>
+
+      {/* Albert Hall Museum */}
+      <g stroke="currentColor" fill="none" strokeWidth="1.2" strokeLinejoin="round">
+        <rect x="244" y="304" width="384" height="14" opacity="0.7" />
+        <rect x="260" y="232" width="352" height="72" fill={`url(#${uid}-museum)`} />
+        <rect x="336" y="198" width="200" height="106" fill={`url(#${uid}-museum)`} />
+        <path d="M252 232H620M270 246H602M330 212H542" opacity="0.5" />
+        <path d="M252 304H620" opacity="0.5" />
+        <rect x="266" y="250" width="340" height="54" fill={`url(#${uid}-mid-arch)`} stroke="none" opacity="0.85" />
+        <rect x="336" y="198" width="200" height="106" fill="none" />
+        <path d="M392 304V262Q392 232 436 232Q480 232 480 262V304" strokeWidth="1.5" />
+        <path d="M404 304V266Q404 244 436 244Q468 244 468 266V304" opacity="0.7" />
+        <path d="M412 304V270Q412 254 436 254Q460 254 460 270V304" opacity="0.45" />
+        <path d="M356 246V232M516 246V232" opacity="0.5" />
+        <path d="M280 250V232M310 250V232M562 250V232M592 250V232" opacity="0.35" />
+      </g>
+
+      {/* Albert Hall towers */}
+      <g stroke="currentColor" fill="none" strokeWidth="1.1" opacity="0.85">
+        <path d="M282 232V176H308V232" fill="currentColor" fillOpacity="0.08" />
+        <path d="M280 176V168H288V162H302V168H310V176" fill="currentColor" fillOpacity="0.28" />
+        <path d="M284 162C284 148 290 142 295 132C300 142 306 148 306 162Z" fill="currentColor" fillOpacity="0.2" />
+        <path d="M295 132V120" />
+        <circle cx="295" cy="117" r="2.2" />
+        <path d="M566 232V176H592V232" fill="currentColor" fillOpacity="0.08" />
+        <path d="M564 176V168H572V162H586V168H594V176" fill="currentColor" fillOpacity="0.28" />
+        <path d="M568 162C568 148 574 142 579 132C584 142 590 148 590 162Z" fill="currentColor" fillOpacity="0.2" />
+        <path d="M579 132V120" />
+        <circle cx="579" cy="117" r="2.2" />
+      </g>
+
+      {/* Albert Hall dome */}
+      <g stroke="currentColor" strokeWidth="1.2" fill="none">
+        <path d="M404 198V178H468V198" fill="currentColor" fillOpacity="0.12" />
+        <path d="M398 178H474" opacity="0.6" />
+        <path
+          d="M400 180C400 154 416 140 436 104C456 140 472 154 472 180Z"
+          fill={`url(#${uid}-dome)`}
+        />
+        <path d="M436 104V86" />
+        <circle cx="436" cy="82" r="3.2" />
+        <path d="M428 90H444" opacity="0.6" />
+        <path d="M418 158Q436 146 454 158" opacity="0.4" />
+        <path d="M412 170Q436 156 460 170" opacity="0.35" />
+      </g>
+
+      {/* Jal Mahal */}
+      <g stroke="currentColor" strokeWidth="1.1" fill="none" opacity="0.9">
+        <path d="M1004 300V262H1324V300" fill={`url(#${uid}-palace)`} />
+        <path d="M1016 300V268H1312V300" fill={`url(#${uid}-mid-arch)`} stroke="none" opacity="0.8" />
+        <path d="M1000 300H1328" opacity="0.6" />
+        <path d="M1004 262V252H1324V262" fill="currentColor" fillOpacity="0.24" />
+      </g>
+
+      {/* Jal Mahal chhatris */}
+      <g stroke="currentColor" strokeWidth="1" fill="none" opacity="0.8">
+        {[1034, 1164, 1294].map((x) => (
+          <g key={x}>
+            <path d={`M${x - 18} 252V242H${x - 23}V237H${x + 23}V242H${x + 18}V252`} fill="currentColor" fillOpacity="0.18" />
+            <path d={`M${x - 22} 238C${x - 22} 222 ${x - 11} 214 ${x} 200C${x + 11} 214 ${x + 22} 222 ${x + 22} 238Z`} fill="currentColor" fillOpacity="0.12" />
+            <path d={`M${x} 200V188`} />
+            <circle cx={x} cy={184} r="2.2" />
+            <path d={`M${x - 9} 252V246M${x + 9} 252V246`} opacity="0.45" />
+          </g>
+        ))}
+      </g>
+
+      {/* Water reflection + ripples */}
+      <g transform="translate(0,600) scale(1,-1)" opacity="0.19" fill="currentColor" stroke="none">
+        <path d="M1004 300V262H1324V300Z" />
+        <path d="M1012 238C1012 222 1023 214 1034 200C1045 214 1056 222 1056 238Z" />
+        <path d="M1142 238C1142 222 1153 214 1164 200C1175 214 1186 222 1186 238Z" />
+        <path d="M1272 238C1272 222 1283 214 1294 200C1305 214 1316 222 1316 238Z" />
+      </g>
+      <g stroke="currentColor" strokeWidth="0.9" opacity="0.32">
+        <path d="M992 316H1340M1016 326H1316M988 338H1338M1034 350H1298" />
+        <path d="M60 320H520M110 332H470M40 346H500" opacity="0.55" />
+      </g>
+    </svg>
+  );
+}
+
+function NearArt({ uid }: { uid: string }) {
+  return (
+    <svg viewBox="0 0 1440 340" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <pattern id={`${uid}-jharokha`} width="42" height="40" patternUnits="userSpaceOnUse">
+          <path
+            d="M4 38V17Q4 6 16 6H26Q38 6 38 17V38Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.05"
+            opacity="0.85"
+          />
+          <path
+            d="M6.5 38V18Q6.5 8.5 16 8.5H26Q35.5 8.5 35.5 18V38"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.55"
+            opacity="0.5"
+          />
+          <path d="M16 38V28Q21 20 26 28V38" fill="currentColor" opacity="0.28" />
+          <path d="M21 6V1.5" stroke="currentColor" strokeWidth="0.9" opacity="0.7" />
+          <path d="M3 38H39" stroke="currentColor" strokeWidth="0.8" opacity="0.45" />
+          <circle cx="21" cy="14" r="1.5" fill="currentColor" opacity="0.55" />
+        </pattern>
+        <pattern id={`${uid}-merlon`} width="30" height="24" patternUnits="userSpaceOnUse">
+          <path
+            d="M2 24V14Q2 5 15 5Q28 5 28 14V24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+            opacity="0.7"
+          />
+          <path d="M15 5V0" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+        </pattern>
+        <pattern id={`${uid}-lattice`} width="18" height="18" patternUnits="userSpaceOnUse">
+          <path d="M9 1L17 9L9 17L1 9Z" fill="none" stroke="currentColor" strokeWidth="0.6" opacity="0.5" />
+          <circle cx="9" cy="9" r="1" fill="currentColor" opacity="0.5" />
+        </pattern>
+        <linearGradient id={`${uid}-hawa`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.34" />
+          <stop offset="0.48" stopColor="currentColor" stopOpacity="0.19" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.08" />
+        </linearGradient>
+        <linearGradient id={`${uid}-hawa-tower`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="currentColor" stopOpacity="0.4" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.12" />
+        </linearGradient>
+      </defs>
+
+      {/* Hawa Mahal side towers */}
+      <g stroke="currentColor" strokeWidth="1.1" fill="none" opacity="0.9">
+        <path d="M104 320V124H152V320Z" fill={`url(#${uid}-hawa-tower)`} />
+        <path d="M100 124V114H110V106H118V114H138V106H146V114H156V124" fill="currentColor" fillOpacity="0.24" />
+        <path d="M106 105C106 88 115 80 128 62C141 80 150 88 150 105Z" fill="currentColor" fillOpacity="0.14" />
+        <path d="M128 62V48" />
+        <circle cx="128" cy="44" r="2.6" />
+        <path d="M104 148H152M104 178H152M104 208H152M104 238H152M104 268H152M104 296H152" opacity="0.32" />
+        <rect x="112" y="152" width="32" height="140" fill={`url(#${uid}-lattice)`} stroke="none" opacity="0.6" />
+
+        <path d="M686 320V124H734V320Z" fill={`url(#${uid}-hawa-tower)`} />
+        <path d="M682 124V114H692V106H700V114H720V106H728V114H738V124" fill="currentColor" fillOpacity="0.24" />
+        <path d="M690 105C690 88 699 80 712 62C725 80 734 88 734 105Z" fill="currentColor" fillOpacity="0.14" />
+        <path d="M712 62V48" />
+        <circle cx="712" cy="44" r="2.6" />
+        <path d="M686 148H734M686 178H734M686 208H734M686 238H734M686 268H734M686 296H734" opacity="0.32" />
+        <rect x="694" y="152" width="32" height="140" fill={`url(#${uid}-lattice)`} stroke="none" opacity="0.6" />
+      </g>
+
+      {/* Hawa Mahal main facade */}
+      <g stroke="currentColor" strokeWidth="1.1" fill="none">
+        <path d="M152 320V140H686V320Z" fill={`url(#${uid}-hawa)`} />
+        <rect x="152" y="130" width="534" height="16" fill={`url(#${uid}-merlon)`} stroke="none" opacity="0.9" />
+        <path d="M146 146H692" opacity="0.55" />
+
+        {/* Five-storey jharokha lattice */}
+        <rect x="158" y="152" width="522" height="160" fill={`url(#${uid}-jharokha)`} stroke="none" opacity="0.9" />
+        <path d="M152 192H686M152 232H686M152 272H686" opacity="0.5" />
+        <path d="M152 312H686" opacity="0.65" />
+
+        {/* Central grand jharokha */}
+        <path d="M372 320V206Q372 170 419 170Q466 170 466 206V320Z" fill={`url(#${uid}-hawa)`} />
+        <path d="M366 320V204Q366 160 419 160Q472 160 472 204V320" strokeWidth="1.6" />
+        <path d="M378 320V208Q378 176 419 176Q460 176 460 208V320" opacity="0.7" />
+        <path d="M390 320V214Q390 190 419 190Q448 190 448 214V320" opacity="0.55" />
+        <rect x="388" y="246" width="62" height="74" fill={`url(#${uid}-lattice)`} stroke="none" opacity="0.65" />
+        <path d="M384 246H454M380 238H458" opacity="0.6" />
+
+        {/* Ground arcade */}
+        <path d="M164 320V300H674V320" fill="currentColor" fillOpacity="0.2" stroke="none" />
+        <path d="M176 320V306Q176 296 186 296Q196 296 196 306V320M212 320V306Q212 296 222 296Q232 296 232 306V320M248 320V306Q248 296 258 296Q268 296 268 306V320M284 320V306Q284 296 294 296Q304 296 304 306V320M320 320V306Q320 296 330 296Q340 296 340 306V320M478 320V306Q478 296 488 296Q498 296 498 306V320M514 320V306Q514 296 524 296Q534 296 534 306V320M550 320V306Q550 296 560 296Q570 296 570 306V320M586 320V306Q586 296 596 296Q606 296 616 306V320M622 320V306Q622 296 632 296Q642 296 652 306V320" opacity="0.6" />
+      </g>
+
+      {/* Crown chhatris */}
+      <g stroke="currentColor" strokeWidth="1" fill="none" opacity="0.85">
+        {[300, 419, 538].map((x) => (
+          <g key={x}>
+            <path d={`M${x - 17} 130V120H${x - 22}V115H${x + 22}V120H${x + 17}V130`} fill="currentColor" fillOpacity="0.2" />
+            <path d={`M${x - 21} 116C${x - 21} 101 ${x - 10} 94 ${x} 80C${x + 10} 94 ${x + 21} 101 ${x + 21} 116Z`} fill="currentColor" fillOpacity="0.13" />
+            <path d={`M${x} 80V68`} />
+            <circle cx={x} cy={64} r="2.3" />
+          </g>
+        ))}
+      </g>
+
+      {/* Finial aura + birds */}
+      <g stroke="currentColor" strokeWidth="0.8" fill="none" opacity="0.22">
+        <path d="M419 40V22M405 30H433M419 22L427 12M419 22L411 12" />
+        <path d="M620 84q7-7 14 0q7-7 14 0M566 58q6-6 12 0q6-6 12 0" />
+      </g>
+    </svg>
   );
 }
